@@ -1,0 +1,7 @@
+# Demo target dependencies — patched.
+fastapi==0.139.0
+uvicorn
+httpx
+cryptography
+# FIX: upgraded past every advisory affecting requests 2.31.0 (latest fixes in 2.33.0).
+requests==2.34.2

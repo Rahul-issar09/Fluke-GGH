@@ -17,6 +17,7 @@ import asyncio
 import json
 from datetime import datetime, timezone
 
+from aegis.chat import index_manifest
 from aegis.chat.chroma_store import ChromaStore, ChromaUnavailable
 from aegis.chat.chunker import chunk_from_store
 from aegis.chat.embedder import EmbeddingUnavailable, make_embedder
@@ -51,11 +52,18 @@ async def index_scan(store, chroma: ChromaStore, embedder, scan_id: str, *, inde
         chunks.extend(chunk_from_store(store, finding, indexed_at=indexed_at))
 
     try:
+        # never mix two embedding models' vectors in one index (LP4)
+        compat = index_manifest.check(chroma, embedder)
+        if not compat.compatible:
+            raise index_manifest.IndexMismatch(compat.reason)
         embeddings = await embedder.embed_documents([c.text for c in chunks]) if chunks else []
         chroma.delete_scan(scan_id)                 # replace the scan's index atomically-ish
         if chunks:
             chroma.upsert(chunks, embeddings)
-    except (EmbeddingUnavailable, ChromaUnavailable) as exc:
+            expected = index_manifest.expected_for(embedder)
+            if compat.manifest is None and expected is not None and getattr(chroma, "path", None):
+                index_manifest.write_manifest(chroma.path, expected, adopted=compat.adopt)
+    except (EmbeddingUnavailable, ChromaUnavailable, index_manifest.IndexMismatch) as exc:
         _record(store, scan_id, ok=False, chunks=0, indexed_at=indexed_at, error=f"{type(exc).__name__}: {str(exc)[:160]}")
         log.error("chat.index_error", scan_id=scan_id, error=f"{type(exc).__name__}: {str(exc)[:200]}")
         raise
@@ -65,11 +73,13 @@ async def index_scan(store, chroma: ChromaStore, embedder, scan_id: str, *, inde
     return {"scan_id": scan_id, "findings": len(findings), "chunks": len(chunks), "indexed_at": indexed_at, "ok": True}
 
 
-def make_chat_indexer(store, chat_settings, ollama_url: str, *, embedder=None, chroma=None):
+def make_chat_indexer(store, chat_settings, ollama_url: str = "", *, embedder=None, chroma=None, guard: bool = False):
     """The background indexer ``finalize`` calls, or ``None`` when chat is disabled.
 
     The Chroma store and embedder are built lazily on first use (and reused), so nothing is opened
-    for a scan that is never indexed. ``embedder`` / ``chroma`` may be injected for tests.
+    for a scan that is never indexed. ``embedder`` / ``chroma`` may be injected for tests. The
+    embedder uses ``chat_settings.embed_url`` (``ollama_url`` only as a fallback); ``guard`` keeps
+    it local (see :func:`~aegis.chat.embedder.make_embedder`).
     """
     if not chat_settings.enabled:
         return None
@@ -80,7 +90,7 @@ def make_chat_indexer(store, chat_settings, ollama_url: str, *, embedder=None, c
         if cache["chroma"] is None:
             cache["chroma"] = ChromaStore(chat_settings.chroma_path, chat_settings.collection)
         if cache["embedder"] is None:
-            cache["embedder"] = make_embedder(chat_settings, ollama_url)
+            cache["embedder"] = make_embedder(chat_settings, ollama_url, guard=guard)
         return await asyncio.wait_for(
             index_scan(store, cache["chroma"], cache["embedder"], scan_id),
             timeout=chat_settings.index_timeout_s,

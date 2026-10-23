@@ -1,0 +1,250 @@
+{
+  "Claim": {
+    "kind": "model",
+    "schema": {
+      "description": "One explanation sentence produced by the LLM. Distinct from the DB\ntable ``evidence.models.Claim`` (conflict C27).",
+      "properties": {
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "field": {
+          "enum": [
+            "what",
+            "impact",
+            "exploit",
+            "fix"
+          ],
+          "title": "Field",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 400,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field",
+        "text",
+        "evidence_ids"
+      ],
+      "title": "Claim",
+      "type": "object"
+    }
+  },
+  "Explanation": {
+    "kind": "model",
+    "schema": {
+      "$defs": {
+        "Claim": {
+          "description": "One explanation sentence produced by the LLM. Distinct from the DB\ntable ``evidence.models.Claim`` (conflict C27).",
+          "properties": {
+            "evidence_ids": {
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "field": {
+              "enum": [
+                "what",
+                "impact",
+                "exploit",
+                "fix"
+              ],
+              "title": "Field",
+              "type": "string"
+            },
+            "text": {
+              "maxLength": 400,
+              "title": "Text",
+              "type": "string"
+            }
+          },
+          "required": [
+            "field",
+            "text",
+            "evidence_ids"
+          ],
+          "title": "Claim",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/Claim"
+          },
+          "maxItems": 12,
+          "title": "Claims",
+          "type": "array"
+        },
+        "finding_id": {
+          "title": "Finding Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "finding_id",
+        "claims"
+      ],
+      "title": "Explanation",
+      "type": "object"
+    }
+  },
+  "FixDraft": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "finding_id": {
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "unified_diff": {
+          "title": "Unified Diff",
+          "type": "string"
+        }
+      },
+      "required": [
+        "finding_id",
+        "unified_diff"
+      ],
+      "title": "FixDraft",
+      "type": "object"
+    }
+  },
+  "NextStep": {
+    "kind": "enum",
+    "members": {
+      "escalate_to_human": "escalate_to_human",
+      "link_and_score": "link_and_score",
+      "mark_sufficient": "mark_sufficient",
+      "request_crypto_scan": "request_crypto_scan",
+      "request_runtime_retest": "request_runtime_retest",
+      "request_source_evidence": "request_source_evidence"
+    }
+  },
+  "NextStepDecision": {
+    "kind": "model",
+    "schema": {
+      "$defs": {
+        "NextStep": {
+          "enum": [
+            "request_source_evidence",
+            "request_runtime_retest",
+            "request_crypto_scan",
+            "link_and_score",
+            "mark_sufficient",
+            "escalate_to_human"
+          ],
+          "title": "NextStep",
+          "type": "string"
+        },
+        "Target": {
+          "properties": {
+            "function": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Function"
+            },
+            "route": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Route"
+            }
+          },
+          "title": "Target",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "finding_id": {
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "next_step": {
+          "$ref": "#/$defs/NextStep"
+        },
+        "reason_evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Reason Evidence Ids",
+          "type": "array"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        }
+      },
+      "required": [
+        "finding_id",
+        "next_step",
+        "reason_evidence_ids"
+      ],
+      "title": "NextStepDecision",
+      "type": "object"
+    }
+  },
+  "Target": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Function"
+        },
+        "route": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Route"
+        }
+      },
+      "title": "Target",
+      "type": "object"
+    }
+  }
+}

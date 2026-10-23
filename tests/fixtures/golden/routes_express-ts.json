@@ -1,0 +1,57 @@
+[
+  {
+    "path": "/health",
+    "methods": [
+      "GET"
+    ],
+    "function": "health",
+    "qualname": "app.ts::health",
+    "file": "app.ts",
+    "line": 9,
+    "end_line": 11
+  },
+  {
+    "path": "/login",
+    "methods": [
+      "POST"
+    ],
+    "function": "post_login",
+    "qualname": "app.ts::post_login",
+    "file": "app.ts",
+    "line": 15,
+    "end_line": 18
+  },
+  {
+    "path": "/api/orders/:id",
+    "methods": [
+      "GET"
+    ],
+    "function": "getOrder",
+    "qualname": "routes/orders.ts::getOrder",
+    "file": "routes/orders.ts",
+    "line": 8,
+    "end_line": 11
+  },
+  {
+    "path": "/api/orders/:id/items",
+    "methods": [
+      "GET"
+    ],
+    "function": "listItems",
+    "qualname": "routes/orders.ts::listItems",
+    "file": "routes/orders.ts",
+    "line": 17,
+    "end_line": 19
+  },
+  {
+    "path": "/api/orders/:id/items",
+    "methods": [
+      "POST"
+    ],
+    "function": "post_id_items",
+    "qualname": "routes/orders.ts::post_id_items",
+    "file": "routes/orders.ts",
+    "line": 20,
+    "end_line": 22
+  }
+]

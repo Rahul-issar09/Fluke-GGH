@@ -53,6 +53,10 @@ dependencies = [
 browser = ["playwright>=1.63"]
 # live TLS checks (sslyze runs as a scanner binary through the SafetyController)
 tls = ["sslyze>=6.3"]
+# Online mode: Google Gemini as the reasoning model (LLM_PROVIDER_PHASES LP5). Optional - an offline
+# install never needs it. Tested together with langchain-core 1.6.7 (4.4.0 is the newest release
+# that does not require a newer langchain-core). The API key is asked for every run, never saved.
+gemini = ["langchain-google-genai>=4.4,<5"]
 dev = [
     "pytest>=9.1",
     "pytest-asyncio>=1.4",
@@ -83,11 +87,12 @@ aegis = [
 pythonpath = ["."]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-addopts = "-m 'not ollama and not docker and not tools'"
+addopts = "-m 'not ollama and not docker and not tools and not gemini'"
 markers = [
     "phase(code): AEGIS build-phase tag (e.g. AG00). ST05 adds the --upto plugin.",
     "ollama: needs a local Ollama instance (run with -m ollama)",
     "docker: needs the docker-compose stack",
     "tools: runs a real external scanner binary (run with -m tools)",
+    "gemini: calls the real Gemini API with AEGIS_TEST_GEMINI_API_KEY (run with -m gemini; costs quota)",
     "slow: slow test",
 ]

@@ -1,0 +1,146 @@
+{
+ "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
+ "bomFormat": "CycloneDX",
+ "specVersion": "1.7",
+ "serialNumber": "urn:uuid:c3daeb88-3000-41dc-b7af-2895cb0158a9",
+ "version": 1,
+ "metadata": {
+  "timestamp": "2026-10-08T01:38:01+05:30",
+  "tools": {
+   "components": [
+    {
+     "type": "application",
+     "author": "anchore",
+     "name": "syft",
+     "version": "1.54.1"
+    }
+   ]
+  },
+  "component": {
+   "bom-ref": "02d279a03efa666f",
+   "type": "file",
+   "name": "{ROOT}"
+  }
+ },
+ "components": [
+  {
+   "bom-ref": "pkg:pypi/fastapi@0.139.0?package-id=7219fd98b6b41677",
+   "type": "library",
+   "name": "fastapi",
+   "version": "0.139.0",
+   "cpe": "cpe:2.3:a:python-fastapi:python-fastapi:0.139.0:*:*:*:*:*:*:*",
+   "purl": "pkg:pypi/fastapi@0.139.0",
+   "properties": [
+    {
+     "name": "syft:package:foundBy",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "syft:package:language",
+     "value": "python"
+    },
+    {
+     "name": "syft:package:type",
+     "value": "python"
+    },
+    {
+     "name": "syft:package:metadataType",
+     "value": "python-pip-requirements-entry"
+    },
+    {
+     "name": "syft:cpe23",
+     "value": "cpe:2.3:a:python-fastapi:python_fastapi:0.139.0:*:*:*:*:*:*:*"
+    },
+    {
+     "name": "syft:cpe23",
+     "value": "cpe:2.3:a:python_fastapi:python-fastapi:0.139.0:*:*:*:*:*:*:*"
+    },
+    {
+     "name": "syft:cpe23",
+     "value": "cpe:2.3:a:python_fastapi:python_fastapi:0.139.0:*:*:*:*:*:*:*"
+    },
+    {
+     "name": "syft:cpe23",
+     "value": "cpe:2.3:a:fastapi:python-fastapi:0.139.0:*:*:*:*:*:*:*"
+    },
+    {
+     "name": "syft:cpe23",
+     "value": "cpe:2.3:a:fastapi:python_fastapi:0.139.0:*:*:*:*:*:*:*"
+    },
+    {
+     "name": "syft:cpe23",
+     "value": "cpe:2.3:a:python-fastapi:fastapi:0.139.0:*:*:*:*:*:*:*"
+    },
+    {
+     "name": "syft:cpe23",
+     "value": "cpe:2.3:a:python_fastapi:fastapi:0.139.0:*:*:*:*:*:*:*"
+    },
+    {
+     "name": "syft:cpe23",
+     "value": "cpe:2.3:a:python:python-fastapi:0.139.0:*:*:*:*:*:*:*"
+    },
+    {
+     "name": "syft:cpe23",
+     "value": "cpe:2.3:a:python:python_fastapi:0.139.0:*:*:*:*:*:*:*"
+    },
+    {
+     "name": "syft:cpe23",
+     "value": "cpe:2.3:a:fastapi:fastapi:0.139.0:*:*:*:*:*:*:*"
+    },
+    {
+     "name": "syft:cpe23",
+     "value": "cpe:2.3:a:python:fastapi:0.139.0:*:*:*:*:*:*:*"
+    },
+    {
+     "name": "syft:location:0:path",
+     "value": "/requirements.txt"
+    }
+   ]
+  },
+  {
+   "bom-ref": "pkg:pypi/requests@2.31.0?package-id=21ce5e236ab6b5c2",
+   "type": "library",
+   "name": "requests",
+   "version": "2.31.0",
+   "cpe": "cpe:2.3:a:python:requests:2.31.0:*:*:*:*:*:*:*",
+   "purl": "pkg:pypi/requests@2.31.0",
+   "properties": [
+    {
+     "name": "syft:package:foundBy",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "syft:package:language",
+     "value": "python"
+    },
+    {
+     "name": "syft:package:type",
+     "value": "python"
+    },
+    {
+     "name": "syft:package:metadataType",
+     "value": "python-pip-requirements-entry"
+    },
+    {
+     "name": "syft:location:0:path",
+     "value": "/requirements.txt"
+    }
+   ]
+  },
+  {
+   "bom-ref": "26ca2b7dc025d550",
+   "type": "file",
+   "name": "{ROOT}/requirements.txt",
+   "hashes": [
+    {
+     "alg": "SHA-1",
+     "content": "f8cca47c95ec14f04a5456bb4726d83365ec44f2"
+    },
+    {
+     "alg": "SHA-256",
+     "content": "ccd24ef39a5489cb1d1c28ff4f43a0bd2c83a19d92dc8ad8859a483d0b0dbfad"
+    }
+   ]
+  }
+ ]
+}

@@ -12,6 +12,7 @@ from typing import Optional
 import typer
 
 from aegis.cli.commands._common import check_id, session
+from aegis.cli.commands.llm import before_model_use
 from aegis.cli.errors import USAGE, CliError, cli_command
 from aegis.cli.ui.views import answer_view, finding_view, findings_view, to_data
 
@@ -115,6 +116,7 @@ def register(app: typer.Typer, groups: dict[str, typer.Typer]) -> None:
         with session(typer_ctx) as (ctx, be):
             _api_only(ctx)
             sid = be.resolve_scan(check_id("scan", scan_id))
+            before_model_use(ctx, be)            # this run's Gemini key, if Online mode waits for it
             answer = ask_once(ctx, be, sid, question)
             ctx.out.emit(answer, answer_view(answer))
 
@@ -128,4 +130,6 @@ def register(app: typer.Typer, groups: dict[str, typer.Typer]) -> None:
             _api_only(ctx)
             if ctx.out.json_mode:
                 raise CliError("chat is interactive; use `aegis ask --json` for one answer as JSON", USAGE)
-            chat_loop(ctx, be, be.resolve_scan(check_id("scan", scan_id)))
+            sid = be.resolve_scan(check_id("scan", scan_id))
+            before_model_use(ctx, be)
+            chat_loop(ctx, be, sid)

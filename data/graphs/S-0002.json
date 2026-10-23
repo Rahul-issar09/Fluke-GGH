@@ -1,0 +1,66 @@
+{
+  "directed": true,
+  "edges": [
+    {
+      "kind": "ON",
+      "source": "F-0004",
+      "target": "GET /api/accounts/{param}"
+    },
+    {
+      "kind": "ON",
+      "source": "F-0005",
+      "target": "GET /api/fetch"
+    },
+    {
+      "kind": "ON",
+      "source": "F-0006",
+      "target": "GET /api/accounts/{param}"
+    }
+  ],
+  "multigraph": true,
+  "nodes": [
+    {
+      "correlation": null,
+      "id": "F-0004",
+      "label": "F-0004",
+      "merged": [],
+      "owasp": "A01",
+      "risk": 0.792,
+      "state": "confirmed",
+      "type": "finding",
+      "weakness": "broken_access_control"
+    },
+    {
+      "correlation": null,
+      "id": "F-0005",
+      "label": "F-0005",
+      "merged": [],
+      "owasp": "A05",
+      "risk": 0.053,
+      "state": "candidate",
+      "type": "finding",
+      "weakness": "api_conformance"
+    },
+    {
+      "correlation": null,
+      "id": "F-0006",
+      "label": "F-0006",
+      "merged": [],
+      "owasp": "A05",
+      "risk": 0.089,
+      "state": "candidate",
+      "type": "finding",
+      "weakness": "api_conformance"
+    },
+    {
+      "id": "GET /api/accounts/{param}",
+      "label": "GET /api/accounts/{param}",
+      "type": "endpoint"
+    },
+    {
+      "id": "GET /api/fetch",
+      "label": "GET /api/fetch",
+      "type": "endpoint"
+    }
+  ]
+}

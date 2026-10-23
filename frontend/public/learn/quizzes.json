@@ -1,0 +1,788 @@
+{
+  "items": [
+    {
+      "id": "a01-1",
+      "category": "A01",
+      "q": "A user changes /api/orders/1001 to /api/orders/1002 and sees another customer's order. What is this flaw?",
+      "options": [
+        "Broken object-level authorization (IDOR / BOLA)",
+        "SQL injection",
+        "Clickjacking",
+        "Cross-site scripting"
+      ],
+      "answer": 0,
+      "explanation": "The server returned an object without checking that it belongs to the caller. That missing ownership check is BOLA, also called IDOR.",
+      "cheatsheet_ref": "A01"
+    },
+    {
+      "id": "a01-2",
+      "category": "A01",
+      "q": "Where must authorization be enforced?",
+      "options": [
+        "On the server, for every request",
+        "In the browser, by hiding buttons",
+        "Only at login",
+        "In the CDN"
+      ],
+      "answer": 0,
+      "explanation": "Anything the client does can be skipped. The server must decide on every request whether this user may do this action on this object.",
+      "cheatsheet_ref": "A01"
+    },
+    {
+      "id": "a01-3",
+      "category": "A01",
+      "q": "A user asks for an object they do not own. Which response is best?",
+      "options": [
+        "A redirect to the home page",
+        "500 with a stack trace",
+        "200 with the data masked",
+        "403 or 404 and no data"
+      ],
+      "answer": 3,
+      "explanation": "Return no data. A 404 can also avoid confirming that the object exists.",
+      "cheatsheet_ref": "A01"
+    },
+    {
+      "id": "a01-4",
+      "category": "A01",
+      "q": "'Deny by default' means:",
+      "options": [
+        "Admins skip all checks",
+        "All users share one role",
+        "Access is refused unless a rule grants it",
+        "Access is allowed unless a rule forbids it"
+      ],
+      "answer": 2,
+      "explanation": "New endpoints should be closed until someone explicitly grants access, so a forgotten check fails safe.",
+      "cheatsheet_ref": "A01"
+    },
+    {
+      "id": "a01-5",
+      "category": "A01",
+      "q": "Random, hard-to-guess IDs instead of 1, 2, 3 ...",
+      "options": [
+        "Make the owner check unnecessary",
+        "Only make enumeration harder; the server-side ownership check is still required",
+        "Are slower to index, so avoid them",
+        "Must never appear in URLs"
+      ],
+      "answer": 1,
+      "explanation": "Unguessable IDs are good hygiene, but an attacker who obtains one ID (from a log, a link, a colleague) still gets the data unless the server checks ownership.",
+      "cheatsheet_ref": "A01"
+    },
+    {
+      "id": "a01-6",
+      "category": "A01",
+      "q": "A normal user calls POST /admin/users directly. No page links to it. What is the right fix?",
+      "options": [
+        "Remove the menu link",
+        "Rename the URL",
+        "Check the caller's role on the server for that endpoint",
+        "Obfuscate the JavaScript"
+      ],
+      "answer": 2,
+      "explanation": "Hidden is not protected. The endpoint itself must check the role (function-level authorization).",
+      "cheatsheet_ref": "A01"
+    },
+    {
+      "id": "a01-7",
+      "category": "A01",
+      "q": "Mass assignment is when:",
+      "options": [
+        "A request's fields are bound straight onto a model, so a user can send role=admin",
+        "Large files are uploaded",
+        "Many users log in at once",
+        "DNS is queried in bulk"
+      ],
+      "answer": 0,
+      "explanation": "Bind only an explicit allow-list of fields; never copy the whole request body onto a model.",
+      "cheatsheet_ref": "A01"
+    },
+    {
+      "id": "a02-1",
+      "category": "A02",
+      "q": "Which is appropriate for storing passwords?",
+      "options": [
+        "Base64",
+        "SHA-256 applied once",
+        "MD5",
+        "argon2id or bcrypt with a per-password salt"
+      ],
+      "answer": 3,
+      "explanation": "Password hashes must be slow and salted. argon2id, bcrypt and scrypt are built for that; fast hashes let attackers test billions of guesses per second.",
+      "cheatsheet_ref": "A02"
+    },
+    {
+      "id": "a02-2",
+      "category": "A02",
+      "q": "Why is MD5 unsuitable for security uses?",
+      "options": [
+        "It needs a key",
+        "It is too slow",
+        "Practical collisions exist and it is extremely fast to brute-force",
+        "Its output is too long"
+      ],
+      "answer": 2,
+      "explanation": "MD5 collisions can be produced cheaply, and its speed helps password cracking.",
+      "cheatsheet_ref": "A02"
+    },
+    {
+      "id": "a02-3",
+      "category": "A02",
+      "q": "AES in ECB mode is a problem because:",
+      "options": [
+        "It cannot decrypt",
+        "Identical plaintext blocks give identical ciphertext blocks, leaking patterns",
+        "It needs a 512-bit key",
+        "It is too new"
+      ],
+      "answer": 1,
+      "explanation": "ECB encrypts every block independently. Use an authenticated mode such as AES-GCM.",
+      "cheatsheet_ref": "A02"
+    },
+    {
+      "id": "a02-4",
+      "category": "A02",
+      "q": "Reusing a nonce with the same key in AES-GCM:",
+      "options": [
+        "Only slows things down",
+        "Can break both confidentiality and authentication",
+        "Is fine",
+        "Makes the key longer"
+      ],
+      "answer": 1,
+      "explanation": "Every message needs a unique nonce for a given key. Generate it randomly (96-bit) or with a counter you never repeat.",
+      "cheatsheet_ref": "A02"
+    },
+    {
+      "id": "a02-5",
+      "category": "A02",
+      "q": "Which is a suitable source of randomness for session tokens?",
+      "options": [
+        "Math.random()",
+        "The operating system's CSPRNG (secrets, crypto.randomBytes, SecureRandom)",
+        "An incrementing counter",
+        "The current timestamp"
+      ],
+      "answer": 1,
+      "explanation": "General-purpose random generators are predictable. Tokens must come from a cryptographically secure generator.",
+      "cheatsheet_ref": "A02"
+    },
+    {
+      "id": "a02-6",
+      "category": "A02",
+      "q": "Hard-coding an encryption key in source code:",
+      "options": [
+        "Is safe if the repository is private",
+        "Is required by AES",
+        "Makes encryption faster",
+        "Exposes it to anyone with the code or its history; keep keys in a secret store"
+      ],
+      "answer": 3,
+      "explanation": "Keys in code end up in repositories, builds and logs. Load them from a secret manager or the environment, and rotate them.",
+      "cheatsheet_ref": "A02"
+    },
+    {
+      "id": "a02-7",
+      "category": "A02",
+      "q": "Which setting protects data in transit?",
+      "options": [
+        "Base64-encoding the body",
+        "HTTP with long URLs",
+        "Hiding the port number",
+        "TLS 1.2 or newer with a valid certificate"
+      ],
+      "answer": 3,
+      "explanation": "Encoding is not encryption. Use TLS with certificate validation turned on.",
+      "cheatsheet_ref": "A02"
+    },
+    {
+      "id": "a03-1",
+      "category": "A03",
+      "q": "What is the best fix for SQL injection?",
+      "options": [
+        "Escape quotes by hand",
+        "Use POST instead of GET",
+        "Block the word SELECT",
+        "Parameterized queries"
+      ],
+      "answer": 3,
+      "explanation": "With parameters the database receives the query and the data separately, so input can never change the query's structure.",
+      "cheatsheet_ref": "A03"
+    },
+    {
+      "id": "a03-2",
+      "category": "A03",
+      "q": "A login form receives ' OR '1'='1 as the username. The attacker is trying to:",
+      "options": [
+        "Steal cookies",
+        "Overflow a buffer",
+        "Upload a file",
+        "Make the WHERE clause always true"
+      ],
+      "answer": 3,
+      "explanation": "If the input is concatenated into the query, the condition becomes always true and the login check passes.",
+      "cheatsheet_ref": "A03"
+    },
+    {
+      "id": "a03-3",
+      "category": "A03",
+      "q": "os.system('ping ' + host) is vulnerable to:",
+      "options": [
+        "Cross-site scripting",
+        "CSRF",
+        "Command injection",
+        "Clickjacking"
+      ],
+      "answer": 2,
+      "explanation": "A value such as '8.8.8.8; cat /etc/passwd' runs a second command through the shell.",
+      "cheatsheet_ref": "A03"
+    },
+    {
+      "id": "a03-4",
+      "category": "A03",
+      "q": "What is the safer way to run an external program?",
+      "options": [
+        "Build a command string for the shell",
+        "Use backticks",
+        "Use eval",
+        "Pass an argument list and no shell"
+      ],
+      "answer": 3,
+      "explanation": "subprocess.run([...]), execFile, ProcessBuilder(list) and exec.Command(name, args...) do not go through a shell, so metacharacters stay plain text.",
+      "cheatsheet_ref": "A03"
+    },
+    {
+      "id": "a03-5",
+      "category": "A03",
+      "q": "Is a blocklist of 'bad characters' a sufficient defence?",
+      "options": [
+        "Yes, if written as a regex",
+        "No; it misses encodings and variants. Use parameterization and allow-lists",
+        "Only for numbers",
+        "Yes"
+      ],
+      "answer": 1,
+      "explanation": "Attackers find the character or encoding you forgot. Remove the interpreter from the data path instead.",
+      "cheatsheet_ref": "A03"
+    },
+    {
+      "id": "a03-6",
+      "category": "A03",
+      "q": "An ORM protects against SQL injection:",
+      "options": [
+        "Never",
+        "Only in Java",
+        "Only when you use its parameter binding, not when you concatenate raw SQL into it",
+        "Always"
+      ],
+      "answer": 2,
+      "explanation": "Raw-query escape hatches (raw(), text(), nativeQuery) are as injectable as hand-written SQL if you build them with string joins.",
+      "cheatsheet_ref": "A03"
+    },
+    {
+      "id": "a03-7",
+      "category": "A03",
+      "q": "Which is an example of NoSQL injection?",
+      "options": [
+        "Using MongoDB",
+        "A very large collection",
+        "A missing index",
+        "Sending a JSON object such as {\"$ne\": null} where a string was expected"
+      ],
+      "answer": 3,
+      "explanation": "If the server passes request JSON straight into a query, operators like $ne or $gt change its meaning. Validate types and reject objects.",
+      "cheatsheet_ref": "A03"
+    },
+    {
+      "id": "a05-1",
+      "category": "A05",
+      "q": "Which is a security misconfiguration?",
+      "options": [
+        "Least-privilege accounts",
+        "TLS enabled",
+        "Audit logging on",
+        "Debug mode enabled in production"
+      ],
+      "answer": 3,
+      "explanation": "Debug mode often exposes stack traces, interactive consoles and configuration.",
+      "cheatsheet_ref": "A05"
+    },
+    {
+      "id": "a05-2",
+      "category": "A05",
+      "q": "An API key was committed to Git and removed in a later commit. The key is now:",
+      "options": [
+        "Encrypted",
+        "Safe",
+        "Still in the history, so it must be rotated",
+        "Hidden from forks"
+      ],
+      "answer": 2,
+      "explanation": "Deleting a file does not delete history or forks. Treat the key as leaked and rotate it.",
+      "cheatsheet_ref": "A05"
+    },
+    {
+      "id": "a05-3",
+      "category": "A05",
+      "q": "Where should secrets live?",
+      "options": [
+        "In source code",
+        "In the README",
+        "In client-side JavaScript",
+        "In the environment or a secret manager, not in the repository"
+      ],
+      "answer": 3,
+      "explanation": "Anything in code or the browser is readable by whoever gets the code or the page.",
+      "cheatsheet_ref": "A05"
+    },
+    {
+      "id": "a05-4",
+      "category": "A05",
+      "q": "Default admin credentials left unchanged are:",
+      "options": [
+        "Automatically hashed",
+        "Fine behind a firewall",
+        "The first thing attackers try",
+        "Required by the vendor"
+      ],
+      "answer": 2,
+      "explanation": "Default credentials are published. Change them at install time, or generate unique ones.",
+      "cheatsheet_ref": "A05"
+    },
+    {
+      "id": "a05-5",
+      "category": "A05",
+      "q": "Detailed error pages with stack traces should:",
+      "options": [
+        "Be required by HTTP",
+        "Be shown to help users",
+        "Not be shown; return a generic message and log the details on the server",
+        "Be cached"
+      ],
+      "answer": 2,
+      "explanation": "Stack traces reveal file paths, library versions and queries that guide an attacker.",
+      "cheatsheet_ref": "A05"
+    },
+    {
+      "id": "a05-6",
+      "category": "A05",
+      "q": "A Content-Security-Policy header helps by:",
+      "options": [
+        "Encrypting traffic",
+        "Compressing responses",
+        "Blocking bots",
+        "Restricting what the browser may load or run"
+      ],
+      "answer": 3,
+      "explanation": "CSP limits script, style and frame sources, which reduces the impact of injected content.",
+      "cheatsheet_ref": "A05"
+    },
+    {
+      "id": "a05-7",
+      "category": "A05",
+      "q": "Directory listing enabled on a web server may:",
+      "options": [
+        "Block uploads",
+        "Encrypt files",
+        "Expose files that were never meant to be public",
+        "Improve search ranking"
+      ],
+      "answer": 2,
+      "explanation": "Backups, configs and source files show up when the server lists a folder. Turn listing off.",
+      "cheatsheet_ref": "A05"
+    },
+    {
+      "id": "a06-1",
+      "category": "A06",
+      "q": "What is an SBOM?",
+      "options": [
+        "A password policy",
+        "A firewall rule",
+        "A list of the components and versions inside your software",
+        "A database backup"
+      ],
+      "answer": 2,
+      "explanation": "A software bill of materials lets you answer 'do we use library X, and which version?' quickly.",
+      "cheatsheet_ref": "A06"
+    },
+    {
+      "id": "a06-2",
+      "category": "A06",
+      "q": "What is the most reliable way to learn you use a vulnerable library?",
+      "options": [
+        "Ask your users",
+        "Wait for an incident",
+        "Scan manifests and lockfiles against vulnerability databases on a schedule",
+        "Read the news"
+      ],
+      "answer": 2,
+      "explanation": "Automated, repeated scanning (OSV, Trivy, npm audit, pip-audit, govulncheck) catches new advisories for old dependencies.",
+      "cheatsheet_ref": "A06"
+    },
+    {
+      "id": "a06-3",
+      "category": "A06",
+      "q": "A lockfile is useful because it:",
+      "options": [
+        "Prevents updates forever",
+        "Encrypts packages",
+        "Pins exact versions so builds are reproducible and auditable",
+        "Hides dependencies"
+      ],
+      "answer": 2,
+      "explanation": "What you test is what you ship, and a scanner knows exactly which versions to check.",
+      "cheatsheet_ref": "A06"
+    },
+    {
+      "id": "a06-4",
+      "category": "A06",
+      "q": "A transitive dependency is:",
+      "options": [
+        "A dependency of one of your dependencies",
+        "A deprecated package",
+        "A development-only tool",
+        "A package you wrote"
+      ],
+      "answer": 0,
+      "explanation": "Most vulnerable code arrives indirectly. Scanners must read the full resolved tree, not just your top-level list.",
+      "cheatsheet_ref": "A06"
+    },
+    {
+      "id": "a06-5",
+      "category": "A06",
+      "q": "CVE-2021-44228 ('Log4Shell') was in which library?",
+      "options": [
+        "Apache Log4j",
+        "xz",
+        "OpenSSL",
+        "Apache Struts"
+      ],
+      "answer": 0,
+      "explanation": "It affected Apache Log4j2's JNDI lookups.",
+      "cheatsheet_ref": "A06"
+    },
+    {
+      "id": "a06-6",
+      "category": "A06",
+      "q": "Typosquatting is when:",
+      "options": [
+        "DNS answers are cached",
+        "A malicious package uses a name similar to a popular one",
+        "TLS uses the wrong version",
+        "Someone types slowly"
+      ],
+      "answer": 1,
+      "explanation": "Check names carefully and prefer lockfiles, private registries or allow-lists.",
+      "cheatsheet_ref": "A06"
+    },
+    {
+      "id": "a06-7",
+      "category": "A06",
+      "q": "No fixed version of a vulnerable dependency exists. A reasonable response is:",
+      "options": [
+        "Delete the logs",
+        "Rename the package",
+        "Mitigate (disable the feature, restrict exposure) or replace it, and track the risk",
+        "Ignore it"
+      ],
+      "answer": 2,
+      "explanation": "Reduce exposure now and plan the replacement.",
+      "cheatsheet_ref": "A06"
+    },
+    {
+      "id": "a07-1",
+      "category": "A07",
+      "q": "Which control slows down password guessing?",
+      "options": [
+        "Unlimited attempts",
+        "Telling the user which field was wrong",
+        "Shorter passwords",
+        "Rate limiting with lockout or back-off"
+      ],
+      "answer": 3,
+      "explanation": "Limit attempts per account and per source, and add increasing delays.",
+      "cheatsheet_ref": "A07"
+    },
+    {
+      "id": "a07-2",
+      "category": "A07",
+      "q": "Different messages for 'user not found' and 'wrong password' allow:",
+      "options": [
+        "User enumeration: attackers learn which usernames exist",
+        "Faster logins",
+        "Nothing",
+        "Better caching"
+      ],
+      "answer": 0,
+      "explanation": "Use one generic message and equal response time for both cases.",
+      "cheatsheet_ref": "A07"
+    },
+    {
+      "id": "a07-3",
+      "category": "A07",
+      "q": "A JWT is read with jwt.decode() and no signature check. This is:",
+      "options": [
+        "Secure",
+        "Forgeable: anyone can write their own claims",
+        "Encrypted",
+        "Short-lived"
+      ],
+      "answer": 1,
+      "explanation": "decode() only parses. Always call the verify function with the expected algorithms and key.",
+      "cheatsheet_ref": "A07"
+    },
+    {
+      "id": "a07-4",
+      "category": "A07",
+      "q": "After a successful login you should:",
+      "options": [
+        "Issue a new session ID to prevent fixation",
+        "Keep the same session ID",
+        "Disable cookies",
+        "Put the session ID in the URL"
+      ],
+      "answer": 0,
+      "explanation": "A fresh session ID defeats an attacker who planted a known ID before login.",
+      "cheatsheet_ref": "A07"
+    },
+    {
+      "id": "a07-5",
+      "category": "A07",
+      "q": "Multi-factor authentication helps because:",
+      "options": [
+        "It encrypts the database",
+        "A stolen password alone is no longer enough",
+        "It speeds up logins",
+        "Passwords become unnecessary"
+      ],
+      "answer": 1,
+      "explanation": "A second factor stops most credential-stuffing and phishing-for-password attacks.",
+      "cheatsheet_ref": "A07"
+    },
+    {
+      "id": "a07-6",
+      "category": "A07",
+      "q": "Comparing secrets with == can leak information through timing. Use:",
+      "options": [
+        "Longer secrets",
+        "A constant-time comparison",
+        "MD5 first",
+        "sleep()"
+      ],
+      "answer": 1,
+      "explanation": "hmac.compare_digest, crypto.timingSafeEqual, MessageDigest.isEqual and subtle.ConstantTimeCompare compare in constant time.",
+      "cheatsheet_ref": "A07"
+    },
+    {
+      "id": "a07-7",
+      "category": "A07",
+      "q": "Which cookie attributes should a session cookie have?",
+      "options": [
+        "None",
+        "Secure, HttpOnly and SameSite",
+        "Path=/ only",
+        "Domain=*"
+      ],
+      "answer": 1,
+      "explanation": "Secure keeps it on HTTPS, HttpOnly hides it from scripts, SameSite limits cross-site sending.",
+      "cheatsheet_ref": "A07"
+    },
+    {
+      "id": "a10-1",
+      "category": "A10",
+      "q": "SSRF happens when:",
+      "options": [
+        "A browser runs a script",
+        "SQL is concatenated",
+        "A server fetches a URL chosen by the user and can be steered to internal targets",
+        "A cookie lacks Secure"
+      ],
+      "answer": 2,
+      "explanation": "The server's network position (inside the firewall, with cloud credentials) is borrowed by the attacker.",
+      "cheatsheet_ref": "A10"
+    },
+    {
+      "id": "a10-2",
+      "category": "A10",
+      "q": "Which target is the classic SSRF prize in a cloud environment?",
+      "options": [
+        "google.com",
+        "A DNS root server",
+        "The CDN",
+        "The instance metadata service at 169.254.169.254"
+      ],
+      "answer": 3,
+      "explanation": "It can hand out temporary credentials for the machine's role.",
+      "cheatsheet_ref": "A10"
+    },
+    {
+      "id": "a10-3",
+      "category": "A10",
+      "q": "What is the best defence?",
+      "options": [
+        "Use POST instead of GET",
+        "Block the word 'localhost'",
+        "Trim whitespace from the URL",
+        "An allow-list of destinations plus refusing private and link-local addresses after DNS resolution"
+      ],
+      "answer": 3,
+      "explanation": "Blocklists of names are bypassed with other spellings and encodings of the same address.",
+      "cheatsheet_ref": "A10"
+    },
+    {
+      "id": "a10-4",
+      "category": "A10",
+      "q": "Why check the IP address after DNS resolution?",
+      "options": [
+        "For logging",
+        "A public-looking hostname can resolve to an internal address, or change between checks (DNS rebinding)",
+        "HTTP requires it",
+        "It is faster"
+      ],
+      "answer": 1,
+      "explanation": "Validate the address you will actually connect to, and connect to that address.",
+      "cheatsheet_ref": "A10"
+    },
+    {
+      "id": "a10-5",
+      "category": "A10",
+      "q": "Following redirects automatically is risky because:",
+      "options": [
+        "They add cookies",
+        "HTTPS forbids them",
+        "An allowed host can redirect to an internal one",
+        "Redirects are slow"
+      ],
+      "answer": 2,
+      "explanation": "Disable redirects, or re-validate every hop.",
+      "cheatsheet_ref": "A10"
+    },
+    {
+      "id": "a10-6",
+      "category": "A10",
+      "q": "Blind SSRF means:",
+      "options": [
+        "There is no logging",
+        "The attacker cannot see the screen",
+        "Only IPv6 is affected",
+        "The response is not shown but the server still makes the request, so you detect it with an out-of-band callback"
+      ],
+      "answer": 3,
+      "explanation": "A callback listener that records an incoming request is the usual proof.",
+      "cheatsheet_ref": "A10"
+    },
+    {
+      "id": "a10-7",
+      "category": "A10",
+      "q": "Which URL schemes should a fetch-by-URL feature usually refuse?",
+      "options": [
+        "file:// and other non-HTTP schemes",
+        "http://",
+        "https://",
+        "None of them"
+      ],
+      "answer": 0,
+      "explanation": "Allow only http and https. file://, gopher:// and others reach local files or raw sockets.",
+      "cheatsheet_ref": "A10"
+    },
+    {
+      "id": "xss-1",
+      "category": "XSS",
+      "q": "Cross-site scripting lets an attacker:",
+      "options": [
+        "Crack password hashes",
+        "Run script in other users' browsers on your site",
+        "Change your DNS records",
+        "Read your database directly"
+      ],
+      "answer": 1,
+      "explanation": "The injected script runs with the page's privileges: it can read the page, act as the user and send data away.",
+      "cheatsheet_ref": "XSS"
+    },
+    {
+      "id": "xss-2",
+      "category": "XSS",
+      "q": "What is the best primary defence?",
+      "options": [
+        "Using cookies",
+        "Client-side validation only",
+        "Context-aware output encoding (or textContent)",
+        "Stripping <script> tags"
+      ],
+      "answer": 2,
+      "explanation": "Encode data for the place it lands: HTML body, attribute, JavaScript string or URL each need their own encoding.",
+      "cheatsheet_ref": "XSS"
+    },
+    {
+      "id": "xss-3",
+      "category": "XSS",
+      "q": "element.innerHTML = userInput is dangerous because:",
+      "options": [
+        "The browser parses the input as HTML",
+        "It blocks rendering",
+        "It is slow",
+        "It is deprecated"
+      ],
+      "answer": 0,
+      "explanation": "Use textContent (or a framework's escaped binding) to insert text.",
+      "cheatsheet_ref": "XSS"
+    },
+    {
+      "id": "xss-4",
+      "category": "XSS",
+      "q": "A Content-Security-Policy:",
+      "options": [
+        "Replaces output encoding",
+        "Adds defence in depth by limiting where scripts may come from",
+        "Hashes passwords",
+        "Stops SQL injection"
+      ],
+      "answer": 1,
+      "explanation": "CSP is a second layer. Encoding stays the first.",
+      "cheatsheet_ref": "XSS"
+    },
+    {
+      "id": "xss-5",
+      "category": "XSS",
+      "q": "Stored XSS differs from reflected XSS because:",
+      "options": [
+        "Reflected XSS requires a login",
+        "They are the same",
+        "Stored XSS only affects the client",
+        "Stored XSS persists on the server and hits every viewer; reflected XSS needs the victim to open a crafted link"
+      ],
+      "answer": 3,
+      "explanation": "Stored XSS in a comment or profile field is usually the more serious of the two.",
+      "cheatsheet_ref": "XSS"
+    },
+    {
+      "id": "xss-6",
+      "category": "XSS",
+      "q": "HttpOnly cookies help because:",
+      "options": [
+        "They never expire",
+        "Scripts cannot read them, so XSS cannot simply steal the session",
+        "They block CSRF",
+        "They are encrypted"
+      ],
+      "answer": 1,
+      "explanation": "XSS can still act as the user, but it cannot copy the cookie value to another machine.",
+      "cheatsheet_ref": "XSS"
+    },
+    {
+      "id": "xss-7",
+      "category": "XSS",
+      "q": "In a template engine, which is the safest default?",
+      "options": [
+        "Auto-escaped output",
+        "eval on templates",
+        "Marking user input as 'safe' or raw",
+        "String concatenation into HTML"
+      ],
+      "answer": 0,
+      "explanation": "Keep auto-escaping on. Treat every |safe, Markup(), v-html, dangerouslySetInnerHTML and template.HTML as a review item.",
+      "cheatsheet_ref": "XSS"
+    }
+  ]
+}

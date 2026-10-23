@@ -1,0 +1,393 @@
+{
+  "aegis_report": "1.0",
+  "generated_at": "2026-10-07T18:16:36.594962+00:00",
+  "scan": {
+    "id": "S-0005",
+    "mode": "runtime",
+    "status": "running",
+    "target_url": "http://127.0.0.1:5000",
+    "source": null,
+    "repo_url": null,
+    "created_at": "2026-10-07T18:16:30.929291+00:00",
+    "started_at": "2026-10-07T18:16:30.942749+00:00",
+    "finished_at": null
+  },
+  "summary": {
+    "findings": 3,
+    "open": 3,
+    "resolved": 0,
+    "by_state": {
+      "candidate": 2,
+      "confirmed": 1
+    },
+    "top_risk": "F-0013",
+    "evidence": 5
+  },
+  "risk": {
+    "formula": "Risk = Severity × Confidence × (1 + Exploitability + Exposure + Criticality + PathFactor) / 5",
+    "kmax": 5.0,
+    "confidence_by_state": {
+      "candidate": 0.4,
+      "corroborated": 0.7,
+      "confirmed": 1.0,
+      "resolved": 1.0
+    }
+  },
+  "db_snapshot_dates": {
+    "nuclei": null,
+    "osv": null,
+    "trivy": null
+  },
+  "findings": [
+    {
+      "id": "F-0013",
+      "type": "broken_access_control",
+      "owasp": "A01",
+      "title": "Broken object-level access control on GET /api/accounts/{id}",
+      "severity": 0.9,
+      "state": "confirmed",
+      "mode": "runtime",
+      "route": "GET /api/accounts/{id}",
+      "function": null,
+      "file": null,
+      "line": null,
+      "risk": 0.792,
+      "correlation_score": null,
+      "what": "The endpoint does not check that the requested object belongs to the person asking for it.",
+      "where": "GET /api/accounts/{id}",
+      "impact": "Any signed-in user can read, and possibly change, other users' data.",
+      "exploit": "A signed-in user asks for another user's object by its identifier and the server returns it.",
+      "fix": null,
+      "scores": {
+        "confidence": 1.0,
+        "exploitability": 1.0,
+        "exposure": 0.6,
+        "criticality": 1.0,
+        "path_factor": 0.8,
+        "risk": 0.792,
+        "correlation": null
+      },
+      "claims": [
+        {
+          "field": "what",
+          "text": "The endpoint does not check that the requested object belongs to the person asking for it.",
+          "evidence_ids": [
+            "E-0022"
+          ]
+        },
+        {
+          "field": "impact",
+          "text": "Any signed-in user can read, and possibly change, other users' data.",
+          "evidence_ids": [
+            "E-0022"
+          ]
+        },
+        {
+          "field": "exploit",
+          "text": "A signed-in user asks for another user's object by its identifier and the server returns it.",
+          "evidence_ids": [
+            "E-0022"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E-0022"
+      ],
+      "sources": [
+        "worker1.bola"
+      ],
+      "risk_breakdown": {
+        "formula": "Risk = Severity × Confidence × (1 + Exploitability + Exposure + Criticality + PathFactor) / 5",
+        "factors": {
+          "severity": 0.9,
+          "confidence": 1.0,
+          "exploitability": 1.0,
+          "exposure": 0.6,
+          "criticality": 1.0,
+          "path_factor": 0.8
+        },
+        "expression": "0.9 × 1 × (1 + 1 + 0.6 + 1 + 0.8) / 5 = 0.792",
+        "risk": 0.792
+      },
+      "merged": [],
+      "history": [
+        {
+          "from": "candidate",
+          "to": "confirmed",
+          "actor": "worker",
+          "reason": "differential replay: the second identity received the first identity's record",
+          "evidence_ids": [
+            "E-0022"
+          ],
+          "at": "2026-10-07T18:16:31.272757+00:00"
+        }
+      ],
+      "rank": 1
+    },
+    {
+      "id": "F-0015",
+      "type": "api_conformance",
+      "owasp": "A05",
+      "title": "API conformance failure on GET /api/accounts/{id}: Undocumented HTTP status code",
+      "severity": 0.3,
+      "state": "candidate",
+      "mode": "runtime",
+      "route": "GET /api/accounts/{id}",
+      "function": null,
+      "file": null,
+      "line": null,
+      "risk": 0.089,
+      "correlation_score": null,
+      "what": "The API behaves differently from its own documented contract.",
+      "where": "GET /api/accounts/{id}",
+      "impact": "Clients and security controls that trust the documentation can be misled or bypassed.",
+      "exploit": "A request outside the documented behaviour gets a response the documentation does not describe.",
+      "fix": null,
+      "scores": {
+        "confidence": 0.4,
+        "exploitability": 0.3,
+        "exposure": 0.6,
+        "criticality": 1.0,
+        "path_factor": 0.8,
+        "risk": 0.089,
+        "correlation": null
+      },
+      "claims": [
+        {
+          "field": "what",
+          "text": "The API behaves differently from its own documented contract.",
+          "evidence_ids": [
+            "E-0025"
+          ]
+        },
+        {
+          "field": "impact",
+          "text": "Clients and security controls that trust the documentation can be misled or bypassed.",
+          "evidence_ids": [
+            "E-0025"
+          ]
+        },
+        {
+          "field": "exploit",
+          "text": "A request outside the documented behaviour gets a response the documentation does not describe.",
+          "evidence_ids": [
+            "E-0025"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E-0025"
+      ],
+      "sources": [
+        "worker1.schemathesis"
+      ],
+      "risk_breakdown": {
+        "formula": "Risk = Severity × Confidence × (1 + Exploitability + Exposure + Criticality + PathFactor) / 5",
+        "factors": {
+          "severity": 0.3,
+          "confidence": 0.4,
+          "exploitability": 0.3,
+          "exposure": 0.6,
+          "criticality": 1.0,
+          "path_factor": 0.8
+        },
+        "expression": "0.3 × 0.4 × (1 + 0.3 + 0.6 + 1 + 0.8) / 5 = 0.089",
+        "risk": 0.089
+      },
+      "merged": [],
+      "history": [],
+      "rank": 2
+    },
+    {
+      "id": "F-0014",
+      "type": "api_conformance",
+      "owasp": "A05",
+      "title": "API conformance failure on GET /api/fetch: Server error",
+      "severity": 0.3,
+      "state": "candidate",
+      "mode": "runtime",
+      "route": "GET /api/fetch",
+      "function": null,
+      "file": null,
+      "line": null,
+      "risk": 0.053,
+      "correlation_score": null,
+      "what": "The API behaves differently from its own documented contract.",
+      "where": "GET /api/fetch",
+      "impact": "Clients and security controls that trust the documentation can be misled or bypassed.",
+      "exploit": "A request outside the documented behaviour gets a response the documentation does not describe.",
+      "fix": null,
+      "scores": {
+        "confidence": 0.4,
+        "exploitability": 0.3,
+        "exposure": 0.6,
+        "criticality": 0.3,
+        "path_factor": 0.0,
+        "risk": 0.053,
+        "correlation": null
+      },
+      "claims": [
+        {
+          "field": "what",
+          "text": "The API behaves differently from its own documented contract.",
+          "evidence_ids": [
+            "E-0024"
+          ]
+        },
+        {
+          "field": "impact",
+          "text": "Clients and security controls that trust the documentation can be misled or bypassed.",
+          "evidence_ids": [
+            "E-0024"
+          ]
+        },
+        {
+          "field": "exploit",
+          "text": "A request outside the documented behaviour gets a response the documentation does not describe.",
+          "evidence_ids": [
+            "E-0024"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E-0024"
+      ],
+      "sources": [
+        "worker1.schemathesis"
+      ],
+      "risk_breakdown": {
+        "formula": "Risk = Severity × Confidence × (1 + Exploitability + Exposure + Criticality + PathFactor) / 5",
+        "factors": {
+          "severity": 0.3,
+          "confidence": 0.4,
+          "exploitability": 0.3,
+          "exposure": 0.6,
+          "criticality": 0.3,
+          "path_factor": 0.0
+        },
+        "expression": "0.3 × 0.4 × (1 + 0.3 + 0.6 + 0.3 + 0) / 5 = 0.053",
+        "risk": 0.053
+      },
+      "merged": [],
+      "history": [],
+      "rank": 3
+    }
+  ],
+  "attack_paths": [],
+  "evidence": [
+    {
+      "id": "E-0021",
+      "finding_id": null,
+      "scan_id": "S-0005",
+      "kind": "http_exchange",
+      "tool": "httpx",
+      "tool_version": "",
+      "db_date": null,
+      "payload": {
+        "method": "GET",
+        "route": "/openapi.json",
+        "status": 200,
+        "routes_found": 6,
+        "routes": [
+          "GET /api/accounts",
+          "GET /api/accounts/{id}",
+          "GET /api/fetch",
+          "GET /api/users/search",
+          "GET /health",
+          "POST /login"
+        ]
+      },
+      "created_at": "2026-10-07T18:16:31.100765+00:00"
+    },
+    {
+      "id": "E-0022",
+      "finding_id": "F-0013",
+      "scan_id": "S-0005",
+      "kind": "http_exchange",
+      "tool": "bola",
+      "tool_version": "0.1.0",
+      "db_date": null,
+      "payload": {
+        "method": "GET",
+        "route": "/api/accounts/1",
+        "route_template": "GET /api/accounts/{id}",
+        "object_id": 1,
+        "identity": "B",
+        "auth_context": "authenticated",
+        "status": 200,
+        "timing_ms": 14,
+        "contains_owner_fields": true,
+        "baseline": {
+          "identity": "A",
+          "status": 200
+        },
+        "request": "GET /api/accounts/1 (as identity B)",
+        "response": "{\"id\": 1, \"owner_id\": 1, \"owner\": \"alice\", \"account_number\": \"ACC-1001\", \"balance\": 1200.5}"
+      },
+      "created_at": "2026-10-07T18:16:31.242081+00:00"
+    },
+    {
+      "id": "E-0023",
+      "finding_id": null,
+      "scan_id": "S-0005",
+      "kind": "tool_error",
+      "tool": "runtime.check_ssrf",
+      "tool_version": "",
+      "db_date": null,
+      "payload": {
+        "reason": "RuntimeStageError: callback listener unreachable (ConnectError)"
+      },
+      "created_at": "2026-10-07T18:16:34.029104+00:00"
+    },
+    {
+      "id": "E-0024",
+      "finding_id": "F-0014",
+      "scan_id": "S-0005",
+      "kind": "http_exchange",
+      "tool": "schemathesis",
+      "tool_version": "schemathesis-4",
+      "db_date": null,
+      "payload": {
+        "method": "GET",
+        "route": "/api/fetch",
+        "route_template": "GET /api/fetch",
+        "status": 502,
+        "auth_context": "authenticated",
+        "checks": [
+          "Server error",
+          "Undocumented HTTP status code"
+        ],
+        "request": "GET /api/fetch"
+      },
+      "created_at": "2026-10-07T18:16:35.838891+00:00"
+    },
+    {
+      "id": "E-0025",
+      "finding_id": "F-0015",
+      "scan_id": "S-0005",
+      "kind": "http_exchange",
+      "tool": "schemathesis",
+      "tool_version": "schemathesis-4",
+      "db_date": null,
+      "payload": {
+        "method": "GET",
+        "route": "/api/accounts/{id}",
+        "route_template": "GET /api/accounts/{id}",
+        "status": 404,
+        "auth_context": "authenticated",
+        "checks": [
+          "Undocumented HTTP status code"
+        ],
+        "request": "GET /api/accounts/{id}"
+      },
+      "created_at": "2026-10-07T18:16:35.888405+00:00"
+    }
+  ],
+  "audit": {
+    "tool_calls": 1,
+    "blocked": 0,
+    "by_tool": {
+      "schemathesis": 1
+    }
+  }
+}

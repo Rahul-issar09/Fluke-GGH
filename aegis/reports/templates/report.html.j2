@@ -60,6 +60,11 @@ footer { margin-top: 48px; color: var(--muted); font-size: 13px; }
     {% if scan.repo_url %} · repo <code>{{ scan.repo_url }}</code>{% if scan.repo_commit %} @ <code>{{ scan.repo_commit[:12] }}</code>{% endif %}{% elif scan.source %} · source <code>{{ scan.source }}</code>{% endif %}
     {% if scan.repo_url %} · repo <code>{{ scan.repo_url }}</code>{% endif %}
     <br>Generated {{ report.generated_at }} · report format {{ report.aegis_report }}
+    {% set ai = report.audit.ai if report.audit is defined and report.audit.ai is defined else none %}
+    {% if ai and ai.model %}<br>Explanations and fix drafts: <code>{{ ai.model }}</code> ({{ ai.location }}, {{ ai.provider }})
+      {% if ai.status == "unavailable" %} · <b>AI unavailable</b> — explanations come from templates ({{ ai.reason }})
+      {% elif ai.status == "degraded" %} · <b>AI partly unavailable</b> — {{ ai.unavailable }} answer(s) from templates ({{ ai.reason }}){% endif %}
+    {% endif %}
   </div>
 </header>
 

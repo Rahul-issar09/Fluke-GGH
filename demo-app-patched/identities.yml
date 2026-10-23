@@ -1,0 +1,10 @@
+# Two pre-provisioned test identities for the differential access-control check.
+# These are fake demo credentials for the intentionally vulnerable demo app only.
+login:
+  url: /login            # relative to the target URL (or an absolute allowlisted URL)
+  method: POST
+  body: json             # json | form
+  fields: { username: username, password: password }
+identities:
+  A: { username: alice, password: alice-demo-pass }
+  B: { username: bob,   password: bob-demo-pass }

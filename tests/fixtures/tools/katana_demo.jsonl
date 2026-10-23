@@ -1,0 +1,7 @@
+{"request": {"method": "GET", "endpoint": "http://{HOST}"}, "response": {"status_code": 200}}
+{"request": {"method": "GET", "endpoint": "http://{HOST}/api/accounts/1", "tag": "a", "attribute": "href", "source": "http://{HOST}"}, "response": {"status_code": 200}}
+{"request": {"method": "GET", "endpoint": "http://{HOST}/static/app.js", "tag": "script", "attribute": "src", "source": "http://{HOST}"}, "response": {"status_code": 200}}
+{"request": {"method": "GET", "endpoint": "http://{HOST}/api/accounts", "tag": "a", "attribute": "href", "source": "http://{HOST}"}, "response": {"status_code": 200}}
+{"request": {"method": "GET", "endpoint": "http://{HOST}/login-form", "tag": "a", "attribute": "href", "source": "http://{HOST}"}, "response": {"status_code": 200}}
+{"request": {"method": "GET", "endpoint": "http://{HOST}/api/fetch?url=link", "tag": "js", "attribute": "regex", "source": "http://{HOST}/static/app.js"}, "response": {"status_code": 502}}
+{"request": {"method": "GET", "endpoint": "http://{HOST}/api/users/search?name=demo", "tag": "js", "attribute": "regex", "source": "http://{HOST}/static/app.js"}, "response": {"status_code": 200}}

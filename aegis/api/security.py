@@ -20,7 +20,8 @@ import json
 
 from aegis.observability import get_logger
 
-__all__ = ["BearerAuthMiddleware", "BodyLimitMiddleware", "PROTECTED_PREFIXES"]
+__all__ = ["BearerAuthMiddleware", "BodyLimitMiddleware", "LocalHostGuardMiddleware", "PROTECTED_PREFIXES",
+           "host_is_local"]
 
 log = get_logger("api.security")
 
@@ -51,6 +52,53 @@ class BearerAuthMiddleware:
             return await self.app(scope, receive, send)
         log.warning("api.auth_failed", method=scope["method"], path=scope["path"], reason="missing token" if not header else "wrong token")
         await _send_error(send, 401, "unauthorized", "a valid bearer token is required", [(b"www-authenticate", b"Bearer")])
+
+
+LOOPBACK_NAMES = frozenset({"localhost", "127.0.0.1", "::1"})
+
+
+def host_is_local(host: str | None) -> bool:
+    import ipaddress
+
+    if not host:
+        return False
+    host = host.strip("[]").lower()
+    if host in LOOPBACK_NAMES:
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
+class LocalHostGuardMiddleware:
+    """DNS-rebinding guard (LLM_PROVIDER_PHASES LP11, finding S-4).
+
+    Without an API token, a web page on any site could rebind its own domain to 127.0.0.1 and read
+    this API from the user's browser (scans, findings, evidence, reports). Such requests carry the
+    attacker's name in ``Host``. So, when no token is set, ``/api`` and ``/mcp`` answer only requests
+    addressed to this machine (``localhost``, ``127.0.0.1``, ``::1``) or to a name listed in
+    ``AEGIS_API__ALLOWED_HOSTS``. With a token, the token protects every route and this is skipped.
+    """
+
+    def __init__(self, app, token: str | None, allowed_hosts: tuple[str, ...] = ()):
+        self.app = app
+        self.active = token is None
+        self.allowed = frozenset(h.strip().lower() for h in allowed_hosts if h.strip())
+
+    async def __call__(self, scope, receive, send):
+        if not self.active or scope["type"] != "http" or not scope["path"].startswith(PROTECTED_PREFIXES):
+            return await self.app(scope, receive, send)
+        raw = dict(scope.get("headers") or []).get(b"host", b"").decode("latin-1")
+        from urllib.parse import urlsplit
+
+        host = urlsplit(f"//{raw}").hostname
+        if host_is_local(host) or (host or "").lower() in self.allowed:
+            return await self.app(scope, receive, send)
+        log.warning("api.host_refused", method=scope["method"], path=scope["path"], host=raw[:100])
+        await _send_error(send, 403, "host_not_allowed",
+                          "this AEGIS API answers only requests addressed to this machine (localhost / 127.0.0.1); "
+                          "set AEGIS_API__ALLOWED_HOSTS, or an API token, to serve it under another name")
 
 
 class BodyLimitMiddleware:

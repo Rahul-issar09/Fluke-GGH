@@ -1,0 +1,111 @@
+{
+  "AegisState": {
+    "keys": {
+      "completed_stages": "ForwardRef('Annotated[list[str], operator.add]')",
+      "errors": "ForwardRef('Annotated[list[str], operator.add]')",
+      "inputs": "ForwardRef('ScanInputs')",
+      "iterations": "ForwardRef('int')",
+      "max_iterations": "ForwardRef('int')",
+      "mode": "ForwardRef('Mode')",
+      "open_findings": "ForwardRef('list[str]')",
+      "pending_actions": "ForwardRef('list[NextStepDecision]')",
+      "plan": "ForwardRef('list[str]')",
+      "scan_id": "ForwardRef('str')"
+    },
+    "kind": "typeddict",
+    "optional": [],
+    "required": [
+      "completed_stages",
+      "errors",
+      "inputs",
+      "iterations",
+      "max_iterations",
+      "mode",
+      "open_findings",
+      "pending_actions",
+      "plan",
+      "scan_id"
+    ]
+  },
+  "FixState": {
+    "keys": {
+      "approved": "ForwardRef('bool')",
+      "commit_mode": "ForwardRef('str | None')",
+      "diff": "ForwardRef('str | None')",
+      "errors": "ForwardRef('Annotated[list[str], operator.add]')",
+      "finding_id": "ForwardRef('str')",
+      "fix_id": "ForwardRef('str')",
+      "verify_report": "ForwardRef('dict[str, Any] | None')",
+      "workspace_path": "ForwardRef('str | None')"
+    },
+    "kind": "typeddict",
+    "optional": [],
+    "required": [
+      "approved",
+      "commit_mode",
+      "diff",
+      "errors",
+      "finding_id",
+      "fix_id",
+      "verify_report",
+      "workspace_path"
+    ]
+  },
+  "ScanInputs": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "folder": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Folder"
+        },
+        "identities": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Identities"
+        },
+        "repo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repo"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        }
+      },
+      "title": "ScanInputs",
+      "type": "object"
+    }
+  }
+}

@@ -29,7 +29,7 @@ from langchain_core.runnables import RunnableConfig
 from aegis.agent import rules
 from aegis.agent.analysis import TERMINAL_STEPS, worklist
 from aegis.agent.deps import AgentDeps, get_deps
-from aegis.agent.llm import structured_call
+from aegis.agent.llm import llm_unavailable, structured_call
 from aegis.agent.prompt_guard import build_payload
 from aegis.agent.rules import FindingSummary
 from aegis.agent.schemas import NextStep, NextStepDecision, Target
@@ -100,6 +100,7 @@ async def _consult_llm(
     valid: list[NextStep],
     graph: SecurityGraph,
     audit: list[dict[str, Any]],
+    route: dict[str, Any],
 ) -> tuple[NextStepDecision | None, str, str | None]:
     """Ask the model; returns ``(decision | None, source, error)``. Rejected attempts go to *audit*."""
     rejected: list[tuple[NextStepDecision, list[str]]] = []
@@ -117,13 +118,12 @@ async def _consult_llm(
             _system_prompt(),
             _prompt_payload(deps, s, valid),
             validate,
-            llm=deps.llm,
-            settings=deps.llm_settings,
             trace=trace,
+            **route,
         )
     except Exception as exc:  # noqa: BLE001 - the model being down must never fail the scan
         log.warning("investigate.llm_unavailable", finding_id=s.finding_id, error=type(exc).__name__)
-        return None, "fallback", f"llm unavailable: {type(exc).__name__}"
+        return None, "fallback", llm_unavailable(exc)
 
     rejected_iter = iter(rejected)
     for entry in trace:
@@ -154,6 +154,7 @@ async def investigate(state: dict, config: RunnableConfig) -> dict:
 
     pending: list[NextStepDecision] = []
     closed = 0
+    route: dict[str, Any] | None = None  # how to reach the model; resolved on the first judgment call
     for finding in worklist(store, scan_id):
         summary = rules.summarize_finding(store, finding, scan_mode=scan_mode, graph=graph)
         valid = rules.valid_steps(summary, threshold)
@@ -165,7 +166,8 @@ async def investigate(state: dict, config: RunnableConfig) -> dict:
         decision = rules.decide(summary, threshold)
         audit: list[dict[str, Any]] = []
         if decision is None:  # several steps are valid: a judgment call for the model
-            decision, source, error = await _consult_llm(deps, summary, valid, graph, audit)
+            route = route or deps.llm_route(scan_id)  # the model this scan started with (read once)
+            decision, source, error = await _consult_llm(deps, summary, valid, graph, audit, route)
             if decision is None:
                 decision = rules.default(summary, threshold)
                 source = "fallback"

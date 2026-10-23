@@ -1,0 +1,843 @@
+{
+  "AgentDecision": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "finding_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finding Id"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "input_summary_json": {
+          "default": "{}",
+          "title": "Input Summary Json",
+          "type": "string"
+        },
+        "node": {
+          "default": "",
+          "title": "Node",
+          "type": "string"
+        },
+        "output_json": {
+          "default": "{}",
+          "title": "Output Json",
+          "type": "string"
+        },
+        "scan_id": {
+          "title": "Scan Id",
+          "type": "string"
+        },
+        "source": {
+          "default": "rule",
+          "title": "Source",
+          "type": "string"
+        },
+        "valid": {
+          "default": true,
+          "title": "Valid",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "scan_id"
+      ],
+      "title": "AgentDecision",
+      "type": "object"
+    }
+  },
+  "Claim": {
+    "kind": "model",
+    "schema": {
+      "description": "Explanation sentence (DB table). Distinct from the agent-schema ``Claim``\npydantic model used for LLM output (conflict C27: same name, different\nmodule and purpose).",
+      "properties": {
+        "evidence_ids_json": {
+          "default": "[]",
+          "title": "Evidence Ids Json",
+          "type": "string"
+        },
+        "field": {
+          "title": "Field",
+          "type": "string"
+        },
+        "finding_id": {
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "kept": {
+          "default": true,
+          "title": "Kept",
+          "type": "boolean"
+        },
+        "text": {
+          "default": "",
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "finding_id",
+        "field"
+      ],
+      "title": "Claim",
+      "type": "object"
+    }
+  },
+  "Counter": {
+    "kind": "model",
+    "schema": {
+      "description": "Monotonic per-prefix counter for human-readable IDs (S/F/E/X/D).",
+      "properties": {
+        "prefix": {
+          "title": "Prefix",
+          "type": "string"
+        },
+        "value": {
+          "default": 0,
+          "title": "Value",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "prefix"
+      ],
+      "title": "Counter",
+      "type": "object"
+    }
+  },
+  "Evidence": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "db_date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Db Date"
+        },
+        "finding_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finding Id"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "payload_json": {
+          "default": "{}",
+          "title": "Payload Json",
+          "type": "string"
+        },
+        "scan_id": {
+          "title": "Scan Id",
+          "type": "string"
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        },
+        "tool_version": {
+          "default": "",
+          "title": "Tool Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "scan_id",
+        "kind",
+        "tool"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    }
+  },
+  "EvidenceKind": {
+    "kind": "enum",
+    "members": {
+      "code_location": "code_location",
+      "crypto_asset": "crypto_asset",
+      "dataflow_path": "dataflow_path",
+      "dependency": "dependency",
+      "http_exchange": "http_exchange",
+      "oob_hit": "oob_hit",
+      "retest": "retest",
+      "secret": "secret",
+      "tls_scan": "tls_scan",
+      "tool_error": "tool_error"
+    }
+  },
+  "Finding": {
+    "kind": "model",
+    "schema": {
+      "$defs": {
+        "FindingState": {
+          "enum": [
+            "candidate",
+            "corroborated",
+            "confirmed",
+            "resolved"
+          ],
+          "title": "FindingState",
+          "type": "string"
+        },
+        "Mode": {
+          "enum": [
+            "runtime",
+            "code",
+            "correlated"
+          ],
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "properties": {
+        "correlation_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Score"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "criticality": {
+          "default": 0.0,
+          "title": "Criticality",
+          "type": "number"
+        },
+        "exploit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Exploit"
+        },
+        "exploitability": {
+          "default": 0.0,
+          "title": "Exploitability",
+          "type": "number"
+        },
+        "exposure": {
+          "default": 0.0,
+          "title": "Exposure",
+          "type": "number"
+        },
+        "file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "File"
+        },
+        "fingerprint": {
+          "default": "",
+          "title": "Fingerprint",
+          "type": "string"
+        },
+        "fix_diff": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fix Diff"
+        },
+        "function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Function"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "impact": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Impact"
+        },
+        "line": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Mode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "owasp": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owasp"
+        },
+        "path_factor": {
+          "default": 0.0,
+          "title": "Path Factor",
+          "type": "number"
+        },
+        "risk": {
+          "default": 0.0,
+          "title": "Risk",
+          "type": "number"
+        },
+        "route": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Route"
+        },
+        "scan_id": {
+          "title": "Scan Id",
+          "type": "string"
+        },
+        "severity": {
+          "default": 0.0,
+          "title": "Severity",
+          "type": "number"
+        },
+        "sources": {
+          "default": "[]",
+          "title": "Sources",
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/FindingState",
+          "default": "candidate"
+        },
+        "title": {
+          "default": "",
+          "title": "Title",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        },
+        "what": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "What"
+        }
+      },
+      "required": [
+        "id",
+        "scan_id",
+        "type"
+      ],
+      "title": "Finding",
+      "type": "object"
+    }
+  },
+  "FindingState": {
+    "kind": "enum",
+    "members": {
+      "candidate": "candidate",
+      "confirmed": "confirmed",
+      "corroborated": "corroborated",
+      "resolved": "resolved"
+    }
+  },
+  "FixAttempt": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "commit_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Commit Mode"
+        },
+        "diff": {
+          "default": "",
+          "title": "Diff",
+          "type": "string"
+        },
+        "finding_id": {
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "status": {
+          "default": "drafted",
+          "title": "Status",
+          "type": "string"
+        },
+        "verify_report_json": {
+          "default": "{}",
+          "title": "Verify Report Json",
+          "type": "string"
+        },
+        "workspace_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Workspace Path"
+        }
+      },
+      "required": [
+        "id",
+        "finding_id"
+      ],
+      "title": "FixAttempt",
+      "type": "object"
+    }
+  },
+  "Mode": {
+    "kind": "enum",
+    "members": {
+      "code": "code",
+      "correlated": "correlated",
+      "runtime": "runtime"
+    }
+  },
+  "Scan": {
+    "kind": "model",
+    "schema": {
+      "$defs": {
+        "Mode": {
+          "enum": [
+            "runtime",
+            "code",
+            "correlated"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "ScanStatus": {
+          "enum": [
+            "queued",
+            "running",
+            "awaiting_approval",
+            "completed",
+            "failed",
+            "cancelled"
+          ],
+          "title": "ScanStatus",
+          "type": "string"
+        }
+      },
+      "properties": {
+        "config_json": {
+          "default": "{}",
+          "title": "Config Json",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "db_snapshot_dates": {
+          "default": "{}",
+          "title": "Db Snapshot Dates",
+          "type": "string"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finished At"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "mode": {
+          "$ref": "#/$defs/Mode"
+        },
+        "repo_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repo Url"
+        },
+        "source_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Path"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Started At"
+        },
+        "status": {
+          "$ref": "#/$defs/ScanStatus",
+          "default": "queued"
+        },
+        "target_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Url"
+        }
+      },
+      "required": [
+        "id",
+        "mode"
+      ],
+      "title": "Scan",
+      "type": "object"
+    }
+  },
+  "ScanStatus": {
+    "kind": "enum",
+    "members": {
+      "awaiting_approval": "awaiting_approval",
+      "cancelled": "cancelled",
+      "completed": "completed",
+      "failed": "failed",
+      "queued": "queued",
+      "running": "running"
+    }
+  },
+  "StateTransition": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "actor": {
+          "default": "rule",
+          "title": "Actor",
+          "type": "string"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "default": "[]",
+          "title": "Evidence Ids",
+          "type": "string"
+        },
+        "finding_id": {
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "from_state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "From State"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        },
+        "to_state": {
+          "title": "To State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "finding_id",
+        "to_state"
+      ],
+      "title": "StateTransition",
+      "type": "object"
+    }
+  },
+  "ToolCallLog": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "args_hash": {
+          "default": "",
+          "title": "Args Hash",
+          "type": "string"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "blocked_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Blocked Reason"
+        },
+        "duration_ms": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Duration Ms"
+        },
+        "exit_code": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Exit Code"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "scan_id": {
+          "title": "Scan Id",
+          "type": "string"
+        },
+        "target_host": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Host"
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        }
+      },
+      "required": [
+        "scan_id",
+        "tool"
+      ],
+      "title": "ToolCallLog",
+      "type": "object"
+    }
+  }
+}

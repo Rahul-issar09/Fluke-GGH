@@ -17,7 +17,7 @@ to its console; the CLI to stderr, so stdout stays clean for output).
 from __future__ import annotations
 
 from contextlib import AsyncExitStack, asynccontextmanager
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, AsyncIterator
 
@@ -27,10 +27,11 @@ from aegis.agent.deps import AgentDeps
 from aegis.agent.fix_graph import build_fix_graph
 from aegis.agent.graph import build_aegis_graph
 from aegis.chat.indexer import make_chat_indexer
-from aegis.config import AppSettings, ChatSettings
+from aegis.config import AppSettings, ChatSettings, resolve_chat_settings
 from aegis.evidence.db import init_db, make_engine
 from aegis.evidence.models import Scan, ScanStatus
 from aegis.evidence.store import EvidenceStore
+from aegis.llm.manager import ProviderManager
 from aegis.observability import get_logger
 from aegis.services.chat_service import ChatService
 from aegis.services.event_bus import EventBus
@@ -70,6 +71,7 @@ class Runtime:
     query_service: QueryService
     chat_service: ChatService
     chat_settings: ChatSettings
+    llm_manager: ProviderManager
 
 
 def ensure_dirs(data_dir: str | Path) -> Path:
@@ -121,9 +123,9 @@ async def check_model(settings: AppSettings) -> dict:
 
 
 def chat_settings_for(settings: AppSettings, data: Path) -> ChatSettings:
-    """The chat settings with a relative chat-index path placed under the data folder."""
-    chat = settings.chat
-    return chat if Path(chat.chroma_path).is_absolute() else replace(chat, chroma_path=str(data / "chroma"))
+    """The chat settings with a relative chat-index path placed under the data folder and the
+    embedding URL filled in (LP4: embeddings are configured apart from the LLM)."""
+    return resolve_chat_settings(settings, str(data))
 
 
 @asynccontextmanager
@@ -136,6 +138,8 @@ async def open_runtime(settings: AppSettings, *, agent_overrides: dict[str, Any]
     store = EvidenceStore(engine)
     _report_interrupted_scans(store)
     await check_model(settings)
+    # which model answers: environment → data/config/llm.json → offline default (never creates files)
+    llm_manager = agent_overrides.get("llm_manager") or ProviderManager(settings, data)
 
     try:
         async with AsyncExitStack() as stack:
@@ -145,6 +149,7 @@ async def open_runtime(settings: AppSettings, *, agent_overrides: dict[str, Any]
                 "offline_db_dir": settings.offline_db_dir,
                 "default_allowlist": tuple(settings.allowlist),
                 "llm_settings": settings.model,
+                "llm_manager": llm_manager,
                 "patched_target_url": settings.patched_target_url,
                 "callback_url": settings.callback_url,
                 "tmp_root": str(data / "clones"),
@@ -153,7 +158,7 @@ async def open_runtime(settings: AppSettings, *, agent_overrides: dict[str, Any]
             }
             chat_cfg = chat_settings_for(settings, data)
             if chat_cfg.enabled:  # RAG: index findings at finalize, answer questions
-                options["chat_indexer"] = make_chat_indexer(store, chat_cfg, settings.model.ollama_url)
+                options["chat_indexer"] = make_chat_indexer(store, chat_cfg, guard=True)
             if settings.git_hosts:  # repo scans (TNW-1): clones only from these hosts
                 options["clone_fn"] = make_clone_fn(
                     settings.git_hosts,
@@ -183,13 +188,16 @@ async def open_runtime(settings: AppSettings, *, agent_overrides: dict[str, Any]
                 fix_service=fix_service,
                 scan_service=ScanService(store, runner, graph, settings),
                 query_service=QueryService(store, data),
-                chat_service=ChatService(store, chat_cfg, ollama_url=settings.model.ollama_url, model_settings=settings.model),
+                chat_service=ChatService(store, chat_cfg, ollama_url=settings.model.ollama_url, model_settings=settings.model,
+                                         llm_manager=llm_manager),
                 chat_settings=chat_cfg,
+                llm_manager=llm_manager,
             )
             log.info(
                 "startup.ready",
                 data_dir=str(data.resolve()),
                 model=settings.model.name,
+                llm=llm_manager.snapshot.to_dict(),
                 allowlist=list(settings.allowlist),
                 git_hosts=list(settings.git_hosts),
                 auth=settings.api.auth_token is not None,

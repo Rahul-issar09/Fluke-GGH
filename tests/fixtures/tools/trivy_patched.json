@@ -1,0 +1,58 @@
+{
+ "SchemaVersion": 2,
+ "Trivy": {
+  "Version": "0.75.0"
+ },
+ "ReportID": "01a117fa-f0a4-77df-a085-49af62d13cb8",
+ "CreatedAt": "2026-10-08T01:38:04.004516+05:30",
+ "ArtifactName": "{ROOT}",
+ "ArtifactType": "filesystem",
+ "Results": [
+  {
+   "Target": "requirements.txt",
+   "Class": "lang-pkgs",
+   "Type": "pip",
+   "Packages": [
+    {
+     "Name": "fastapi",
+     "Identifier": {
+      "PURL": "pkg:pypi/fastapi@0.139.0",
+      "UID": "7176353defb8c018"
+     },
+     "Version": "0.139.0",
+     "Locations": [
+      {
+       "StartLine": 2,
+       "EndLine": 2
+      }
+     ],
+     "AnalyzedBy": "pip"
+    },
+    {
+     "Name": "requests",
+     "Identifier": {
+      "PURL": "pkg:pypi/requests@2.34.2",
+      "UID": "700e9f4adea617c0"
+     },
+     "Version": "2.34.2",
+     "Locations": [
+      {
+       "StartLine": 7,
+       "EndLine": 7
+      }
+     ],
+     "AnalyzedBy": "pip"
+    }
+   ]
+  },
+  {
+   "Target": "Dockerfile",
+   "Class": "config",
+   "Type": "dockerfile",
+   "MisconfSummary": {
+    "Successes": 27,
+    "Failures": 0
+   }
+  }
+ ]
+}

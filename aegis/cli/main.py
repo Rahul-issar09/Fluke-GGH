@@ -16,7 +16,7 @@ from typing import Optional
 
 import typer
 
-from aegis.cli.commands import chat, findings, graph, planned, report, scan_run, scans, setup, version
+from aegis.cli.commands import chat, findings, graph, llm, planned, report, scan_run, scans, setup, version
 from aegis.cli.context import build_context
 
 __all__ = ["app", "main"]
@@ -70,7 +70,7 @@ def _interactive() -> bool:
 
 
 # built commands first; every other command of the plan is registered as "arrives in phase …"
-_BUILT_MODULES = (scans, scan_run, findings, graph, report, setup, chat)
+_BUILT_MODULES = (scans, scan_run, findings, graph, report, setup, chat, llm)
 version.register(app)
 _groups = planned.register(app, built=set().union(*(m.BUILT for m in _BUILT_MODULES)))
 for _module in _BUILT_MODULES:

@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AEGIS report S-0005</title>
+<style>
+:root {
+  --bg: #f7f8fa; --panel: #ffffff; --text: #1d2330; --muted: #5f6b7a; --line: #dde2ea; --code: #f1f3f7;
+  --accent: #2f5bd3; --confirmed: #b42318; --corroborated: #b54708; --candidate: #475467; --resolved: #067647;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #11151c; --panel: #181e27; --text: #e6e9ef; --muted: #9aa4b2; --line: #2a3340; --code: #10141a;
+    --accent: #7ea2ff; --confirmed: #f97066; --corroborated: #fdb022; --candidate: #98a2b3; --resolved: #47cd89;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+header h1 { margin: 0 0 4px; font-size: 26px; }
+h2 { margin: 36px 0 12px; font-size: 20px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { margin: 0; font-size: 17px; }
+h4 { margin: 18px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin: 12px 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat b { display: block; font-size: 24px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+pre { background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-x: auto; font: 13px/1.45 ui-monospace, "Cascadia Mono", Consolas, monospace; white-space: pre; }
+code { font: 13px ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.badge { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #fff; text-transform: uppercase; letter-spacing: .03em; }
+.badge.confirmed { background: var(--confirmed); } .badge.corroborated { background: var(--corroborated); }
+.badge.candidate { background: var(--candidate); } .badge.resolved { background: var(--resolved); }
+.formula { font-size: 16px; font-weight: 600; }
+.warning { border-left: 4px solid var(--confirmed); padding: 8px 12px; background: var(--code); border-radius: 6px; }
+.claims li { margin: 4px 0; }
+.ev { scroll-margin-top: 12px; }
+.ev:target, .finding:target { outline: 2px solid var(--accent); outline-offset: 3px; }
+.paths-wrap { overflow-x: auto; }
+svg.paths text { font: 12px system-ui, sans-serif; fill: var(--text); }
+svg.paths .node { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+svg.paths .node.finding { stroke: var(--confirmed); stroke-width: 2; }
+svg.paths .edge { stroke: var(--muted); stroke-width: 1.5; }
+svg.paths .arrowhead { fill: var(--muted); }
+footer { margin-top: 48px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>AEGIS security report</h1>
+  <div class="muted">
+    Scan <code>S-0005</code> · mode <b>runtime</b> · status running
+ · target <code>http://127.0.0.1:5000</code>    <br>Generated 2026-10-07T18:16:36.594962+00:00 · report format 1.0
+  </div>
+</header>
+
+<h2 id="summary">Summary</h2>
+<div class="grid">
+  <div class="panel stat"><b>3</b>findings</div>
+  <div class="panel stat"><b>3</b>open</div>
+  <div class="panel stat"><b>0</b>resolved</div>
+  <div class="panel stat"><b>2</b><span class="badge candidate">candidate</span></div>
+  <div class="panel stat"><b>1</b><span class="badge confirmed">confirmed</span></div>
+</div>
+<p>Highest risk: <a href="#F-0013">F-0013</a>.</p>
+
+<h2 id="ranked">Findings by risk</h2>
+<table>
+  <thead><tr><th class="num">#</th><th>Finding</th><th class="num">Risk</th><th>State</th><th>Type</th><th>Where</th></tr></thead>
+  <tbody>
+  <tr>
+    <td class="num">1</td>
+    <td><a href="#F-0013">F-0013</a> Broken object-level access control on GET /api/accounts/{id}</td>
+    <td class="num">0.792</td>
+    <td><span class="badge confirmed">confirmed</span></td>
+    <td>broken_access_control <span class="muted">(A01)</span></td>
+    <td><code>GET /api/accounts/{id}</code><br></td>
+  </tr>
+  <tr>
+    <td class="num">2</td>
+    <td><a href="#F-0015">F-0015</a> API conformance failure on GET /api/accounts/{id}: Undocumented HTTP status code</td>
+    <td class="num">0.089</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>api_conformance <span class="muted">(A05)</span></td>
+    <td><code>GET /api/accounts/{id}</code><br></td>
+  </tr>
+  <tr>
+    <td class="num">3</td>
+    <td><a href="#F-0014">F-0014</a> API conformance failure on GET /api/fetch: Server error</td>
+    <td class="num">0.053</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>api_conformance <span class="muted">(A05)</span></td>
+    <td><code>GET /api/fetch</code><br></td>
+  </tr>
+  </tbody>
+</table>
+
+<h2 id="risk">How risk is computed</h2>
+<div class="panel">
+  <p class="formula">Risk = Severity × Confidence × (1 + Exploitability + Exposure + Criticality + PathFactor) / 5</p>
+  <p class="muted">K<sub>max</sub> = 5 keeps risk between 0 and 1. Confidence comes from the finding's state:
+candidate = 0.4, corroborated = 0.7, confirmed = 1, resolved = 1.
+  Every finding below lists its factor values and the arithmetic, so each score can be recomputed by hand.</p>
+</div>
+
+<h2 id="db-dates">Vulnerability database snapshot dates</h2>
+<div class="panel">
+  <table>
+    <thead><tr><th>Database</th><th>Snapshot date</th></tr></thead>
+    <tbody><tr><td>nuclei</td><td>not present</td></tr><tr><td>osv</td><td>not present</td></tr><tr><td>trivy</td><td>not present</td></tr></tbody>
+  </table>
+  <p class="muted">Results that depend on these databases are only as current as these dates.</p>
+</div>
+
+<h2 id="attack-paths">Attack paths</h2>
+<div class="panel paths-wrap"><p class="muted">No attack path: no finding is linked to an endpoint or code path.</p></div>
+
+<h2 id="details">Finding details</h2>
+<section class="panel finding" id="F-0013">
+  <h3>1. F-0013 — Broken object-level access control on GET /api/accounts/{id} <span class="badge confirmed">confirmed</span></h3>
+  <div class="muted">broken_access_control · OWASP A01 · risk 0.792 · sources: worker1.bola</div>
+
+  <h4>what</h4>
+<p>The endpoint does not check that the requested object belongs to the person asking for it.</p>
+  <h4>where</h4>
+<pre>GET /api/accounts/{id}</pre>
+  <h4>impact</h4>
+<p>Any signed-in user can read, and possibly change, other users&#39; data.</p>
+  <h4>exploit</h4>
+<p>A signed-in user asks for another user&#39;s object by its identifier and the server returns it.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The endpoint does not check that the requested object belongs to the person asking for it. —
+<a href="#E-0022">E-0022</a></li>
+    <li><b>impact</b>: Any signed-in user can read, and possibly change, other users&#39; data. —
+<a href="#E-0022">E-0022</a></li>
+    <li><b>exploit</b>: A signed-in user asks for another user&#39;s object by its identifier and the server returns it. —
+<a href="#E-0022">E-0022</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.9</td><td>1</td><td>1</td>
+      <td>0.6</td><td>1</td><td>0.8</td><td class="num">0.792</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.9 × 1 × (1 + 1 + 0.6 + 1 + 0.8) / 5 = 0.792</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0022">E-0022</a></p>
+
+  <h4>State history</h4>
+  <table>
+    <thead><tr><th>From</th><th>To</th><th>By</th><th>Why</th><th>Evidence</th></tr></thead>
+    <tbody>
+    <tr><td>candidate</td><td><span class="badge confirmed">confirmed</span></td><td>worker</td><td>differential replay: the second identity received the first identity&#39;s record</td>
+      <td><a href="#E-0022">E-0022</a></td></tr>
+    </tbody>
+  </table>
+</section>
+<section class="panel finding" id="F-0015">
+  <h3>2. F-0015 — API conformance failure on GET /api/accounts/{id}: Undocumented HTTP status code <span class="badge candidate">candidate</span></h3>
+  <div class="muted">api_conformance · OWASP A05 · risk 0.089 · sources: worker1.schemathesis</div>
+
+  <h4>what</h4>
+<p>The API behaves differently from its own documented contract.</p>
+  <h4>where</h4>
+<pre>GET /api/accounts/{id}</pre>
+  <h4>impact</h4>
+<p>Clients and security controls that trust the documentation can be misled or bypassed.</p>
+  <h4>exploit</h4>
+<p>A request outside the documented behaviour gets a response the documentation does not describe.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The API behaves differently from its own documented contract. —
+<a href="#E-0025">E-0025</a></li>
+    <li><b>impact</b>: Clients and security controls that trust the documentation can be misled or bypassed. —
+<a href="#E-0025">E-0025</a></li>
+    <li><b>exploit</b>: A request outside the documented behaviour gets a response the documentation does not describe. —
+<a href="#E-0025">E-0025</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.3</td><td>0.4</td><td>0.3</td>
+      <td>0.6</td><td>1</td><td>0.8</td><td class="num">0.089</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.3 × 0.4 × (1 + 0.3 + 0.6 + 1 + 0.8) / 5 = 0.089</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0025">E-0025</a></p>
+
+</section>
+<section class="panel finding" id="F-0014">
+  <h3>3. F-0014 — API conformance failure on GET /api/fetch: Server error <span class="badge candidate">candidate</span></h3>
+  <div class="muted">api_conformance · OWASP A05 · risk 0.053 · sources: worker1.schemathesis</div>
+
+  <h4>what</h4>
+<p>The API behaves differently from its own documented contract.</p>
+  <h4>where</h4>
+<pre>GET /api/fetch</pre>
+  <h4>impact</h4>
+<p>Clients and security controls that trust the documentation can be misled or bypassed.</p>
+  <h4>exploit</h4>
+<p>A request outside the documented behaviour gets a response the documentation does not describe.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The API behaves differently from its own documented contract. —
+<a href="#E-0024">E-0024</a></li>
+    <li><b>impact</b>: Clients and security controls that trust the documentation can be misled or bypassed. —
+<a href="#E-0024">E-0024</a></li>
+    <li><b>exploit</b>: A request outside the documented behaviour gets a response the documentation does not describe. —
+<a href="#E-0024">E-0024</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.3</td><td>0.4</td><td>0.3</td>
+      <td>0.6</td><td>0.3</td><td>0</td><td class="num">0.053</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.3 × 0.4 × (1 + 0.3 + 0.6 + 0.3 + 0) / 5 = 0.053</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0024">E-0024</a></p>
+
+</section>
+
+<h2 id="evidence">Evidence appendix</h2>
+<section class="panel ev" id="E-0021">
+  <h3>E-0021 <span class="muted">· http_exchange · httpx</span></h3>
+  <div class="muted">recorded 2026-10-07T18:16:31.100765+00:00</div>
+  <pre>{
+  &#34;method&#34;: &#34;GET&#34;,
+  &#34;route&#34;: &#34;/openapi.json&#34;,
+  &#34;routes&#34;: [
+    &#34;GET /api/accounts&#34;,
+    &#34;GET /api/accounts/{id}&#34;,
+    &#34;GET /api/fetch&#34;,
+    &#34;GET /api/users/search&#34;,
+    &#34;GET /health&#34;,
+    &#34;POST /login&#34;
+  ],
+  &#34;routes_found&#34;: 6,
+  &#34;status&#34;: 200
+}</pre>
+</section>
+<section class="panel ev" id="E-0022">
+  <h3>E-0022 <span class="muted">· http_exchange · bola 0.1.0</span></h3>
+  <div class="muted">Finding <a href="#F-0013">F-0013</a> · recorded 2026-10-07T18:16:31.242081+00:00</div>
+  <pre>{
+  &#34;auth_context&#34;: &#34;authenticated&#34;,
+  &#34;baseline&#34;: {
+    &#34;identity&#34;: &#34;A&#34;,
+    &#34;status&#34;: 200
+  },
+  &#34;contains_owner_fields&#34;: true,
+  &#34;identity&#34;: &#34;B&#34;,
+  &#34;method&#34;: &#34;GET&#34;,
+  &#34;object_id&#34;: 1,
+  &#34;request&#34;: &#34;GET /api/accounts/1 (as identity B)&#34;,
+  &#34;response&#34;: &#34;{\&#34;id\&#34;: 1, \&#34;owner_id\&#34;: 1, \&#34;owner\&#34;: \&#34;alice\&#34;, \&#34;account_number\&#34;: \&#34;ACC-1001\&#34;, \&#34;balance\&#34;: 1200.5}&#34;,
+  &#34;route&#34;: &#34;/api/accounts/1&#34;,
+  &#34;route_template&#34;: &#34;GET /api/accounts/{id}&#34;,
+  &#34;status&#34;: 200,
+  &#34;timing_ms&#34;: 14
+}</pre>
+</section>
+<section class="panel ev" id="E-0023">
+  <h3>E-0023 <span class="muted">· tool_error · runtime.check_ssrf</span></h3>
+  <div class="muted">recorded 2026-10-07T18:16:34.029104+00:00</div>
+  <pre>{
+  &#34;reason&#34;: &#34;RuntimeStageError: callback listener unreachable (ConnectError)&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0024">
+  <h3>E-0024 <span class="muted">· http_exchange · schemathesis schemathesis-4</span></h3>
+  <div class="muted">Finding <a href="#F-0014">F-0014</a> · recorded 2026-10-07T18:16:35.838891+00:00</div>
+  <pre>{
+  &#34;auth_context&#34;: &#34;authenticated&#34;,
+  &#34;checks&#34;: [
+    &#34;Server error&#34;,
+    &#34;Undocumented HTTP status code&#34;
+  ],
+  &#34;method&#34;: &#34;GET&#34;,
+  &#34;request&#34;: &#34;GET /api/fetch&#34;,
+  &#34;route&#34;: &#34;/api/fetch&#34;,
+  &#34;route_template&#34;: &#34;GET /api/fetch&#34;,
+  &#34;status&#34;: 502
+}</pre>
+</section>
+<section class="panel ev" id="E-0025">
+  <h3>E-0025 <span class="muted">· http_exchange · schemathesis schemathesis-4</span></h3>
+  <div class="muted">Finding <a href="#F-0015">F-0015</a> · recorded 2026-10-07T18:16:35.888405+00:00</div>
+  <pre>{
+  &#34;auth_context&#34;: &#34;authenticated&#34;,
+  &#34;checks&#34;: [
+    &#34;Undocumented HTTP status code&#34;
+  ],
+  &#34;method&#34;: &#34;GET&#34;,
+  &#34;request&#34;: &#34;GET /api/accounts/{id}&#34;,
+  &#34;route&#34;: &#34;/api/accounts/{id}&#34;,
+  &#34;route_template&#34;: &#34;GET /api/accounts/{id}&#34;,
+  &#34;status&#34;: 404
+}</pre>
+</section>
+
+<footer>
+  Tool calls: 1 (0 blocked by the safety layer) · schemathesis 1.
+  Findings and states come from evidence and deterministic rules; explanation text is shown only where it passed validation against that evidence.
+  This file is self-contained and works offline.
+</footer>
+</main>
+</body>
+</html>

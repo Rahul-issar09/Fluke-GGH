@@ -1,0 +1,145 @@
+/* Landing page ("paper forensic" theme): one full-screen 3D film with short captions. Every class is prefixed
+   "ln-" and every rule is scoped under .ln-root, so nothing here reaches the console, and the console's element
+   rules (button, section, nav, h2, ol…) are reset inside it. Breakpoints at 1000 / 640px. */
+
+.ln-root {
+  --bg: #eee9dd;
+  --fg: #15130f;
+  --mut: #6b6557;
+  --line: #cdc6b5;
+  --line2: #b0a892;
+  --panel: #f7f3ea;
+  --acc: #b3261e;
+  --ok: #1f6f5c;
+  --gx: clamp(20px, 5vw, 72px);
+  position: fixed;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.ln-root *,
+.ln-root *::before,
+.ln-root *::after { box-sizing: border-box; }
+.ln-root a,
+.ln-root button { color: inherit; font: inherit; text-decoration: none; }
+.ln-root button { display: inline-block; background: none; border: 0; border-radius: 0; padding: 0; cursor: pointer; }
+/* the console styles these elements globally; inside the landing they start from nothing */
+.ln-root section,
+.ln-root nav,
+.ln-root header,
+.ln-root footer { background: none; border: 0; border-radius: 0; padding-block: 0; padding-inline: 0; margin: 0; gap: 0; display: block; }
+.ln-root h1,
+.ln-root h2,
+.ln-root p,
+.ln-root ol { margin: 0; padding: 0; font-size: inherit; text-transform: none; letter-spacing: normal; color: inherit; font-weight: 400; }
+.ln-root ol { list-style: none; }
+.ln-root em,
+.ln-root i,
+.ln-root s,
+.ln-root b { font-style: normal; text-decoration: none; font-weight: 400; }
+.ln-root :focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+.ln-root .ln-disp { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; letter-spacing: -0.01em; }
+.ln-root .ln-disp em { font-style: italic; color: var(--acc); }
+.ln-root .ln-lbl { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mut); }
+
+/* nav floats over the film */
+.ln-root .ln-nav { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 28px; height: 72px; padding-inline: var(--gx); background: linear-gradient(var(--bg) 70%, rgba(238, 233, 221, 0)); }
+.ln-root .ln-logo { display: flex; align-items: center; gap: 12px; font-family: "Instrument Serif", Georgia, serif; font-size: 28px; letter-spacing: 0.04em; }
+.ln-root .ln-mark { width: 26px; height: 26px; background: var(--acc); display: flex; align-items: center; justify-content: center; }
+.ln-root .ln-links { display: flex; gap: 26px; margin-left: 24px; flex: 1; font-family: Consolas, monospace; font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--mut); }
+.ln-root .ln-links button:hover { color: var(--fg); }
+.ln-root .ln-pill { display: flex; align-items: center; gap: 8px; font-family: Consolas, monospace; font-size: 12px; color: var(--mut); white-space: nowrap; }
+.ln-root .ln-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.ln-root .ln-btn { padding: 12px 22px; font-weight: 600; font-size: 15px; border: 1px solid var(--fg); white-space: nowrap; transition: background 0.15s, color 0.15s; }
+.ln-root .ln-btn-p { background: var(--acc); border-color: var(--acc); color: var(--panel); }
+.ln-root .ln-btn-p:hover { background: #8f1d17; border-color: #8f1d17; }
+.ln-root .ln-btn-g { background: transparent; color: var(--fg); }
+.ln-root .ln-btn-g:hover { background: var(--fg); color: var(--bg); }
+
+/* the film: a tall track with one sticky full-screen stage; Landing.jsx turns scroll position into progress */
+.ln-root .ln-track { height: 760vh; margin-top: -72px; }
+.ln-root .ln-pin { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+.ln-root .ln-canvas { position: absolute; inset: 0; }
+.ln-root .ln-3d { width: 100%; height: 100%; }
+.ln-root .ln-3d canvas { display: block; }
+.ln-root .ln-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; align-items: center; padding: 72px var(--gx) 24px; }
+.ln-root .ln-cap { max-width: min(520px, 42vw); pointer-events: auto; animation: ln-in 0.55s ease both; }
+.ln-root .ln-cap-hero { max-width: min(640px, 50vw); }
+@keyframes ln-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.ln-root .ln-hero-text h1 { font-size: clamp(60px, 8vw, 118px); line-height: 0.98; margin: 20px 0 22px; }
+.ln-root .ln-sub { font-size: 19px; line-height: 1.55; color: var(--mut); max-width: 460px; }
+.ln-root .ln-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+.ln-root .ln-term { margin-top: 26px; background: var(--fg); color: var(--bg); font-family: Consolas, monospace; font-size: 13.5px; padding: 11px 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.ln-root .ln-term span { color: #ff6a5e; font-weight: 700; margin-right: 6px; }
+
+.ln-root .ln-capbox .ln-step { display: block; font-size: 22px; color: var(--acc); font-style: italic; margin-bottom: 8px; }
+.ln-root .ln-capbox h2 { font-family: "Instrument Serif", Georgia, serif; font-size: clamp(40px, 4.8vw, 68px); line-height: 1.02; }
+.ln-root .ln-capbox p { margin-top: 16px; font-size: 18px; line-height: 1.55; color: var(--mut); max-width: 430px; }
+.ln-root .ln-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+.ln-root .ln-chips i { font-family: Consolas, monospace; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 12px; border: 1px solid var(--line2); background: var(--panel); }
+
+/* chapter rail */
+.ln-root .ln-rail { position: absolute; right: var(--gx); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 4px; z-index: 5; align-items: flex-end; }
+.ln-root .ln-rail button { display: flex; align-items: center; gap: 10px; padding: 5px 0; color: var(--mut); }
+.ln-root .ln-rail span { font-family: Consolas, monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0; transform: translateX(6px); transition: opacity 0.2s, transform 0.2s; }
+.ln-root .ln-rail button:hover span,
+.ln-root .ln-rail button.ln-on span { opacity: 1; transform: none; }
+.ln-root .ln-rail i { width: 9px; height: 9px; border: 1.5px solid var(--fg); border-radius: 50%; transition: background 0.2s, transform 0.2s; }
+.ln-root .ln-rail button.ln-on { color: var(--fg); }
+.ln-root .ln-rail button.ln-on i { background: var(--acc); border-color: var(--acc); transform: scale(1.35); }
+.ln-root .ln-scroll { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); font-family: Consolas, monospace; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mut); animation: ln-bob 1.8s ease-in-out infinite; }
+.ln-root .ln-scroll::after { content: ""; display: block; width: 1px; height: 28px; background: var(--fg); margin: 8px auto 0; }
+@keyframes ln-bob { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, 6px); } }
+
+/* ledger: shown while the scene loads, and when WebGL is missing */
+.ln-root .ln-ledger { background: var(--panel); border: 1px solid var(--line2); font-family: Consolas, monospace; font-size: 13px; width: min(560px, 90%); position: absolute; right: var(--gx); top: 50%; transform: translateY(-50%); }
+.ln-root .ln-lh { display: flex; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.ln-root .ln-lh i { color: var(--mut); }
+.ln-root .ln-ladder { display: flex; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.ln-root .ln-ladder b { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 10px; border: 1px solid var(--line2); color: var(--mut); margin-left: -1px; }
+.ln-root .ln-ladder b.ln-on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.ln-root .ln-code { padding: 8px 0; }
+.ln-root .ln-code p { display: flex; line-height: 1.9; padding: 0 16px; white-space: nowrap; overflow: hidden; color: var(--fg); font-size: 13px; }
+.ln-root .ln-code s { width: 32px; color: var(--mut); flex: none; }
+.ln-root .ln-rm { background: rgba(179, 38, 30, 0.14); color: var(--acc); }
+.ln-root .ln-ad { background: rgba(31, 111, 92, 0.15); color: var(--ok); }
+.ln-root .ln-lf { padding: 12px 16px; border-top: 1px solid var(--line); color: var(--ok); }
+
+.ln-root .ln-foot { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-inline: var(--gx); padding-block: 22px 28px; border-top: 1px solid var(--line); font-family: Consolas, monospace; font-size: 12.5px; color: var(--mut); }
+
+/* reduced motion: no film, just the hero scene and the captions as a list */
+.ln-root .ln-track.ln-still { height: auto; }
+.ln-root .ln-track.ln-still .ln-pin { position: relative; height: 100vh; }
+.ln-root .ln-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 48px 40px; padding: 60px var(--gx); }
+
+@media (max-width: 1000px) {
+  .ln-root .ln-links,
+  .ln-root .ln-pill { display: none; }
+  .ln-root .ln-nav { justify-content: space-between; }
+  .ln-root .ln-overlay { align-items: flex-end; padding: 72px var(--gx) 56px; background: linear-gradient(rgba(238, 233, 221, 0) 40%, rgba(238, 233, 221, 0.94) 72%); }
+  .ln-root .ln-cap,
+  .ln-root .ln-cap-hero { max-width: 100%; }
+  .ln-root .ln-hero-text h1 { font-size: clamp(48px, 13vw, 84px); margin: 12px 0 14px; }
+  .ln-root .ln-sub { font-size: 16px; }
+  .ln-root .ln-term { display: none; }
+  .ln-root .ln-capbox h2 { font-size: clamp(34px, 9vw, 52px); }
+  .ln-root .ln-capbox p { font-size: 16px; margin-top: 10px; }
+  .ln-root .ln-rail { display: none; }
+  .ln-root .ln-list { grid-template-columns: 1fr; }
+  .ln-root .ln-ledger { top: 36%; right: auto; left: 50%; transform: translate(-50%, -50%); }
+}
+@media (max-width: 640px) {
+  .ln-root .ln-track { height: 700vh; }
+  .ln-root .ln-nav-btn { padding: 10px 16px; font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ln-root .ln-cap { animation: none; }
+  .ln-root .ln-scroll { animation: none; }
+}

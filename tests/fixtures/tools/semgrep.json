@@ -1,0 +1,45 @@
+{
+  "results": [
+    {
+      "check_id": "fastapi-sqli",
+      "path": "app/routes/users.py",
+      "start": {"line": 42},
+      "end": {"line": 42},
+      "extra": {
+        "message": "User input flows into a SQL query built by string concatenation.",
+        "severity": "ERROR",
+        "metadata": {"owasp": "A03", "cwe": "CWE-89"},
+        "dataflow_trace": {
+          "taint_source": ["request.args", 40],
+          "taint_sink": ["cursor.execute", 42]
+        }
+      }
+    },
+    {
+      "check_id": "fastapi-missing-owner-check",
+      "path": "app/routes/accounts.py",
+      "start": {"line": 27},
+      "end": {"line": 27},
+      "extra": {
+        "message": "Object is read by id without an owner check.",
+        "severity": "ERROR",
+        "metadata": {"owasp": "A01", "cwe": "CWE-639"},
+        "dataflow_trace": {
+          "taint_source": ["path.id", 22],
+          "taint_sink": ["db.execute", 27]
+        }
+      }
+    },
+    {
+      "check_id": "weak-hash",
+      "path": "app/auth.py",
+      "start": {"line": 14},
+      "end": {"line": 14},
+      "extra": {
+        "message": "MD5 used for password hashing.",
+        "severity": "WARNING",
+        "metadata": {"owasp": "A02", "cwe": "CWE-327"}
+      }
+    }
+  ]
+}

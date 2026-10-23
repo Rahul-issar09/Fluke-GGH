@@ -22,13 +22,27 @@ log = get_logger("chat.service")
 
 class ChatService:
     def __init__(self, store, chat_settings, *, ollama_url: str = "", model_settings=None,
-                 embedder=None, chroma=None, sparse=None, llm=None):
+                 embedder=None, chroma=None, sparse=None, llm=None, llm_manager=None):
         self._store = store
         self._settings = chat_settings
         self._ollama_url = ollama_url
         self._model_settings = model_settings
         self._llm = llm
+        self._llm_manager = llm_manager  # which model answers (LLM_PROVIDER_PHASES LP3); None → legacy path
         self._cache = {"embedder": embedder, "chroma": chroma, "sparse": sparse}
+
+    @staticmethod
+    def _compatible_embedder(chroma, embedder):
+        """*embedder*, or one that refuses if the index was built by another embedding model (LP4):
+        questions then use keyword search instead of comparing vectors from two models."""
+        from aegis.chat import index_manifest
+        from aegis.chat.embedder import UnavailableEmbedder
+
+        compat = index_manifest.check(chroma, embedder)
+        if compat.compatible:
+            return embedder
+        log.warning("chat.index_mismatch", reason=compat.reason)
+        return UnavailableEmbedder(getattr(embedder, "model", "?"), getattr(embedder, "dim", None), compat.reason)
 
     def _retrieval(self):
         """(chroma, embedder, sparse) — built once; ``(None, …)`` if the vector store can't open."""
@@ -43,7 +57,11 @@ class ChatService:
         if self._cache["embedder"] is None:
             from aegis.chat.embedder import make_embedder
 
-            self._cache["embedder"] = make_embedder(self._settings, self._ollama_url)
+            self._cache["embedder"] = make_embedder(self._settings, self._ollama_url, guard=True)
+            self._cache["checked"] = False
+        if not self._cache.get("checked"):
+            self._cache["embedder"] = self._compatible_embedder(self._cache["chroma"], self._cache["embedder"])
+            self._cache["checked"] = True
         if self._cache["sparse"] is None:
             from aegis.chat.sparse import SparseRetriever
 
@@ -69,9 +87,12 @@ class ChatService:
 
         from aegis.chat.retriever import answer_explain
 
+        if self._llm_manager is not None:
+            self._llm_manager.reload_if_changed()  # another process (the API, the CLI) may have switched it
         ans = await answer_explain(
             self._store, chroma, embedder, sparse, scan_id, question,
             filt=decision.filter, settings=self._settings, llm=self._llm, model_settings=self._model_settings,
+            manager=self._llm_manager,
         )
         log.info("chat.ask", scan_id=scan_id, path="explain", findings=len(ans.finding_ids), evidence=len(ans.evidence_ids))
         return ans.to_askout()

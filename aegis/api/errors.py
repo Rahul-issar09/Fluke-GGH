@@ -27,6 +27,7 @@ from aegis.fix.verifier import VerifyError
 from aegis.observability import get_logger
 from aegis.router import RequestInvalid
 from aegis.safety.egress import EgressBlocked
+from aegis.secret_scrub import scrub
 from aegis.services.fix_service import FixServiceError
 from aegis.services.query_service import NotAvailable, QueryNotFound
 from aegis.services.scan_service import ScanConflict, ScanNotFound
@@ -49,6 +50,7 @@ class Conflict(Exception):
 
 
 def error_response(status: int, error: str, detail: str | None = None, ids: list[str] | None = None, headers: dict | None = None) -> JSONResponse:
+    detail = scrub(detail) if detail is not None else None   # never echo a secret (LLM_PROVIDER_PHASES §9.3)
     body = ErrorOut(error=error, detail=detail, ids=ids).model_dump(exclude_none=True)
     return JSONResponse(status_code=status, content=body, headers=headers)
 
@@ -93,6 +95,36 @@ def install_error_handlers(app: FastAPI) -> None:
     async def _fix(request: Request, exc: FixServiceError):
         names = {404: "not found", 409: "conflict", 422: "invalid request"}
         return _client_error(request, exc.code, names.get(exc.code, "error"), str(exc))
+
+    # --- model configuration (LLM_PROVIDER_PHASES §8.3) --------------------------------------
+    from aegis.api.routers.llm import _Forbidden
+    from aegis.llm.base import LlmError
+    from aegis.llm.policy import ConfigRefused
+
+    @app.exception_handler(ConfigRefused)
+    async def _config_refused(request: Request, exc: ConfigRefused):
+        status = {"cloud_disabled": 403, "validation_expired": 410, "provider_unavailable": 501,
+                  "invalid_request": 422}.get(exc.code, 409)
+        return _client_error(request, status, exc.code, str(exc))
+
+    @app.exception_handler(_Forbidden)
+    async def _config_forbidden(request: Request, exc: _Forbidden):
+        return _client_error(request, 403, "config_api_forbidden",
+                             "the model configuration can only be changed from this machine, or with the API token")
+
+    @app.exception_handler(LlmError)
+    async def _llm_error(request: Request, exc: LlmError):
+        # 422 for a key/model the provider refused — not 401/403, which mean AEGIS's own access control
+        status, error = {
+            "rate_limited": (429, "provider_rate_limited"), "quota_exhausted": (429, "provider_quota_exhausted"),
+            "unavailable": (503, "provider_unreachable"), "timeout": (503, "provider_unreachable"),
+            "config_error": (409, "config_error"), "revoked": (409, "revoked"),
+            "provider_unavailable": (501, "provider_unavailable"), "unknown": (502, "provider_error"),
+        }.get(exc.kind, (422, exc.kind))
+        response = _client_error(request, status, error, str(exc))
+        if status == 429 and exc.retry_after:
+            response.headers["Retry-After"] = str(int(exc.retry_after))
+        return response
 
     @app.exception_handler(StarletteHTTPException)
     async def _http(request: Request, exc: StarletteHTTPException):

@@ -97,6 +97,7 @@ async def answer_explain(
     settings=None,
     llm=None,
     model_settings=None,
+    manager=None,
 ) -> Answer:
     from aegis.config import ChatSettings
 
@@ -162,8 +163,10 @@ async def answer_explain(
 
     trace: list = []
     try:
+        # a question is answered by the model active *now* (not the scan's pinned one)
         ans, source = await structured_call(
             Answer, _system_prompt(), ctx.payload, validate, llm=llm, settings=model_settings, trace=trace,
+            manager=manager, scope="chat" if manager is not None else None,
         )
     except Exception as exc:  # noqa: BLE001 - the model being down must never fail a question
         log.warning("explain.llm_unavailable", scan_id=scan_id, error=type(exc).__name__)

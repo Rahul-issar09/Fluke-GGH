@@ -1,0 +1,265 @@
+{
+  "items": [
+    {
+      "id": "sqli-py",
+      "title": "SQL injection in a login lookup",
+      "owasp": "A03",
+      "lang": "python",
+      "difficulty": "easy",
+      "task": "get_user builds its SQL by joining the username into the string. Change it so the username is passed to the database as a parameter.",
+      "code": "import sqlite3\n\ndef get_user(conn, username):\n    query = \"SELECT id, email FROM users WHERE username = '\" + username + \"'\"\n    return conn.execute(query).fetchone()\n",
+      "checks": [
+        {
+          "label": "The query uses a ? placeholder",
+          "type": "must",
+          "regex": "WHERE\\s+username\\s*=\\s*\\?"
+        },
+        {
+          "label": "The username is passed as a parameter tuple",
+          "type": "must",
+          "regex": "execute\\(\\s*\\w+\\s*,\\s*\\(\\s*username\\s*,?\\s*\\)"
+        },
+        {
+          "label": "The username is not joined or formatted into the SQL",
+          "type": "must_not",
+          "regex": "(\\+\\s*username|%\\s*username|\\.format\\(|f[\\\"'][^\\\"']*\\{username)"
+        }
+      ],
+      "hints": [
+        "The database driver can take the values separately from the SQL text.",
+        "In sqlite3, put ? where the value goes and pass a tuple as the second argument of execute().",
+        "execute(query, (username,)) - note the comma that makes it a tuple."
+      ],
+      "solution": "import sqlite3\n\ndef get_user(conn, username):\n    query = \"SELECT id, email FROM users WHERE username = ?\"\n    return conn.execute(query, (username,)).fetchone()\n"
+    },
+    {
+      "id": "bac-py",
+      "title": "Missing ownership check",
+      "owasp": "A01",
+      "lang": "python",
+      "difficulty": "easy",
+      "task": "Any logged-in user can read any account by changing the id in the URL. Return the account only if it belongs to the current user; otherwise respond with 404.",
+      "code": "@app.get(\"/api/accounts/<int:account_id>\")\ndef get_account(account_id):\n    user = current_user()\n    account = db.get_account(account_id)\n    return jsonify(account)\n",
+      "checks": [
+        {
+          "label": "The owner is compared with the current user",
+          "type": "must",
+          "regex": "owner_id.*user\\.id|user\\.id.*owner_id"
+        },
+        {
+          "label": "A non-owner gets an error (abort 403 or 404)",
+          "type": "must",
+          "regex": "abort\\(\\s*40[34]"
+        }
+      ],
+      "hints": [
+        "The account has an owner_id; the logged-in user has an id.",
+        "Compare them before returning anything.",
+        "If they differ, abort(404) so the response does not even confirm the account exists."
+      ],
+      "solution": "@app.get(\"/api/accounts/<int:account_id>\")\ndef get_account(account_id):\n    user = current_user()\n    account = db.get_account(account_id)\n    if account is None or account.owner_id != user.id:\n        abort(404)\n    return jsonify(account)\n"
+    },
+    {
+      "id": "ssrf-py",
+      "title": "Server-side request forgery in a link preview",
+      "owasp": "A10",
+      "lang": "python",
+      "difficulty": "medium",
+      "task": "fetch_preview downloads any URL it is given, including internal addresses. Restrict it: allow only http/https, check the destination host against an allow-list or refuse private addresses, and do not follow redirects.",
+      "code": "import requests\n\ndef fetch_preview(url):\n    resp = requests.get(url, timeout=5)\n    return resp.text[:500]\n",
+      "checks": [
+        {
+          "label": "The URL is parsed",
+          "type": "must",
+          "regex": "urlparse|urllib\\.parse"
+        },
+        {
+          "label": "The scheme is checked",
+          "type": "must",
+          "regex": "scheme"
+        },
+        {
+          "label": "The host is checked against an allow-list or private ranges",
+          "type": "must",
+          "regex": "ipaddress|is_private|is_loopback|is_link_local|ALLOWED_HOSTS|allowlist|allow_list"
+        },
+        {
+          "label": "Redirects are not followed",
+          "type": "must",
+          "regex": "allow_redirects\\s*=\\s*False"
+        }
+      ],
+      "hints": [
+        "Parse the URL first with urllib.parse.urlparse.",
+        "Refuse anything that is not http or https, and compare parsed.hostname with a set of allowed hosts.",
+        "Pass allow_redirects=False so an allowed host cannot bounce you to an internal one."
+      ],
+      "solution": "import requests\nfrom urllib.parse import urlparse\n\nALLOWED_HOSTS = {\"example.com\", \"images.example.com\"}\n\ndef fetch_preview(url):\n    parsed = urlparse(url)\n    if parsed.scheme not in (\"http\", \"https\") or parsed.hostname not in ALLOWED_HOSTS:\n        raise ValueError(\"destination not allowed\")\n    resp = requests.get(url, timeout=5, allow_redirects=False)\n    return resp.text[:500]\n"
+    },
+    {
+      "id": "secret-py",
+      "title": "Hard-coded cloud secret",
+      "owasp": "A05",
+      "lang": "python",
+      "difficulty": "easy",
+      "task": "The secret access key is written in the source file. Read it from the environment instead and remove the literal. (The key shown is the example value from AWS documentation, not a real credential.)",
+      "code": "import boto3\n\nAWS_SECRET_ACCESS_KEY = \"wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\"\n\nclient = boto3.client(\"s3\", aws_secret_access_key=AWS_SECRET_ACCESS_KEY)\n",
+      "checks": [
+        {
+          "label": "The value is read from the environment",
+          "type": "must",
+          "regex": "os\\.(environ|getenv)"
+        },
+        {
+          "label": "No long secret literal remains in the code",
+          "type": "must_not",
+          "regex": "[\\\"'][A-Za-z0-9/+=]{30,}[\\\"']"
+        }
+      ],
+      "hints": [
+        "import os, then read the value at runtime.",
+        "os.environ[\"AWS_SECRET_ACCESS_KEY\"] fails loudly when the variable is missing, which is what you want.",
+        "Remember that a key that was committed once must also be rotated."
+      ],
+      "solution": "import os\nimport boto3\n\nclient = boto3.client(\"s3\", aws_secret_access_key=os.environ[\"AWS_SECRET_ACCESS_KEY\"])\n"
+    },
+    {
+      "id": "md5-py",
+      "title": "MD5 password hashing",
+      "owasp": "A02",
+      "lang": "python",
+      "difficulty": "easy",
+      "task": "Passwords are hashed with MD5, which is fast and broken. Switch to a slow, salted password hash (argon2, bcrypt or scrypt).",
+      "code": "import hashlib\n\ndef hash_password(password):\n    return hashlib.md5(password.encode()).hexdigest()\n\ndef check_password(password, stored):\n    return hash_password(password) == stored\n",
+      "checks": [
+        {
+          "label": "MD5 and SHA-1 are not used",
+          "type": "must_not",
+          "regex": "md5|sha1"
+        },
+        {
+          "label": "A password hashing function is used (argon2, bcrypt, scrypt or pbkdf2)",
+          "type": "must",
+          "regex": "argon2|bcrypt|scrypt|pbkdf2"
+        },
+        {
+          "label": "The stored hash is verified with the library, not with ==",
+          "type": "must_not",
+          "regex": "hash_password\\(password\\)\\s*=="
+        }
+      ],
+      "hints": [
+        "Use a library made for passwords, such as argon2-cffi or bcrypt.",
+        "PasswordHasher().hash(password) creates a salted hash; PasswordHasher().verify(stored, password) checks it.",
+        "verify raises an exception on mismatch, so wrap it in try/except and return False."
+      ],
+      "solution": "from argon2 import PasswordHasher\nfrom argon2.exceptions import VerifyMismatchError\n\nph = PasswordHasher()\n\ndef hash_password(password):\n    return ph.hash(password)\n\ndef check_password(password, stored):\n    try:\n        return ph.verify(stored, password)\n    except VerifyMismatchError:\n        return False\n"
+    },
+    {
+      "id": "xss-js",
+      "title": "Cross-site scripting in a comment box",
+      "owasp": "A03",
+      "lang": "javascript",
+      "difficulty": "easy",
+      "task": "showComment inserts the comment as HTML. Insert it as text instead.",
+      "code": "function showComment(container, comment) {\n  container.innerHTML = \"<p>\" + comment.text + \"</p>\";\n}\n",
+      "checks": [
+        {
+          "label": "The text is inserted as text (textContent, innerText or createTextNode)",
+          "type": "must",
+          "regex": "textContent|innerText|createTextNode"
+        },
+        {
+          "label": "innerHTML is not assigned",
+          "type": "must_not",
+          "regex": "innerHTML\\s*="
+        }
+      ],
+      "hints": [
+        "The browser treats innerHTML as markup, so <script> or onerror= in the comment would run.",
+        "Create the <p> with document.createElement and set its textContent.",
+        "container.appendChild(p) adds it to the page."
+      ],
+      "solution": "function showComment(container, comment) {\n  const p = document.createElement(\"p\");\n  p.textContent = comment.text;\n  container.appendChild(p);\n}\n"
+    },
+    {
+      "id": "traversal-js",
+      "title": "Path traversal in a file download",
+      "owasp": "A01",
+      "lang": "javascript",
+      "difficulty": "medium",
+      "task": "readUpload joins a user-supplied name onto the uploads folder, so ../../etc/passwd escapes it. Resolve the final path and refuse anything outside the uploads folder.",
+      "code": "const fs = require(\"fs\");\nconst path = require(\"path\");\n\nconst BASE = path.join(__dirname, \"uploads\");\n\nfunction readUpload(name) {\n  return fs.readFileSync(path.join(BASE, name), \"utf8\");\n}\n",
+      "checks": [
+        {
+          "label": "The final path is resolved",
+          "type": "must",
+          "regex": "path\\.resolve"
+        },
+        {
+          "label": "The result must start with the uploads folder",
+          "type": "must",
+          "regex": "startsWith\\("
+        },
+        {
+          "label": "An escape is rejected (throw, return null or an error status)",
+          "type": "must",
+          "regex": "throw|return\\s+null|status\\(\\s*40[03]"
+        }
+      ],
+      "hints": [
+        "path.resolve(BASE, name) turns ../ segments into a real absolute path.",
+        "Compare the result with BASE using startsWith(BASE + path.sep).",
+        "If it does not start with BASE, throw an error before reading the file."
+      ],
+      "solution": "const fs = require(\"fs\");\nconst path = require(\"path\");\n\nconst BASE = path.join(__dirname, \"uploads\");\n\nfunction readUpload(name) {\n  const full = path.resolve(BASE, name);\n  if (!full.startsWith(BASE + path.sep)) {\n    throw new Error(\"invalid file name\");\n  }\n  return fs.readFileSync(full, \"utf8\");\n}\n"
+    },
+    {
+      "id": "jwt-js",
+      "title": "Unverified and weakly signed tokens",
+      "owasp": "A07",
+      "lang": "javascript",
+      "difficulty": "medium",
+      "task": "verifyToken only decodes the token, so anyone can forge one, and signToken uses a guessable secret. Verify the signature with a fixed algorithm, read the secret from the environment, and give tokens an expiry.",
+      "code": "const jwt = require(\"jsonwebtoken\");\n\nfunction signToken(user) {\n  return jwt.sign({ sub: user.id }, \"secret\");\n}\n\nfunction verifyToken(token) {\n  return jwt.decode(token);\n}\n",
+      "checks": [
+        {
+          "label": "The signature is verified (jwt.verify)",
+          "type": "must",
+          "regex": "jwt\\.verify\\("
+        },
+        {
+          "label": "The accepted algorithms are fixed",
+          "type": "must",
+          "regex": "algorithms\\s*:"
+        },
+        {
+          "label": "The token is not just decoded",
+          "type": "must_not",
+          "regex": "jwt\\.decode\\("
+        },
+        {
+          "label": "The secret is not a literal like 'secret'",
+          "type": "must_not",
+          "regex": "[\\\"']secret[\\\"']"
+        },
+        {
+          "label": "The secret comes from the environment",
+          "type": "must",
+          "regex": "process\\.env"
+        },
+        {
+          "label": "Tokens expire",
+          "type": "must",
+          "regex": "expiresIn"
+        }
+      ],
+      "hints": [
+        "jwt.decode() never checks the signature; jwt.verify() does.",
+        "Pass { algorithms: [\"HS256\"] } to verify so an attacker cannot choose the algorithm.",
+        "Read process.env.JWT_SECRET once, and add { expiresIn: \"15m\" } when signing."
+      ],
+      "solution": "const jwt = require(\"jsonwebtoken\");\n\nconst SECRET = process.env.JWT_SECRET;\n\nfunction signToken(user) {\n  return jwt.sign({ sub: user.id }, SECRET, { algorithm: \"HS256\", expiresIn: \"15m\" });\n}\n\nfunction verifyToken(token) {\n  return jwt.verify(token, SECRET, { algorithms: [\"HS256\"] });\n}\n"
+    }
+  ]
+}

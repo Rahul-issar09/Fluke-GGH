@@ -42,6 +42,8 @@ def build_config(*, name: str = "aegis", python: str | None = None, data_dir: st
         "AEGIS_CHAT__EMBED_MODEL": embed_model or app.chat.embed_model,
         "AEGIS_CHAT__EMBED_DIM": str(embed_dim or app.chat.embed_dim),
     }
+    if app.chat.embed_url and app.chat.embed_url != env["AEGIS_OLLAMA_URL"]:
+        env["AEGIS_CHAT__EMBED_URL"] = app.chat.embed_url  # embeddings run elsewhere than the chat model (LP4)
     return {"mcpServers": {name: {
         "command": str(Path(python or sys.executable).resolve()),
         "args": ["-m", "aegis.mcp.server"],
@@ -50,6 +52,24 @@ def build_config(*, name: str = "aegis", python: str | None = None, data_dir: st
 
 
 # ------------------------------------------------------------------------------------------ doctor
+def _ai_model_lines(rep, app, data: Path) -> None:
+    """Which model this server's ``ask`` will use (LLM_PROVIDER_PHASES LP10) — never anything about a key."""
+    try:
+        from aegis.llm.manager import ProviderManager
+
+        st = ProviderManager(app, data, read_only=True).status()
+    except Exception as exc:  # noqa: BLE001 - a broken config is reported, never fatal here
+        rep.line("WARN", "AI model", f"could not read the model configuration: {type(exc).__name__}")
+        return
+    if st.get("awaiting_key"):
+        rep.line("WARN", "AI model", f"Online (Gemini {st.get('online_model')}) is chosen in AEGIS, but the key is typed "
+                 f"into the AEGIS app each run and never saved, so this server answers with the offline model {st['model']}")
+    elif st["location"] == "cloud":
+        rep.line("OK", "AI model", f"Gemini {st['model']} (online: questions asked through MCP go to Google)")
+    else:
+        rep.line("OK", "AI model", f"{st['model']} (offline, this machine)")
+
+
 class _Report:
     def __init__(self):
         self.failed = 0
@@ -96,6 +116,8 @@ def doctor() -> int:
         else:
             rep.line("WARN", "AEGIS data", f"{data} has no scans yet - run a scan with the AEGIS API first")
 
+    _ai_model_lines(rep, app, data)
+
     from aegis.safety.model_host import ModelHostRefused, check_model_url
 
     url = app.model.ollama_url
@@ -114,7 +136,14 @@ def doctor() -> int:
             rep.line("FAIL", "Ollama", f"not reachable at {url} ({chat.get('error')}) - start Ollama, or set AEGIS_OLLAMA_URL")
         else:
             rep.line("OK", "Ollama", url)
-            embed = asyncio.run(probe_ollama(url, app.chat.embed_model))
+            embed_url = app.chat.embed_url or url   # embeddings may run on their own Ollama (LP4)
+            if embed_url != url:
+                try:
+                    check_model_url(embed_url)
+                    rep.line("OK", "Embedding URL is local", embed_url)
+                except ModelHostRefused as exc:
+                    rep.line("FAIL", "Embedding URL is local", str(exc))
+            embed = asyncio.run(probe_ollama(embed_url, app.chat.embed_model))
             for label, probe in (("Chat model", chat), ("Embedding model", embed)):
                 if probe["model_present"]:
                     rep.line("OK", label, probe["model"])

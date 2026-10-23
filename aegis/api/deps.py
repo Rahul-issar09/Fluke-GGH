@@ -26,6 +26,7 @@ __all__ = [
     "get_fix_service",
     "get_graph",
     "get_job_runner",
+    "get_llm_manager",
     "get_query_service",
     "get_scan_service",
     "get_settings",
@@ -71,3 +72,8 @@ def get_query_service(request: Request) -> QueryService:
 
 def get_chat_service(request: Request):
     return request.app.state.chat_service
+
+
+def get_llm_manager(request: Request):
+    """The provider manager, or ``None`` for an app state built without one (older tests)."""
+    return getattr(request.app.state, "llm_manager", None)

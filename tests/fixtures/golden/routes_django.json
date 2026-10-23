@@ -1,0 +1,67 @@
+[
+  {
+    "path": "/health/ping/",
+    "methods": [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE"
+    ],
+    "function": "ping",
+    "qualname": "shop/health_urls.py::ping",
+    "file": "shop/health_urls.py",
+    "line": 5,
+    "end_line": 6
+  },
+  {
+    "path": "/api/orders/",
+    "methods": [
+      "GET"
+    ],
+    "function": "order_list",
+    "qualname": "shop/views.py::order_list",
+    "file": "shop/views.py",
+    "line": 9,
+    "end_line": 10
+  },
+  {
+    "path": "/api/orders/<int:order_id>/",
+    "methods": [
+      "GET",
+      "DELETE"
+    ],
+    "function": "order_detail",
+    "qualname": "shop/views.py::order_detail",
+    "file": "shop/views.py",
+    "line": 14,
+    "end_line": 16
+  },
+  {
+    "path": "/api/invoices/{number}/",
+    "methods": [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE"
+    ],
+    "function": "invoice",
+    "qualname": "shop/views.py::invoice",
+    "file": "shop/views.py",
+    "line": 19,
+    "end_line": 20
+  },
+  {
+    "path": "/api/profile/",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "function": "ProfileView",
+    "qualname": "shop/views.py::ProfileView",
+    "file": "shop/views.py",
+    "line": 23,
+    "end_line": 28
+  }
+]

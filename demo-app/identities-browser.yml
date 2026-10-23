@@ -1,0 +1,15 @@
+# The same two test identities, signing in through the browser login form (TNW-4): a CSRF token
+# and, for bob, a TOTP code. AEGIS drives a headless browser through the form (Playwright).
+# These are fake demo credentials for the intentionally vulnerable demo app only.
+login:
+  type: browser
+  url: /login-form                 # the page with the form (relative to the target URL)
+  fields:                          # CSS selectors on that page
+    username: "#username"
+    password: "#password"
+    totp: "#code"                  # filled only for an identity that has a totp_secret
+  submit: "button[type=submit]"
+  success: { cookie: session }     # the cookie that proves the login worked
+identities:
+  A: { username: alice, password: alice-demo-pass }
+  B: { username: bob,   password: bob-demo-pass, totp_secret: JBSWY3DPEHPK3PXP }

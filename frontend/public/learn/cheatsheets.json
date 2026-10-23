@@ -1,0 +1,1157 @@
+{
+  "topics": [
+    {
+      "id": "A01",
+      "title": "Broken access control",
+      "owasp": "A01"
+    },
+    {
+      "id": "A02",
+      "title": "Cryptographic failures",
+      "owasp": "A02"
+    },
+    {
+      "id": "A03",
+      "title": "Injection",
+      "owasp": "A03"
+    },
+    {
+      "id": "A05",
+      "title": "Security misconfiguration and secrets",
+      "owasp": "A05"
+    },
+    {
+      "id": "A06",
+      "title": "Vulnerable and outdated components",
+      "owasp": "A06"
+    },
+    {
+      "id": "A07",
+      "title": "Identification and authentication failures",
+      "owasp": "A07"
+    },
+    {
+      "id": "A10",
+      "title": "Server-side request forgery",
+      "owasp": "A10"
+    },
+    {
+      "id": "XSS",
+      "title": "Cross-site scripting",
+      "owasp": "A03"
+    },
+    {
+      "id": "auth",
+      "title": "Tokens and JWT",
+      "owasp": "A07"
+    },
+    {
+      "id": "sessions",
+      "title": "Sessions and cookies",
+      "owasp": "A07"
+    },
+    {
+      "id": "crypto",
+      "title": "Randomness and tokens",
+      "owasp": "A02"
+    },
+    {
+      "id": "upload",
+      "title": "File upload",
+      "owasp": "A04"
+    },
+    {
+      "id": "logging",
+      "title": "Logging and monitoring",
+      "owasp": "A09"
+    }
+  ],
+  "items": [
+    {
+      "id": "a01-python",
+      "lang": "Python",
+      "topic": "A01",
+      "title": "Broken access control",
+      "owasp": "A01",
+      "cwe": "CWE-639",
+      "summary": "Check on the server, for every request, that this user may do this action on this object. Default to deny.",
+      "pairs": [
+        {
+          "dont": "acct = db.get_account(account_id)\nreturn jsonify(acct)",
+          "do": "acct = db.get_account(account_id)\nif acct is None or acct.owner_id != current_user.id:\n    abort(404)\nreturn jsonify(acct)",
+          "note": "Return 404 so the response does not confirm the object exists."
+        }
+      ],
+      "safe_apis": [
+        "abort(404)",
+        "flask_login.login_required"
+      ]
+    },
+    {
+      "id": "a01-javascript",
+      "lang": "JavaScript/Node",
+      "topic": "A01",
+      "title": "Broken access control",
+      "owasp": "A01",
+      "cwe": "CWE-639",
+      "summary": "Check on the server, for every request, that this user may do this action on this object. Default to deny.",
+      "pairs": [
+        {
+          "dont": "const acct = await Account.findById(req.params.id);\nres.json(acct);",
+          "do": "const acct = await Account.findOne({ _id: req.params.id, owner: req.user.id });\nif (!acct) return res.sendStatus(404);\nres.json(acct);",
+          "note": "Put the owner in the query itself so a forgotten check cannot happen."
+        }
+      ],
+      "safe_apis": [
+        "res.sendStatus(404)",
+        "scoped queries (findOne with owner)"
+      ]
+    },
+    {
+      "id": "a01-java",
+      "lang": "Java",
+      "topic": "A01",
+      "title": "Broken access control",
+      "owasp": "A01",
+      "cwe": "CWE-639",
+      "summary": "Check on the server, for every request, that this user may do this action on this object. Default to deny.",
+      "pairs": [
+        {
+          "dont": "return repo.findById(id).orElseThrow();",
+          "do": "return repo.findByIdAndOwner(id, principal.getName())\n           .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));",
+          "note": "Method security (@PreAuthorize) is a good second layer, not a replacement for the owner check."
+        }
+      ],
+      "safe_apis": [
+        "@PreAuthorize",
+        "Spring Security method security"
+      ]
+    },
+    {
+      "id": "a01-go",
+      "lang": "Go",
+      "topic": "A01",
+      "title": "Broken access control",
+      "owasp": "A01",
+      "cwe": "CWE-639",
+      "summary": "Check on the server, for every request, that this user may do this action on this object. Default to deny.",
+      "pairs": [
+        {
+          "dont": "acct := store.Get(id)\njson.NewEncoder(w).Encode(acct)",
+          "do": "acct := store.GetForOwner(id, user.ID)\nif acct == nil {\n\thttp.NotFound(w, r)\n\treturn\n}\njson.NewEncoder(w).Encode(acct)",
+          "note": "Make the store method take the owner, so there is no unscoped lookup to misuse."
+        }
+      ],
+      "safe_apis": [
+        "http.NotFound",
+        "scoped store methods"
+      ]
+    },
+    {
+      "id": "a02-python",
+      "lang": "Python",
+      "topic": "A02",
+      "title": "Cryptographic failures",
+      "owasp": "A02",
+      "cwe": "CWE-327",
+      "summary": "Use current algorithms through a reviewed library, keep keys out of the code, and never invent your own scheme.",
+      "pairs": [
+        {
+          "dont": "import hashlib\nh = hashlib.md5(password.encode()).hexdigest()",
+          "do": "from argon2 import PasswordHasher\nh = PasswordHasher().hash(password)",
+          "note": "Passwords need a slow, salted hash. See the Crypto tab for the full list."
+        },
+        {
+          "dont": "cipher = AES.new(key, AES.MODE_ECB)",
+          "do": "from cryptography.hazmat.primitives.ciphers.aead import AESGCM\nct = AESGCM(key).encrypt(os.urandom(12), data, None)",
+          "note": "ECB leaks patterns; GCM encrypts and authenticates."
+        }
+      ],
+      "safe_apis": [
+        "cryptography.hazmat AESGCM",
+        "argon2-cffi",
+        "secrets"
+      ]
+    },
+    {
+      "id": "a02-javascript",
+      "lang": "JavaScript/Node",
+      "topic": "A02",
+      "title": "Cryptographic failures",
+      "owasp": "A02",
+      "cwe": "CWE-327",
+      "summary": "Use current algorithms through a reviewed library, keep keys out of the code, and never invent your own scheme.",
+      "pairs": [
+        {
+          "dont": "const h = crypto.createHash(\"md5\").update(password).digest(\"hex\");",
+          "do": "const h = await bcrypt.hash(password, 12);",
+          "note": "bcrypt, scrypt and argon2 are all fine; plain SHA-2 is not for passwords."
+        },
+        {
+          "dont": "crypto.createCipheriv(\"aes-128-ecb\", key, null);",
+          "do": "crypto.createCipheriv(\"aes-256-gcm\", key, crypto.randomBytes(12));",
+          "note": "Store the nonce and the auth tag with the ciphertext."
+        }
+      ],
+      "safe_apis": [
+        "node:crypto",
+        "bcrypt / argon2",
+        "crypto.randomBytes"
+      ]
+    },
+    {
+      "id": "a02-java",
+      "lang": "Java",
+      "topic": "A02",
+      "title": "Cryptographic failures",
+      "owasp": "A02",
+      "cwe": "CWE-327",
+      "summary": "Use current algorithms through a reviewed library, keep keys out of the code, and never invent your own scheme.",
+      "pairs": [
+        {
+          "dont": "MessageDigest.getInstance(\"MD5\").digest(pw.getBytes());",
+          "do": "new BCryptPasswordEncoder(12).encode(pw);",
+          "note": "Argon2PasswordEncoder is also available in Spring Security."
+        },
+        {
+          "dont": "Cipher.getInstance(\"AES/ECB/PKCS5Padding\");",
+          "do": "Cipher.getInstance(\"AES/GCM/NoPadding\");",
+          "note": "Use a fresh 12-byte IV from SecureRandom for every message."
+        }
+      ],
+      "safe_apis": [
+        "javax.crypto GCM",
+        "Spring PasswordEncoder",
+        "SecureRandom"
+      ]
+    },
+    {
+      "id": "a02-go",
+      "lang": "Go",
+      "topic": "A02",
+      "title": "Cryptographic failures",
+      "owasp": "A02",
+      "cwe": "CWE-327",
+      "summary": "Use current algorithms through a reviewed library, keep keys out of the code, and never invent your own scheme.",
+      "pairs": [
+        {
+          "dont": "sum := md5.Sum([]byte(password))",
+          "do": "hash, _ := bcrypt.GenerateFromPassword([]byte(password), 12)",
+          "note": "golang.org/x/crypto/bcrypt or argon2."
+        },
+        {
+          "dont": "block, _ := aes.NewCipher(key)\nblock.Encrypt(dst, src)   // one block, no mode",
+          "do": "block, _ := aes.NewCipher(key)\ngcm, _ := cipher.NewGCM(block)\nnonce := make([]byte, gcm.NonceSize())\nrand.Read(nonce)   // crypto/rand\nct := gcm.Seal(nonce, nonce, data, nil)",
+          "note": "Prepend the nonce to the ciphertext so decryption can find it."
+        }
+      ],
+      "safe_apis": [
+        "crypto/aes + cipher.NewGCM",
+        "x/crypto/bcrypt",
+        "crypto/rand"
+      ]
+    },
+    {
+      "id": "a03-python",
+      "lang": "Python",
+      "topic": "A03",
+      "title": "Injection",
+      "owasp": "A03",
+      "cwe": "CWE-89",
+      "summary": "Keep data and commands apart: parameterised queries for SQL, argument lists for programs, and never build either from strings.",
+      "pairs": [
+        {
+          "dont": "cur.execute(\"SELECT * FROM users WHERE name = '\" + name + \"'\")",
+          "do": "cur.execute(\"SELECT * FROM users WHERE name = ?\", (name,))",
+          "note": "The placeholder style depends on the driver (?, %s, :name)."
+        },
+        {
+          "dont": "os.system(\"ping \" + host)",
+          "do": "subprocess.run([\"ping\", \"-c\", \"1\", host], check=True)",
+          "note": "A list without shell=True never reaches a shell."
+        }
+      ],
+      "safe_apis": [
+        "DB-API parameters",
+        "subprocess.run(list)"
+      ]
+    },
+    {
+      "id": "a03-javascript",
+      "lang": "JavaScript/Node",
+      "topic": "A03",
+      "title": "Injection",
+      "owasp": "A03",
+      "cwe": "CWE-89",
+      "summary": "Keep data and commands apart: parameterised queries for SQL, argument lists for programs, and never build either from strings.",
+      "pairs": [
+        {
+          "dont": "db.query(`SELECT * FROM users WHERE name = '${name}'`);",
+          "do": "db.query(\"SELECT * FROM users WHERE name = $1\", [name]);",
+          "note": "Same idea for every driver: values travel separately."
+        },
+        {
+          "dont": "exec(\"ping \" + host);",
+          "do": "execFile(\"ping\", [\"-c\", \"1\", host], cb);",
+          "note": "execFile does not start a shell."
+        }
+      ],
+      "safe_apis": [
+        "parameterised driver calls",
+        "child_process.execFile"
+      ]
+    },
+    {
+      "id": "a03-java",
+      "lang": "Java",
+      "topic": "A03",
+      "title": "Injection",
+      "owasp": "A03",
+      "cwe": "CWE-89",
+      "summary": "Keep data and commands apart: parameterised queries for SQL, argument lists for programs, and never build either from strings.",
+      "pairs": [
+        {
+          "dont": "stmt.executeQuery(\"SELECT * FROM users WHERE name = '\" + name + \"'\");",
+          "do": "PreparedStatement ps = conn.prepareStatement(\"SELECT * FROM users WHERE name = ?\");\nps.setString(1, name);\nps.executeQuery();",
+          "note": "JPA: use named parameters in @Query, never string concatenation."
+        },
+        {
+          "dont": "Runtime.getRuntime().exec(\"ping \" + host);",
+          "do": "new ProcessBuilder(\"ping\", \"-c\", \"1\", host).start();",
+          "note": "Validate host against an allow-list as well."
+        }
+      ],
+      "safe_apis": [
+        "PreparedStatement",
+        "ProcessBuilder(List)"
+      ]
+    },
+    {
+      "id": "a03-go",
+      "lang": "Go",
+      "topic": "A03",
+      "title": "Injection",
+      "owasp": "A03",
+      "cwe": "CWE-89",
+      "summary": "Keep data and commands apart: parameterised queries for SQL, argument lists for programs, and never build either from strings.",
+      "pairs": [
+        {
+          "dont": "db.Query(\"SELECT * FROM users WHERE name = '\" + name + \"'\")",
+          "do": "db.Query(\"SELECT * FROM users WHERE name = $1\", name)",
+          "note": "database/sql placeholders depend on the driver ($1 or ?)."
+        },
+        {
+          "dont": "exec.Command(\"sh\", \"-c\", \"ping \"+host)",
+          "do": "exec.Command(\"ping\", \"-c\", \"1\", host)",
+          "note": "Never pass user input to sh -c."
+        }
+      ],
+      "safe_apis": [
+        "database/sql placeholders",
+        "exec.Command(name, args...)"
+      ]
+    },
+    {
+      "id": "a05-python",
+      "lang": "Python",
+      "topic": "A05",
+      "title": "Security misconfiguration and secrets",
+      "owasp": "A05",
+      "cwe": "CWE-798",
+      "summary": "No secrets in code, no debug features in production, and safe defaults for every framework setting.",
+      "pairs": [
+        {
+          "dont": "API_KEY = \"sk_live_...\"   # in source",
+          "do": "API_KEY = os.environ[\"API_KEY\"]",
+          "note": "If a key was ever committed, rotate it; deleting the line is not enough."
+        },
+        {
+          "dont": "app.run(debug=True)",
+          "do": "app.run(debug=os.environ.get(\"FLASK_DEBUG\") == \"1\")",
+          "note": "Debug mode can expose an interactive console."
+        }
+      ],
+      "safe_apis": [
+        "os.environ",
+        "python-dotenv for local development only"
+      ]
+    },
+    {
+      "id": "a05-javascript",
+      "lang": "JavaScript/Node",
+      "topic": "A05",
+      "title": "Security misconfiguration and secrets",
+      "owasp": "A05",
+      "cwe": "CWE-798",
+      "summary": "No secrets in code, no debug features in production, and safe defaults for every framework setting.",
+      "pairs": [
+        {
+          "dont": "const key = \"sk_live_...\";",
+          "do": "const key = process.env.API_KEY;",
+          "note": "Fail at start-up when a required variable is missing."
+        },
+        {
+          "dont": "const app = express();",
+          "do": "const app = express();\napp.disable(\"x-powered-by\");\napp.use(helmet());",
+          "note": "helmet sets a group of safe security headers."
+        }
+      ],
+      "safe_apis": [
+        "process.env",
+        "helmet"
+      ]
+    },
+    {
+      "id": "a05-java",
+      "lang": "Java",
+      "topic": "A05",
+      "title": "Security misconfiguration and secrets",
+      "owasp": "A05",
+      "cwe": "CWE-798",
+      "summary": "No secrets in code, no debug features in production, and safe defaults for every framework setting.",
+      "pairs": [
+        {
+          "dont": "private static final String KEY = \"sk_live_...\";",
+          "do": "String key = System.getenv(\"API_KEY\");",
+          "note": "Or Spring's @Value with a secret manager or environment-backed property."
+        },
+        {
+          "dont": "management.endpoints.web.exposure.include=*",
+          "do": "management.endpoints.web.exposure.include=health,info",
+          "note": "Expose only the actuator endpoints you need, and protect them."
+        }
+      ],
+      "safe_apis": [
+        "System.getenv",
+        "Spring Cloud Config / secret managers"
+      ]
+    },
+    {
+      "id": "a05-go",
+      "lang": "Go",
+      "topic": "A05",
+      "title": "Security misconfiguration and secrets",
+      "owasp": "A05",
+      "cwe": "CWE-798",
+      "summary": "No secrets in code, no debug features in production, and safe defaults for every framework setting.",
+      "pairs": [
+        {
+          "dont": "const apiKey = \"sk_live_...\"",
+          "do": "apiKey := os.Getenv(\"API_KEY\")\nif apiKey == \"\" {\n\tlog.Fatal(\"API_KEY not set\")\n}",
+          "note": "Check at start-up, not at first use."
+        },
+        {
+          "dont": "http.ListenAndServe(\":8080\", mux)",
+          "do": "srv := &http.Server{Addr: \":8080\", Handler: mux,\n\tReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second}\nsrv.ListenAndServe()",
+          "note": "The default server has no timeouts, which makes slow-connection attacks easy."
+        }
+      ],
+      "safe_apis": [
+        "os.Getenv",
+        "http.Server timeouts"
+      ]
+    },
+    {
+      "id": "a06-python",
+      "lang": "Python",
+      "topic": "A06",
+      "title": "Vulnerable and outdated components",
+      "owasp": "A06",
+      "cwe": "CWE-1104",
+      "summary": "Know every dependency you ship, pin versions, and scan them against vulnerability databases on a schedule.",
+      "pairs": [
+        {
+          "dont": "requests\nflask>=1.0",
+          "do": "requests==<exact version>\nflask==<exact version>",
+          "note": "Pin exact versions (and hashes for production) and run pip-audit in CI."
+        }
+      ],
+      "safe_apis": [
+        "pip-audit",
+        "pip install --require-hashes"
+      ]
+    },
+    {
+      "id": "a06-javascript",
+      "lang": "JavaScript/Node",
+      "topic": "A06",
+      "title": "Vulnerable and outdated components",
+      "owasp": "A06",
+      "cwe": "CWE-1104",
+      "summary": "Know every dependency you ship, pin versions, and scan them against vulnerability databases on a schedule.",
+      "pairs": [
+        {
+          "dont": "npm install        # lockfile may drift",
+          "do": "npm ci\nnpm audit --omit=dev",
+          "note": "npm ci installs exactly what package-lock.json says."
+        }
+      ],
+      "safe_apis": [
+        "npm ci",
+        "npm audit"
+      ]
+    },
+    {
+      "id": "a06-java",
+      "lang": "Java",
+      "topic": "A06",
+      "title": "Vulnerable and outdated components",
+      "owasp": "A06",
+      "cwe": "CWE-1104",
+      "summary": "Know every dependency you ship, pin versions, and scan them against vulnerability databases on a schedule.",
+      "pairs": [
+        {
+          "dont": "<version>LATEST</version>",
+          "do": "<version>2.15.0</version>   <!-- pinned; check with OWASP dependency-check -->",
+          "note": "Never use LATEST or ranges you do not control."
+        }
+      ],
+      "safe_apis": [
+        "OWASP dependency-check",
+        "Maven versions plugin"
+      ]
+    },
+    {
+      "id": "a06-go",
+      "lang": "Go",
+      "topic": "A06",
+      "title": "Vulnerable and outdated components",
+      "owasp": "A06",
+      "cwe": "CWE-1104",
+      "summary": "Know every dependency you ship, pin versions, and scan them against vulnerability databases on a schedule.",
+      "pairs": [
+        {
+          "dont": "go get example.com/lib@latest",
+          "do": "go get example.com/lib@v1.2.3\ngovulncheck ./...",
+          "note": "go.sum records hashes; govulncheck reports only vulnerabilities your code can reach."
+        }
+      ],
+      "safe_apis": [
+        "govulncheck",
+        "go mod verify"
+      ]
+    },
+    {
+      "id": "a07-python",
+      "lang": "Python",
+      "topic": "A07",
+      "title": "Identification and authentication failures",
+      "owasp": "A07",
+      "cwe": "CWE-287",
+      "summary": "Verify passwords with a password hash, compare secrets in constant time, limit attempts, and rotate the session on login.",
+      "pairs": [
+        {
+          "dont": "if user.password == password:\n    login(user)",
+          "do": "try:\n    PasswordHasher().verify(user.password_hash, password)\nexcept VerifyMismatchError:\n    abort(401)\nsession.clear()\nlogin(user)",
+          "note": "Clear the old session so a pre-login session ID cannot be reused."
+        }
+      ],
+      "safe_apis": [
+        "hmac.compare_digest",
+        "argon2-cffi verify"
+      ]
+    },
+    {
+      "id": "a07-javascript",
+      "lang": "JavaScript/Node",
+      "topic": "A07",
+      "title": "Identification and authentication failures",
+      "owasp": "A07",
+      "cwe": "CWE-287",
+      "summary": "Verify passwords with a password hash, compare secrets in constant time, limit attempts, and rotate the session on login.",
+      "pairs": [
+        {
+          "dont": "if (user.password === req.body.password) login(user);",
+          "do": "if (!(await bcrypt.compare(req.body.password, user.hash))) return res.sendStatus(401);\nreq.session.regenerate(() => login(user));",
+          "note": "Add rate limiting (express-rate-limit) on the login route."
+        }
+      ],
+      "safe_apis": [
+        "crypto.timingSafeEqual",
+        "req.session.regenerate"
+      ]
+    },
+    {
+      "id": "a07-java",
+      "lang": "Java",
+      "topic": "A07",
+      "title": "Identification and authentication failures",
+      "owasp": "A07",
+      "cwe": "CWE-287",
+      "summary": "Verify passwords with a password hash, compare secrets in constant time, limit attempts, and rotate the session on login.",
+      "pairs": [
+        {
+          "dont": "if (user.getPassword().equals(password)) login(user);",
+          "do": "if (!encoder.matches(password, user.getPasswordHash())) throw new BadCredentialsException(\"invalid\");",
+          "note": "Spring Security does this for you; use it rather than writing your own filter."
+        }
+      ],
+      "safe_apis": [
+        "MessageDigest.isEqual",
+        "Spring Security"
+      ]
+    },
+    {
+      "id": "a07-go",
+      "lang": "Go",
+      "topic": "A07",
+      "title": "Identification and authentication failures",
+      "owasp": "A07",
+      "cwe": "CWE-287",
+      "summary": "Verify passwords with a password hash, compare secrets in constant time, limit attempts, and rotate the session on login.",
+      "pairs": [
+        {
+          "dont": "if user.Password == password {",
+          "do": "if err := bcrypt.CompareHashAndPassword(user.Hash, []byte(password)); err != nil {\n\thttp.Error(w, \"invalid credentials\", 401)\n\treturn\n}",
+          "note": "Return the same message and timing for unknown users and wrong passwords."
+        }
+      ],
+      "safe_apis": [
+        "subtle.ConstantTimeCompare",
+        "bcrypt.CompareHashAndPassword"
+      ]
+    },
+    {
+      "id": "a10-python",
+      "lang": "Python",
+      "topic": "A10",
+      "title": "Server-side request forgery",
+      "owasp": "A10",
+      "cwe": "CWE-918",
+      "summary": "When the server fetches a URL from user input, allow only known destinations, refuse private addresses after DNS resolution, and do not follow redirects.",
+      "pairs": [
+        {
+          "dont": "requests.get(request.args[\"url\"])",
+          "do": "p = urlparse(url)\nif p.scheme not in (\"http\", \"https\") or p.hostname not in ALLOWED_HOSTS:\n    abort(400)\nrequests.get(url, timeout=5, allow_redirects=False)",
+          "note": "If you must allow arbitrary hosts, resolve the name yourself and reject loopback, private and link-local ranges."
+        }
+      ],
+      "safe_apis": [
+        "urllib.parse.urlparse",
+        "ipaddress.ip_address(...).is_private"
+      ]
+    },
+    {
+      "id": "a10-javascript",
+      "lang": "JavaScript/Node",
+      "topic": "A10",
+      "title": "Server-side request forgery",
+      "owasp": "A10",
+      "cwe": "CWE-918",
+      "summary": "When the server fetches a URL from user input, allow only known destinations, refuse private addresses after DNS resolution, and do not follow redirects.",
+      "pairs": [
+        {
+          "dont": "const r = await fetch(req.query.url);",
+          "do": "const u = new URL(req.query.url);\nif (![\"http:\", \"https:\"].includes(u.protocol) || !ALLOWED_HOSTS.has(u.hostname)) return res.sendStatus(400);\nconst r = await fetch(u, { redirect: \"manual\" });",
+          "note": "redirect: manual stops an allowed host bouncing you inward."
+        }
+      ],
+      "safe_apis": [
+        "new URL()",
+        "fetch redirect: manual"
+      ]
+    },
+    {
+      "id": "a10-java",
+      "lang": "Java",
+      "topic": "A10",
+      "title": "Server-side request forgery",
+      "owasp": "A10",
+      "cwe": "CWE-918",
+      "summary": "When the server fetches a URL from user input, allow only known destinations, refuse private addresses after DNS resolution, and do not follow redirects.",
+      "pairs": [
+        {
+          "dont": "new URL(url).openStream();",
+          "do": "URI u = URI.create(url);\nif (!ALLOWED_HOSTS.contains(u.getHost())) throw new IllegalArgumentException();\n// then connect to the address you validated, with redirects off",
+          "note": "Check InetAddress.isSiteLocalAddress / isLoopbackAddress / isLinkLocalAddress on the resolved address."
+        }
+      ],
+      "safe_apis": [
+        "URI / InetAddress checks"
+      ]
+    },
+    {
+      "id": "a10-go",
+      "lang": "Go",
+      "topic": "A10",
+      "title": "Server-side request forgery",
+      "owasp": "A10",
+      "cwe": "CWE-918",
+      "summary": "When the server fetches a URL from user input, allow only known destinations, refuse private addresses after DNS resolution, and do not follow redirects.",
+      "pairs": [
+        {
+          "dont": "http.Get(r.URL.Query().Get(\"url\"))",
+          "do": "u, err := url.Parse(raw)\nif err != nil || !allowed[u.Hostname()] {\n\thttp.Error(w, \"bad url\", 400)\n\treturn\n}\nclient := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}",
+          "note": "A custom Dialer.Control function can reject private IPs at connection time."
+        }
+      ],
+      "safe_apis": [
+        "net/url",
+        "Dialer.Control",
+        "http.ErrUseLastResponse"
+      ]
+    },
+    {
+      "id": "xss-python",
+      "lang": "Python",
+      "topic": "XSS",
+      "title": "Cross-site scripting",
+      "owasp": "A03",
+      "cwe": "CWE-79",
+      "summary": "Encode data for the place it lands in the page. Prefer APIs that insert text, keep template auto-escaping on, and add a Content-Security-Policy as a second layer.",
+      "pairs": [
+        {
+          "dont": "return Markup(\"<b>\" + name + \"</b>\")",
+          "do": "return render_template(\"hello.html\", name=name)   # {{ name }} is escaped",
+          "note": "Treat |safe and Markup() as review items."
+        }
+      ],
+      "safe_apis": [
+        "Jinja2 autoescape",
+        "markupsafe.escape"
+      ]
+    },
+    {
+      "id": "xss-javascript",
+      "lang": "JavaScript/Node",
+      "topic": "XSS",
+      "title": "Cross-site scripting",
+      "owasp": "A03",
+      "cwe": "CWE-79",
+      "summary": "Encode data for the place it lands in the page. Prefer APIs that insert text, keep template auto-escaping on, and add a Content-Security-Policy as a second layer.",
+      "pairs": [
+        {
+          "dont": "el.innerHTML = comment;",
+          "do": "el.textContent = comment;",
+          "note": "In React, avoid dangerouslySetInnerHTML; in Vue, avoid v-html."
+        }
+      ],
+      "safe_apis": [
+        "textContent",
+        "DOMPurify for HTML you must allow"
+      ]
+    },
+    {
+      "id": "xss-java",
+      "lang": "Java",
+      "topic": "XSS",
+      "title": "Cross-site scripting",
+      "owasp": "A03",
+      "cwe": "CWE-79",
+      "summary": "Encode data for the place it lands in the page. Prefer APIs that insert text, keep template auto-escaping on, and add a Content-Security-Policy as a second layer.",
+      "pairs": [
+        {
+          "dont": "out.println(\"<p>\" + request.getParameter(\"q\") + \"</p>\");",
+          "do": "<p th:text=\"${q}\"></p>   <!-- Thymeleaf escapes -->\n// or: HtmlUtils.htmlEscape(q)",
+          "note": "Use th:text, not th:utext, for untrusted values."
+        }
+      ],
+      "safe_apis": [
+        "Thymeleaf th:text",
+        "OWASP Java Encoder"
+      ]
+    },
+    {
+      "id": "xss-go",
+      "lang": "Go",
+      "topic": "XSS",
+      "title": "Cross-site scripting",
+      "owasp": "A03",
+      "cwe": "CWE-79",
+      "summary": "Encode data for the place it lands in the page. Prefer APIs that insert text, keep template auto-escaping on, and add a Content-Security-Policy as a second layer.",
+      "pairs": [
+        {
+          "dont": "t := template.HTML(userInput)",
+          "do": "tmpl.Execute(w, userInput)   // html/template escapes by context",
+          "note": "Import html/template, not text/template, for HTML."
+        }
+      ],
+      "safe_apis": [
+        "html/template"
+      ]
+    },
+    {
+      "id": "auth-python",
+      "lang": "Python",
+      "topic": "auth",
+      "title": "Tokens and JWT",
+      "owasp": "A07",
+      "cwe": "CWE-347",
+      "summary": "Verify the signature with a fixed algorithm and a secret from the environment, check expiry, and never trust a decoded token.",
+      "pairs": [
+        {
+          "dont": "claims = jwt.decode(token, options={\"verify_signature\": False})",
+          "do": "claims = jwt.decode(token, KEY, algorithms=[\"HS256\"], options={\"require\": [\"exp\", \"sub\"]})",
+          "note": "PyJWT. Pass algorithms explicitly so the token header cannot choose."
+        }
+      ],
+      "safe_apis": [
+        "PyJWT decode with algorithms"
+      ]
+    },
+    {
+      "id": "auth-javascript",
+      "lang": "JavaScript/Node",
+      "topic": "auth",
+      "title": "Tokens and JWT",
+      "owasp": "A07",
+      "cwe": "CWE-347",
+      "summary": "Verify the signature with a fixed algorithm and a secret from the environment, check expiry, and never trust a decoded token.",
+      "pairs": [
+        {
+          "dont": "const claims = jwt.decode(token);",
+          "do": "const claims = jwt.verify(token, process.env.JWT_SECRET, { algorithms: [\"HS256\"] });",
+          "note": "Sign with { expiresIn: \"15m\" } and keep refresh tokens server-side."
+        }
+      ],
+      "safe_apis": [
+        "jsonwebtoken verify"
+      ]
+    },
+    {
+      "id": "auth-java",
+      "lang": "Java",
+      "topic": "auth",
+      "title": "Tokens and JWT",
+      "owasp": "A07",
+      "cwe": "CWE-347",
+      "summary": "Verify the signature with a fixed algorithm and a secret from the environment, check expiry, and never trust a decoded token.",
+      "pairs": [
+        {
+          "dont": "Jwts.parserBuilder().build().parseClaimsJwt(token);",
+          "do": "Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);",
+          "note": "parseClaimsJws verifies a signature; parseClaimsJwt accepts an unsigned token."
+        }
+      ],
+      "safe_apis": [
+        "jjwt parseClaimsJws"
+      ]
+    },
+    {
+      "id": "auth-go",
+      "lang": "Go",
+      "topic": "auth",
+      "title": "Tokens and JWT",
+      "owasp": "A07",
+      "cwe": "CWE-347",
+      "summary": "Verify the signature with a fixed algorithm and a secret from the environment, check expiry, and never trust a decoded token.",
+      "pairs": [
+        {
+          "dont": "jwt.Parse(tok, func(t *jwt.Token) (any, error) { return key, nil })",
+          "do": "jwt.Parse(tok, func(t *jwt.Token) (any, error) { return key, nil },\n\tjwt.WithValidMethods([]string{\"HS256\"}), jwt.WithExpirationRequired())",
+          "note": "golang-jwt v5. Without a method check an attacker can choose the algorithm."
+        }
+      ],
+      "safe_apis": [
+        "golang-jwt WithValidMethods"
+      ]
+    },
+    {
+      "id": "sessions-python",
+      "lang": "Python",
+      "topic": "sessions",
+      "title": "Sessions and cookies",
+      "owasp": "A07",
+      "cwe": "CWE-614",
+      "summary": "Session cookies must be Secure, HttpOnly and SameSite, rotate on login, and expire on the server.",
+      "pairs": [
+        {
+          "dont": "# defaults: cookie readable by scripts, sent over HTTP",
+          "do": "app.config.update(SESSION_COOKIE_SECURE=True, SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE=\"Lax\")",
+          "note": "Flask settings. Set a short PERMANENT_SESSION_LIFETIME as well."
+        }
+      ],
+      "safe_apis": [
+        "Flask SESSION_COOKIE_*"
+      ]
+    },
+    {
+      "id": "sessions-javascript",
+      "lang": "JavaScript/Node",
+      "topic": "sessions",
+      "title": "Sessions and cookies",
+      "owasp": "A07",
+      "cwe": "CWE-614",
+      "summary": "Session cookies must be Secure, HttpOnly and SameSite, rotate on login, and expire on the server.",
+      "pairs": [
+        {
+          "dont": "app.use(session({ secret: \"x\" }));",
+          "do": "app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false,\n  cookie: { secure: true, httpOnly: true, sameSite: \"lax\", maxAge: 30 * 60 * 1000 } }));",
+          "note": "express-session. Use a real store (Redis), not the in-memory default, in production."
+        }
+      ],
+      "safe_apis": [
+        "express-session cookie options"
+      ]
+    },
+    {
+      "id": "sessions-java",
+      "lang": "Java",
+      "topic": "sessions",
+      "title": "Sessions and cookies",
+      "owasp": "A07",
+      "cwe": "CWE-614",
+      "summary": "Session cookies must be Secure, HttpOnly and SameSite, rotate on login, and expire on the server.",
+      "pairs": [
+        {
+          "dont": "# application.properties: nothing set",
+          "do": "server.servlet.session.cookie.secure=true\nserver.servlet.session.cookie.http-only=true\nserver.servlet.session.cookie.same-site=lax",
+          "note": "Spring Security's session-fixation protection migrates the session on login by default; do not turn it off."
+        }
+      ],
+      "safe_apis": [
+        "server.servlet.session.cookie.*"
+      ]
+    },
+    {
+      "id": "sessions-go",
+      "lang": "Go",
+      "topic": "sessions",
+      "title": "Sessions and cookies",
+      "owasp": "A07",
+      "cwe": "CWE-614",
+      "summary": "Session cookies must be Secure, HttpOnly and SameSite, rotate on login, and expire on the server.",
+      "pairs": [
+        {
+          "dont": "http.SetCookie(w, &http.Cookie{Name: \"sid\", Value: id})",
+          "do": "http.SetCookie(w, &http.Cookie{Name: \"sid\", Value: id, Path: \"/\",\n\tSecure: true, HttpOnly: true, SameSite: http.SameSiteLaxMode, MaxAge: 1800})",
+          "note": "Generate id with crypto/rand, at least 128 bits."
+        }
+      ],
+      "safe_apis": [
+        "http.Cookie flags"
+      ]
+    },
+    {
+      "id": "crypto-python",
+      "lang": "Python",
+      "topic": "crypto",
+      "title": "Randomness and tokens",
+      "owasp": "A02",
+      "cwe": "CWE-338",
+      "summary": "Anything an attacker must not guess (session IDs, reset tokens, API keys) comes from the operating system's secure random generator.",
+      "pairs": [
+        {
+          "dont": "token = str(random.randint(0, 10**9))",
+          "do": "token = secrets.token_urlsafe(32)",
+          "note": "random is a predictable generator; secrets is for security."
+        }
+      ],
+      "safe_apis": [
+        "secrets.token_urlsafe",
+        "secrets.compare_digest"
+      ]
+    },
+    {
+      "id": "crypto-javascript",
+      "lang": "JavaScript/Node",
+      "topic": "crypto",
+      "title": "Randomness and tokens",
+      "owasp": "A02",
+      "cwe": "CWE-338",
+      "summary": "Anything an attacker must not guess (session IDs, reset tokens, API keys) comes from the operating system's secure random generator.",
+      "pairs": [
+        {
+          "dont": "const token = Math.random().toString(36).slice(2);",
+          "do": "const token = crypto.randomBytes(32).toString(\"base64url\");",
+          "note": "crypto.randomUUID() is also fine for identifiers."
+        }
+      ],
+      "safe_apis": [
+        "crypto.randomBytes",
+        "crypto.randomUUID"
+      ]
+    },
+    {
+      "id": "crypto-java",
+      "lang": "Java",
+      "topic": "crypto",
+      "title": "Randomness and tokens",
+      "owasp": "A02",
+      "cwe": "CWE-338",
+      "summary": "Anything an attacker must not guess (session IDs, reset tokens, API keys) comes from the operating system's secure random generator.",
+      "pairs": [
+        {
+          "dont": "new Random().nextLong();",
+          "do": "byte[] b = new byte[32];\nnew SecureRandom().nextBytes(b);\nBase64.getUrlEncoder().withoutPadding().encodeToString(b);",
+          "note": "Reuse one SecureRandom instance."
+        }
+      ],
+      "safe_apis": [
+        "SecureRandom"
+      ]
+    },
+    {
+      "id": "crypto-go",
+      "lang": "Go",
+      "topic": "crypto",
+      "title": "Randomness and tokens",
+      "owasp": "A02",
+      "cwe": "CWE-338",
+      "summary": "Anything an attacker must not guess (session IDs, reset tokens, API keys) comes from the operating system's secure random generator.",
+      "pairs": [
+        {
+          "dont": "rand.Int63()   // math/rand",
+          "do": "b := make([]byte, 32)\n_, err := rand.Read(b)   // crypto/rand\ntoken := base64.RawURLEncoding.EncodeToString(b)",
+          "note": "Import crypto/rand, not math/rand."
+        }
+      ],
+      "safe_apis": [
+        "crypto/rand"
+      ]
+    },
+    {
+      "id": "upload-python",
+      "lang": "Python",
+      "topic": "upload",
+      "title": "File upload",
+      "owasp": "A04",
+      "cwe": "CWE-434",
+      "summary": "Never trust the file name, type or size. Store uploads outside the web root under names you generate, and check type and size on the server.",
+      "pairs": [
+        {
+          "dont": "f.save(os.path.join(UPLOAD_DIR, f.filename))",
+          "do": "ext = os.path.splitext(secure_filename(f.filename))[1].lower()\nif ext not in {\".png\", \".jpg\", \".pdf\"}:\n    abort(400)\nf.save(os.path.join(UPLOAD_DIR, uuid.uuid4().hex + ext))",
+          "note": "Set MAX_CONTENT_LENGTH to cap the size."
+        }
+      ],
+      "safe_apis": [
+        "werkzeug.utils.secure_filename"
+      ]
+    },
+    {
+      "id": "upload-javascript",
+      "lang": "JavaScript/Node",
+      "topic": "upload",
+      "title": "File upload",
+      "owasp": "A04",
+      "cwe": "CWE-434",
+      "summary": "Never trust the file name, type or size. Store uploads outside the web root under names you generate, and check type and size on the server.",
+      "pairs": [
+        {
+          "dont": "filename: (req, file, cb) => cb(null, file.originalname)",
+          "do": "filename: (req, file, cb) => cb(null, crypto.randomUUID() + path.extname(file.originalname).toLowerCase()),\n// plus: limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: allowOnlyKnownTypes",
+          "note": "multer options. The client-sent MIME type is only a hint."
+        }
+      ],
+      "safe_apis": [
+        "multer limits and fileFilter"
+      ]
+    },
+    {
+      "id": "upload-java",
+      "lang": "Java",
+      "topic": "upload",
+      "title": "File upload",
+      "owasp": "A04",
+      "cwe": "CWE-434",
+      "summary": "Never trust the file name, type or size. Store uploads outside the web root under names you generate, and check type and size on the server.",
+      "pairs": [
+        {
+          "dont": "Files.copy(in, dir.resolve(file.getOriginalFilename()));",
+          "do": "Path target = dir.resolve(UUID.randomUUID() + \".dat\").normalize();\nif (!target.startsWith(dir)) throw new IllegalArgumentException();\nFiles.copy(in, target);",
+          "note": "Set spring.servlet.multipart.max-file-size."
+        }
+      ],
+      "safe_apis": [
+        "Path.normalize + startsWith"
+      ]
+    },
+    {
+      "id": "upload-go",
+      "lang": "Go",
+      "topic": "upload",
+      "title": "File upload",
+      "owasp": "A04",
+      "cwe": "CWE-434",
+      "summary": "Never trust the file name, type or size. Store uploads outside the web root under names you generate, and check type and size on the server.",
+      "pairs": [
+        {
+          "dont": "dst := filepath.Join(dir, header.Filename)",
+          "do": "r.Body = http.MaxBytesReader(w, r.Body, 5<<20)\nname := uuid.NewString() + strings.ToLower(filepath.Ext(filepath.Base(header.Filename)))\ndst := filepath.Join(dir, name)",
+          "note": "filepath.Base removes any directory part the client sent."
+        }
+      ],
+      "safe_apis": [
+        "http.MaxBytesReader",
+        "filepath.Base"
+      ]
+    },
+    {
+      "id": "logging-python",
+      "lang": "Python",
+      "topic": "logging",
+      "title": "Logging and monitoring",
+      "owasp": "A09",
+      "cwe": "CWE-532",
+      "summary": "Log security events with enough context to investigate, never log secrets or whole request bodies, and keep user input from forging log lines.",
+      "pairs": [
+        {
+          "dont": "logging.info(\"login \" + username + \" \" + password)",
+          "do": "logging.info(\"login attempt user=%s ok=%s\", username.replace(\"\\n\", \" \"), ok)",
+          "note": "Never log passwords, tokens or full card numbers. Use parameters, not string joins."
+        }
+      ],
+      "safe_apis": [
+        "logging with %s parameters"
+      ]
+    },
+    {
+      "id": "logging-javascript",
+      "lang": "JavaScript/Node",
+      "topic": "logging",
+      "title": "Logging and monitoring",
+      "owasp": "A09",
+      "cwe": "CWE-532",
+      "summary": "Log security events with enough context to investigate, never log secrets or whole request bodies, and keep user input from forging log lines.",
+      "pairs": [
+        {
+          "dont": "console.log(\"login\", req.body);",
+          "do": "logger.info({ event: \"login\", user: req.body.username, ok }, \"login attempt\");",
+          "note": "pino or winston with a redact list for fields like password and authorization."
+        }
+      ],
+      "safe_apis": [
+        "pino redact"
+      ]
+    },
+    {
+      "id": "logging-java",
+      "lang": "Java",
+      "topic": "logging",
+      "title": "Logging and monitoring",
+      "owasp": "A09",
+      "cwe": "CWE-532",
+      "summary": "Log security events with enough context to investigate, never log secrets or whole request bodies, and keep user input from forging log lines.",
+      "pairs": [
+        {
+          "dont": "log.info(\"login \" + username + \" \" + password);",
+          "do": "log.info(\"login attempt user={} ok={}\", username.replaceAll(\"[\\r\\n]\", \"_\"), ok);",
+          "note": "SLF4J placeholders; strip CR/LF from user input."
+        }
+      ],
+      "safe_apis": [
+        "SLF4J placeholders"
+      ]
+    },
+    {
+      "id": "logging-go",
+      "lang": "Go",
+      "topic": "logging",
+      "title": "Logging and monitoring",
+      "owasp": "A09",
+      "cwe": "CWE-532",
+      "summary": "Log security events with enough context to investigate, never log secrets or whole request bodies, and keep user input from forging log lines.",
+      "pairs": [
+        {
+          "dont": "log.Printf(\"token=%s\", token)",
+          "do": "slog.Info(\"login attempt\", \"user\", userID, \"ok\", ok)",
+          "note": "log/slog gives structured fields; log identifiers, not secrets."
+        }
+      ],
+      "safe_apis": [
+        "log/slog"
+      ]
+    }
+  ]
+}

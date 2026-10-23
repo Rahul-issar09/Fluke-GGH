@@ -21,6 +21,8 @@ from typing import Any
 
 import structlog
 
+from aegis.secret_scrub import scrub
+
 __all__ = [
     "configure_logging",
     "get_logger",
@@ -94,6 +96,9 @@ def redact(obj: Any) -> Any:
         return out
     if isinstance(obj, (list, tuple)):
         return type(obj)(redact(v) for v in obj)
+    if isinstance(obj, str):
+        # a known secret value (an API key) inside any text — e.g. an exception message (§9.3)
+        return scrub(obj)
     return obj
 
 

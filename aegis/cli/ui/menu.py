@@ -1,6 +1,7 @@
 """The interactive menu: typing just ``aegis`` (cli_new_phases.md N4).
 
-    1 Scan  -> M1 / M2 / M3 (each explained) -> inputs -> review -> live progress -> summary -> questions
+    1 Scan  -> M1 / M2 / M3 (each explained) -> inputs -> review -> AI for this scan -> live progress
+            -> summary -> questions
     2 Ask questions   3 Results   4 Report & gate   5 Scan history   0 Exit
 
 It only composes commands that already exist (``scan run`` / ``ask`` / ``findings`` / ``report`` /
@@ -18,6 +19,7 @@ import typer
 
 from aegis.cli.commands._common import check_id
 from aegis.cli.commands.chat import chat_loop, save_report
+from aegis.cli.commands.llm import _send, activate_gemini, before_model_use, get_config, model_label, status_view
 from aegis.cli.commands.scan_run import AUTH_NOTE, build_request, follow, mode_of
 from aegis.cli.errors import CliError
 from aegis.cli.ui.progress import MODE_LABELS
@@ -33,6 +35,7 @@ MAIN = """
   3  Results            findings of a scan, one finding in detail
   4  Report & gate      the report, and the CI verdict
   5  Scan history       recent scans and their status
+  6  AI model           offline (Ollama) or online (Gemini; the key is asked every run)
   0  Exit"""
 
 MODES = """
@@ -79,9 +82,15 @@ def _setting_hint(message: str) -> str | None:
     return next((hint for key, hint in _SETTING_HINTS if key in low), None)
 
 
+def _hidden(prompt: str) -> str:
+    """A prompt that does not echo what is typed (for the Gemini key)."""
+    return typer.prompt(prompt, hide_input=True, default="", show_default=False)
+
+
 class Menu:
-    def __init__(self, ctx, be, read: Reader):
+    def __init__(self, ctx, be, read: Reader, secret: Reader = _hidden):
         self.ctx, self.be, self.read, self.out = ctx, be, read, ctx.out
+        self.secret = secret   # never ``read``: that one echoes
 
     # ------------------------------------------------------------------ prompts
     def ask(self, prompt: str, *, default: str | None = None, allow_back: bool = True) -> str:
@@ -152,6 +161,7 @@ class Menu:
         return api_url(self.ctx.api)
 
     def main(self) -> int:
+        before_model_use(self.ctx, self.be)   # once per run: this run's Gemini key, if Online mode waits for it
         while True:
             self.out.line()
             if not self.header():
@@ -162,12 +172,13 @@ class Menu:
             for line in MAIN.splitlines():
                 needs = line.strip()[:1] in ("2", "3", "4")
                 self.out.line(line + ("   (needs a scan - choose 1 first)" if needs and not has_scan else ""))
-            choice = self.read("\n Choose [0-5]: ").strip()
-            actions = {"1": self.scan, "2": self.questions, "3": self.results, "4": self.report_gate, "5": self.history}
+            choice = self.read("\n Choose [0-6]: ").strip()
+            actions = {"1": self.scan, "2": self.questions, "3": self.results, "4": self.report_gate, "5": self.history,
+                       "6": self.ai_model}
             if choice in ("0", "q", "quit", "exit"):
                 return 0
             if choice not in actions:
-                self.out.error("type a number from 0 to 5")
+                self.out.error("type a number from 0 to 6")
                 continue
             try:
                 actions[choice]()
@@ -179,6 +190,86 @@ class Menu:
                 continue
             except (CliError, typer.BadParameter) as exc:
                 self.out.error(str(exc), getattr(exc, "hint", None))
+
+    def ai_model(self) -> None:
+        """6: the model AEGIS reasons with (LLM_PROVIDER_PHASES LP9)."""
+        api = self.be.api
+        cfg = get_config(api)
+        status_view(cfg)(self.out)
+        for line in ("", "  1  Offline - choose a local model", "  2  Online - Google Gemini (the key is asked every run)",
+                     "  3  Go offline now", "  0  Back"):
+            self.out.line(line)
+        choice = self.read("\n Choose [0-3]: ").strip()
+        if choice in ("", "0"):
+            return
+        if choice == "3":
+            status_view(_send(api, "PUT", "/api/llm/config", {"provider": "ollama"}))(self.out)
+            return
+        if choice not in ("1", "2"):
+            raise CliError("type 1, 2, 3 or 0")
+        result = self.switch_model(choice, cfg)
+        if result:
+            status_view(result)(self.out)
+
+    def switch_model(self, choice: str, cfg: dict) -> dict | None:
+        """1 = a local model, 2 = Gemini. The configuration in effect afterwards, or ``None`` if nothing changed."""
+        api = self.be.api
+        if choice == "1":
+            local = [m for m in api.get("/api/llm/models", params={"provider": "ollama"})["models"]
+                     if not m.get("capabilities") or "generate" in m["capabilities"]]
+            for i, m in enumerate(local, 1):
+                self.out.line(f"  {i:>2}  {m['id']}")
+            pick = self.ask("Local model number", default="1")
+            if not pick.isdigit() or not 1 <= int(pick) <= len(local):
+                raise CliError(f"{pick!r} is not one of 1-{len(local)}")
+            return _send(api, "PUT", "/api/llm/config", {"provider": "ollama", "model": local[int(pick) - 1]["id"]})
+        key = self.secret("Gemini API key (asked every run, never saved)").strip()
+        if not key and not (cfg.get("key") or {}).get("configured"):
+            self.out.note("No key entered; nothing changed.")
+            return None
+        found = _send(api, "POST", "/api/llm/discover", {"provider": "gemini", **({"api_key": key} if key else {})})["models"]
+        ids = [m["id"] for m in found]
+        for i, m in enumerate(found, 1):
+            self.out.line(f"  {i:>2}  {m['id']}" + (f"  ({m['stage']})" if m.get("stage") not in (None, "stable") else ""))
+        default = str(ids.index(cfg["online_model"]) + 1) if cfg.get("online_model") in ids else "1"
+        pick = self.ask("Gemini model number", default=default)
+        if not pick.isdigit() or not 1 <= int(pick) <= len(ids):
+            raise CliError(f"{pick!r} is not one of 1-{len(ids)}")
+
+        def consent(disclosure: dict) -> bool:
+            self.out.heading("Before switching to Online mode")
+            self.out.line(disclosure["text"])
+            allow = self.confirm(disclosure["source_code_text"], default=False)
+            if self.read(f"Type YES to agree (privacy notice {disclosure['version']}): ").strip().upper() != "YES":
+                raise CliError("not switched: the privacy notice was not accepted")
+            return allow
+
+        return activate_gemini(self.ctx, api, ids[int(pick) - 1], key or None, interactive=True, accept_version=None,
+                               allow_source_code=None, ask_consent=consent)
+
+    def scan_model(self) -> None:
+        """Which model the scan uses ("AI for this scan"); it keeps it to the end. Enter keeps the active one."""
+        cfg = get_config(self.be.api)
+        self.out.line()
+        self.out.heading("AI for this scan")
+        for line in (f"  Enter  keep {model_label(cfg)}", "  1      Offline - choose a local model",
+                     "  2      Online - Google Gemini (the key is asked every run)", "  0      Back"):
+            self.out.line(line)
+        while True:
+            choice = self.read("\n Choose [Enter/1/2/0]: ").strip()
+            if choice in ("0", "back", "b"):
+                raise _Back()
+            if not choice:
+                break
+            if choice not in ("1", "2"):
+                self.out.error("type 1, 2 or 0, or press Enter to keep the current model")
+                continue
+            try:
+                cfg = self.switch_model(choice, cfg) or cfg
+                break
+            except CliError as exc:
+                self.out.error(f"{exc} - choose again (Enter keeps {model_label(cfg)})", getattr(exc, "hint", None))
+        self.out.line(f"  AI for this scan: {model_label(cfg)}")
 
     def scan(self) -> None:
         while True:
@@ -232,6 +323,7 @@ class Menu:
             if not self.confirm("  I own this app or am authorised to test it", default=False):
                 self.out.line("Not started.")
                 return None
+        self.scan_model()
         if not self.confirm("Start the scan?", default=True):
             return None
         return body

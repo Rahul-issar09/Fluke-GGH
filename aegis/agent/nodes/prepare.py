@@ -93,6 +93,9 @@ async def prepare(state: dict, config: RunnableConfig) -> dict:
     config_json["source_cleanup"] = cleanup  # temp clones are removed after the scan/fixes (C13)
     if repo_info is not None:
         config_json["repo_clone"] = repo_info  # url, commit, branch, size — shown in the report
+    if deps.llm_manager is not None and "llm" not in config_json:
+        # pin the model: the whole scan uses the one it started with (LLM_PROVIDER_PHASES §5.5)
+        config_json["llm"] = deps.llm_manager.snapshot.to_dict()
     deps.store.update_scan(
         scan_id,
         db_snapshot_dates=json.dumps(db_dates),

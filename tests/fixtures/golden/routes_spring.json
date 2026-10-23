@@ -1,0 +1,69 @@
+[
+  {
+    "path": "/health",
+    "methods": [
+      "GET"
+    ],
+    "function": "health",
+    "qualname": "src/main/java/com/example/shop/HealthController.java::health",
+    "file": "src/main/java/com/example/shop/HealthController.java",
+    "line": 9,
+    "end_line": 12
+  },
+  {
+    "path": "/healthz",
+    "methods": [
+      "GET"
+    ],
+    "function": "health",
+    "qualname": "src/main/java/com/example/shop/HealthController.java::health",
+    "file": "src/main/java/com/example/shop/HealthController.java",
+    "line": 9,
+    "end_line": 12
+  },
+  {
+    "path": "/api/orders/{id}",
+    "methods": [
+      "GET"
+    ],
+    "function": "getOrder",
+    "qualname": "src/main/java/com/example/shop/OrderController.java::getOrder",
+    "file": "src/main/java/com/example/shop/OrderController.java",
+    "line": 15,
+    "end_line": 18
+  },
+  {
+    "path": "/api/orders",
+    "methods": [
+      "POST"
+    ],
+    "function": "create",
+    "qualname": "src/main/java/com/example/shop/OrderController.java::create",
+    "file": "src/main/java/com/example/shop/OrderController.java",
+    "line": 20,
+    "end_line": 23
+  },
+  {
+    "path": "/api/orders/{id}/cancel",
+    "methods": [
+      "POST",
+      "PUT"
+    ],
+    "function": "cancel",
+    "qualname": "src/main/java/com/example/shop/OrderController.java::cancel",
+    "file": "src/main/java/com/example/shop/OrderController.java",
+    "line": 25,
+    "end_line": 28
+  },
+  {
+    "path": "/api/orders/{id}",
+    "methods": [
+      "DELETE"
+    ],
+    "function": "delete",
+    "qualname": "src/main/java/com/example/shop/OrderController.java::delete",
+    "file": "src/main/java/com/example/shop/OrderController.java",
+    "line": 30,
+    "end_line": 33
+  }
+]

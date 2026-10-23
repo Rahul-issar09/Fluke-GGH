@@ -21,6 +21,8 @@ __all__ = [
     "get_logging_settings",
     "ModelSettings",
     "get_model_settings",
+    "LlmSettings",
+    "get_llm_settings",
     "ApiSettings",
     "get_api_settings",
     "AppSettings",
@@ -29,6 +31,7 @@ __all__ = [
     "get_gate_settings",
     "ChatSettings",
     "get_chat_settings",
+    "resolve_chat_settings",
     "McpSettings",
     "get_mcp_settings",
 ]
@@ -56,7 +59,9 @@ class ModelSettings:
     full ``Settings.model`` section. Values match PRD §6.1 / SD §13."""
 
     name: str = "qwen2.5:7b"
-    ollama_url: str = "http://ollama:11434"
+    # 127.0.0.1, not localhost: on Windows "localhost" can reach a different Ollama over IPv6;
+    # Docker setups set AEGIS_OLLAMA_URL=http://ollama:11434 (LLM_PROVIDER_PHASES Q-8)
+    ollama_url: str = "http://127.0.0.1:11434"
     temperature: float = 0.1
     num_ctx: int = 8192
 
@@ -69,11 +74,55 @@ def get_model_settings() -> ModelSettings:
     """
     name = os.getenv("AEGIS_MODEL") or os.getenv("AEGIS_MODEL__NAME", "qwen2.5:7b")
     url = os.getenv("AEGIS_OLLAMA_URL") or os.getenv(
-        "AEGIS_MODEL__OLLAMA_URL", "http://ollama:11434"
+        "AEGIS_MODEL__OLLAMA_URL", ModelSettings.ollama_url
     )
     temp = float(os.getenv("AEGIS_MODEL__TEMPERATURE", "0.1"))
     num_ctx = int(os.getenv("AEGIS_MODEL__NUM_CTX", "8192"))
     return ModelSettings(name=name, ollama_url=url, temperature=temp, num_ctx=num_ctx)
+
+
+LLM_PROVIDERS = ("ollama", "gemini")
+
+
+@dataclass(frozen=True)
+class LlmSettings:
+    """Which model provider is active (LLM_PROVIDER_PHASES §6). ``ModelSettings`` stays the Ollama
+    section. A field set here comes from the environment and overrides ``<data_dir>/config/llm.json``;
+    ``None`` leaves the choice to that file (and then to the offline default)."""
+
+    provider: str | None = None        # ollama | gemini; None → the config file decides
+    allow_cloud: bool = True           # false: no cloud provider can be activated or used
+    timeout_s: float = 120.0           # bound on one model call
+    gemini_model: str | None = None    # pins the Gemini model
+    gemini_rpm: float = 10.0           # requests per minute AEGIS sends to Gemini (all scans + chat)
+    gemini_max_output_tokens: int = 2048
+    gemini_thinking_budget: int | None = None   # None: the model's default (decision Q-7)
+    gemini_exclude: tuple[str, ...] | None = None  # model-name tokens hidden from discovery; None: defaults
+    # operator consent for headless installs: the privacy-notice version agreed to (aegis.llm.consent)
+    cloud_consent: str | None = None
+    cloud_source_consent: bool = False   # …and whether source-code excerpts may be sent too
+    # (the API key is never a setting: see aegis.llm.secrets)
+
+
+def get_llm_settings() -> LlmSettings:
+    provider = (os.getenv("AEGIS_LLM__PROVIDER") or "").strip().lower() or None
+    if provider is not None and provider not in LLM_PROVIDERS:
+        raise ValueError(f"AEGIS_LLM__PROVIDER must be one of {', '.join(LLM_PROVIDERS)}, not {provider!r}")
+    allow = os.getenv("AEGIS_LLM__ALLOW_CLOUD")
+    return LlmSettings(
+        provider=provider,
+        allow_cloud=LlmSettings.allow_cloud if allow is None else allow.strip().lower() not in _FALSEY,
+        timeout_s=float(os.getenv("AEGIS_LLM__TIMEOUT_S", str(LlmSettings.timeout_s))),
+        gemini_model=(os.getenv("AEGIS_LLM__GEMINI__MODEL") or "").strip() or None,
+        gemini_rpm=float(os.getenv("AEGIS_LLM__GEMINI__RPM", str(LlmSettings.gemini_rpm))),
+        gemini_max_output_tokens=int(os.getenv("AEGIS_LLM__GEMINI__MAX_OUTPUT_TOKENS",
+                                               str(LlmSettings.gemini_max_output_tokens))),
+        gemini_thinking_budget=int(budget) if (budget := os.getenv("AEGIS_LLM__GEMINI__THINKING_BUDGET")) else None,
+        gemini_exclude=_split_list(exclude) if (exclude := os.getenv("AEGIS_LLM__GEMINI__EXCLUDE")) else None,
+        cloud_consent=(os.getenv("AEGIS_LLM__CLOUD_CONSENT") or "").strip() or None,
+        cloud_source_consent=(os.getenv("AEGIS_LLM__CLOUD_SOURCE_CONSENT") or "").strip().lower()
+        in ("1", "true", "yes", "on"),
+    )
 
 
 @dataclass(frozen=True)
@@ -84,6 +133,8 @@ class ApiSettings:
     allowed_source_roots: tuple[str, ...] = ("/scan",)
     max_body_bytes: int = 65536
     auth_token: str | None = None
+    # names (besides localhost / 127.0.0.1 / ::1) the API answers to without a token (DNS-rebinding guard, LP11)
+    allowed_hosts: tuple[str, ...] = ()
 
 
 def get_api_settings() -> ApiSettings:
@@ -96,7 +147,9 @@ def get_api_settings() -> ApiSettings:
     )
     max_body = int(os.getenv("AEGIS_API__MAX_BODY_BYTES", "65536"))
     token = os.getenv("AEGIS_API__AUTH_TOKEN") or None
-    return ApiSettings(allowed_source_roots=roots, max_body_bytes=max_body, auth_token=token)
+    hosts = os.getenv("AEGIS_API__ALLOWED_HOSTS")
+    return ApiSettings(allowed_source_roots=roots, max_body_bytes=max_body, auth_token=token,
+                       allowed_hosts=_split_list(hosts) if hosts else ())
 
 
 @dataclass(frozen=True)
@@ -125,8 +178,11 @@ class ChatSettings:
     index. All read-only; indexing runs in the background at finalize and never delays a scan."""
 
     enabled: bool = True
-    embed_model: str = "nomic-embed-text"      # Ollama embedding model (RAG02)
-    embed_dim: int = 768                        # nomic-embed-text = 768; bge-m3 = 1024
+    embed_model: str = "bge-m3"                 # Ollama embedding model (RAG02; LLM_PROVIDER_PHASES Q-8)
+    embed_dim: int = 1024                       # bge-m3 = 1024; nomic-embed-text = 768
+    # where the embedding model runs. None → the Ollama URL in effect (resolve_chat_settings).
+    # Separate from the LLM: switching the LLM provider never moves embeddings (LP4).
+    embed_url: str | None = None
     chroma_path: str = "data/chroma"            # PersistentClient directory (RAG03)
     collection: str = "aegis_findings"          # one shared collection, isolated by scan_id
     dense_k: int = 10                           # dense candidates before fusion
@@ -146,6 +202,7 @@ def get_chat_settings() -> ChatSettings:
         enabled=ChatSettings.enabled if enabled is None else enabled.strip().lower() not in _FALSEY,
         embed_model=os.getenv("AEGIS_CHAT__EMBED_MODEL", ChatSettings.embed_model),
         embed_dim=int(os.getenv("AEGIS_CHAT__EMBED_DIM", str(ChatSettings.embed_dim))),
+        embed_url=(os.getenv("AEGIS_CHAT__EMBED_URL") or "").strip() or None,
         chroma_path=os.getenv("AEGIS_CHAT__CHROMA_PATH", ChatSettings.chroma_path),
         collection=os.getenv("AEGIS_CHAT__COLLECTION", ChatSettings.collection),
         dense_k=int(os.getenv("AEGIS_CHAT__DENSE_K", str(ChatSettings.dense_k))),
@@ -202,9 +259,25 @@ class AppSettings:
     rate_limit_rps: float = 5.0
     logging: LoggingSettings = LoggingSettings()
     model: ModelSettings = ModelSettings()
+    llm: LlmSettings = LlmSettings()
     api: ApiSettings = ApiSettings()
     gate: GateSettings = GateSettings()
     chat: ChatSettings = ChatSettings()
+
+
+def resolve_chat_settings(settings: AppSettings, data_dir: str | None = None) -> ChatSettings:
+    """The chat settings as every process uses them: a relative index path placed under the data
+    folder, and the embedding URL filled in (the Ollama URL in effect unless set on its own)."""
+    from dataclasses import replace
+    from pathlib import Path
+
+    chat = settings.chat
+    data = Path(data_dir if data_dir is not None else settings.data_dir)
+    if not Path(chat.chroma_path).is_absolute():
+        chat = replace(chat, chroma_path=str(data / "chroma"))
+    if not chat.embed_url:
+        chat = replace(chat, embed_url=settings.model.ollama_url)
+    return chat
 
 
 def _split_list(value: str) -> tuple[str, ...]:
@@ -227,6 +300,7 @@ def get_app_settings() -> AppSettings:
         rate_limit_rps=float(os.getenv("AEGIS_SCAN__RATE_LIMIT_RPS", "5")),
         logging=get_logging_settings(),
         model=get_model_settings(),
+        llm=get_llm_settings(),
         api=get_api_settings(),
         gate=get_gate_settings(),
         chat=get_chat_settings(),

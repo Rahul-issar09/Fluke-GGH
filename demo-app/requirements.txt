@@ -1,0 +1,8 @@
+# Demo target dependencies — INTENTIONALLY VULNERABLE (test fixture only).
+fastapi==0.139.0
+uvicorn
+httpx
+cryptography
+# PLANTED WEAKNESS: an outdated dependency with a known advisory (fixed in requests 2.32.x).
+# The app never imports it; it is here so dependency scanners (OSV, Trivy) have something to find.
+requests==2.31.0

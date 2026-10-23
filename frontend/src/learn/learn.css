@@ -1,0 +1,106 @@
+/* Learn page. New classes are prefixed "lr-"; everything else reuses the console's styles.css. */
+
+.lr-root main { padding-top: 26px; padding-bottom: 26px; }
+.lr-title { margin: 0; font-size: 28px; line-height: 1.15; }
+.lr-sub { margin: 8px 0 0; color: var(--muted); font-size: 15px; }
+.lr-prefilter { margin-bottom: 10px; }
+
+.lr-overview { display: flex; flex-direction: column; gap: 22px; }
+.lr-h { margin: 0 0 10px; font-size: 16px; }
+
+.lr-note { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border-radius: 14px; border: 1px dashed var(--line); background: var(--panel); color: var(--muted); }
+.lr-scan-head { margin-bottom: 10px; }
+
+.lr-cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.lr-cat { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel); }
+.lr-cat-title { font-size: 15px; }
+.lr-cat-title .mono { color: var(--accent); }
+.lr-cat-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.lr-cat-links { display: flex; gap: 14px; margin-top: auto; }
+.lr-cat-links .link { padding: 0; font-size: 13px; }
+
+.lr-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.lr-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; height: auto; padding: 16px 18px; border-radius: 16px; background: var(--panel); text-align: left; white-space: normal; }
+.lr-tile:hover { border-color: var(--accent); }
+.lr-tile-title { font-size: 16px; font-weight: 600; color: var(--text); }
+.lr-tile-text { color: var(--muted); font-size: 13.5px; line-height: 1.45; }
+.lr-tile-count { margin-top: auto; font-size: 12px; color: var(--accent); }
+
+@media (max-width: 700px) {
+  .lr-root .topbar { gap: 10px; padding: 0 14px; }
+  .lr-root .topbar .chip .small { display: none; }
+}
+
+/* ---- shared by the tabs ---------------------------------------------------------------- */
+.lr-stack { display: flex; flex-direction: column; gap: 18px; }
+.lr-block { display: block; }
+.lr-snapshot { margin-bottom: 10px; }
+.lr-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 8px; }
+.lr-filters input.grow { min-width: 220px; }
+.lr-split { margin-top: 10px; align-items: start; }
+.lr-split .detail-pane { position: sticky; top: 64px; max-height: calc(100vh - 80px); overflow-y: auto; }
+.lr-detail p { margin: 6px 0 10px; }
+.lr-detail table th { width: 120px; }
+.lr-desc { white-space: pre-wrap; max-height: 260px; overflow-y: auto; padding: 8px 10px; margin-bottom: 10px; border-radius: 8px; background: var(--code); font-size: 13px; }
+.lr-links { margin-top: 10px; }
+.lr-check { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.lr-check ul { margin: 6px 0 0; padding-left: 18px; }
+.lr-accent { color: var(--accent); }
+.lr-chip { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--code); border: 1px solid var(--line); font-size: 12px; }
+
+/* code blocks with a copy button; "dont" / "do" tones for the pairs */
+.lr-code { margin: 6px 0; }
+.lr-code-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+.lr-code pre { margin: 0; }
+.lr-code-dont pre { border-left: 4px solid var(--bad); }
+.lr-code-do pre { border-left: 4px solid var(--ok); }
+.lr-code-dont .lr-code-head .small:first-child { color: var(--bad); font-weight: 600; }
+.lr-code-do .lr-code-head .small:first-child { color: var(--ok); font-weight: 600; }
+
+/* list of cards (case studies, challenges) */
+.lr-cards { display: flex; flex-direction: column; gap: 8px; }
+.lr-card { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 14px; border-radius: 10px; background: var(--panel); text-align: left; white-space: normal; }
+.lr-card-active { border-color: var(--accent); background: var(--code); }
+
+/* crypto */
+.lr-prose p { margin: 0 0 8px; max-width: 900px; }
+.lr-langs { margin: 6px 0; }
+.lr-formula { margin: 6px 0; }
+.lr-checklist { list-style: none; padding: 0; margin: 0 0 6px; display: flex; flex-direction: column; gap: 6px; }
+.lr-checklist label.inline { align-items: flex-start; }
+.lr-checklist input { margin-top: 3px; }
+
+/* cases */
+.lr-timeline { padding-left: 18px; }
+.lr-timeline li { margin: 3px 0; }
+
+/* practice */
+.lr-editor { width: 100%; font: 12.5px/1.5 ui-monospace, Consolas, monospace; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--code); color: var(--text); resize: vertical; tab-size: 4; margin: 6px 0 8px; }
+.lr-results { list-style: none; padding: 0; margin: 10px 0; }
+.lr-results li { padding: 3px 0; font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; }
+.lr-pass { color: var(--ok); }
+.lr-fail { color: var(--bad); }
+.lr-hints { margin: 10px 0; padding-left: 20px; color: var(--muted); }
+
+/* cheat sheets */
+.lr-sheets { display: flex; flex-direction: column; gap: 14px; }
+.lr-sheet { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; break-inside: avoid; }
+.lr-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0; }
+.lr-pair-note { grid-column: 1 / -1; }
+@media (max-width: 900px) { .lr-pair { grid-template-columns: 1fr; } }
+
+/* quizzes */
+.lr-quiz { max-width: 860px; display: flex; flex-direction: column; gap: 10px; }
+.lr-question { font-size: 16px; margin: 4px 0; }
+.lr-options { display: flex; flex-direction: column; gap: 8px; }
+.lr-option { text-align: left; white-space: normal; padding: 10px 14px; }
+.lr-option.lr-right { border-color: var(--ok); color: var(--ok); font-weight: 600; }
+.lr-option.lr-wrong { border-color: var(--bad); color: var(--bad); }
+.lr-option.lr-dim { opacity: .55; }
+
+/* print: only the content (cheat sheets print cleanly) */
+@media print {
+  .lr-root .topbar, .lr-root .tabs, .lr-root .lr-title, .lr-root .lr-sub, .lr-no-print { display: none !important; }
+  .lr-root main, .lr-root section { padding: 0; border: none; max-width: none; }
+  .lr-root pre { white-space: pre-wrap; }
+}

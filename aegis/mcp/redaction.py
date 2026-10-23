@@ -20,6 +20,7 @@ from aegis.evidence.digest import digest
 from aegis.evidence.models import Evidence
 from aegis.mcp.schemas import EvidenceDigestOut, EvidenceOut
 from aegis.reports.json_report import REDACTED, evidence_out
+from aegis.secret_scrub import scrub as scrub_secrets
 
 __all__ = ["project_evidence", "scrub_payload", "scrub_text"]
 
@@ -33,7 +34,8 @@ _PATTERNS = (
 
 
 def scrub_text(text: str) -> str:
-    out = _PATTERNS[0].sub(lambda m: m.group(1) + REDACTED, text)
+    out = scrub_secrets(text)  # known secret values, e.g. the model provider's API key (LLM_PROVIDER_PHASES §9.3)
+    out = _PATTERNS[0].sub(lambda m: m.group(1) + REDACTED, out)
     out = _PATTERNS[1].sub(lambda m: m.group(1) + " " + REDACTED, out)
     out = _PATTERNS[2].sub(lambda m: m.group(1) + REDACTED, out)
     return _PATTERNS[3].sub(REDACTED, out)

@@ -1,0 +1,25 @@
+{
+  "name": "aegis-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Test UI for the AEGIS backend: health, scans, live progress, findings, evidence, graph, CBOM, gate, audit, fixes and reports.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "sync:feeds": "node scripts/sync-feeds.mjs"
+  },
+  "dependencies": {
+    "@fontsource/dancing-script": "5.3.0",
+    "@fontsource/instrument-serif": "5.3.0",
+    "@fontsource/inter": "5.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "0.169.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
+  }
+}

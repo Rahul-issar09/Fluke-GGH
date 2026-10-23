@@ -4,6 +4,9 @@ The CLI sends what the user typed to ``POST /api/scans``; the API validates it (
 folders, git hosts, identities) and picks the mode — URL only → M1, folder or repo only → M2, both →
 M3. The CLI follows ``GET /api/scans/{id}/events`` and prints a summary at the end. Ctrl+C stops
 *watching* only: the scan keeps running in the API.
+
+Before the scan starts, a terminal is asked which model it uses ("AI for this scan"; Enter keeps the
+active one) — or ``--model`` names a local one. The scan keeps that model to the end.
 """
 
 from __future__ import annotations
@@ -14,6 +17,8 @@ from typing import List, Optional
 import typer
 
 from aegis.cli.commands._common import check_id, session
+from aegis.cli.commands import llm as llm_cmd
+from aegis.cli.commands.llm import before_model_use, choose_scan_model, model_label
 from aegis.cli.errors import FAILED, INTERRUPTED, OK, USAGE, CliError, cli_command
 from aegis.cli.ui.progress import MODE_LABELS, Progress, summary_view
 from aegis.cli.ui.views import to_data
@@ -94,6 +99,17 @@ def _api_only(ctx) -> None:
         raise CliError("scans run in the AEGIS API; remove --local", USAGE)
 
 
+def pick_model(ctx, be, model: str | None) -> None:
+    """The model this scan uses: ``--model`` (a local one), else asked in a terminal; scripts keep the active one."""
+    api = getattr(be, "api", None)
+    if api is None:
+        return
+    if model:
+        llm_cmd._send(api, "PUT", "/api/llm/config", {"provider": "ollama", "model": model})
+    elif llm_cmd._interactive() and not ctx.out.json_mode:
+        choose_scan_model(ctx, api)
+
+
 def register(app: typer.Typer, groups: dict[str, typer.Typer]) -> None:
     scan = groups["scan"]
 
@@ -107,6 +123,8 @@ def register(app: typer.Typer, groups: dict[str, typer.Typer]) -> None:
         repo: Optional[str] = typer.Option(None, "--repo", "-r", metavar="URL", help="Public repo link, e.g. https://github.com/owner/name."),
         tls_target: Optional[List[str]] = typer.Option(None, "--tls-target", metavar="HOST:PORT", help="Extra TLS endpoint to check (repeatable)."),
         detach: bool = typer.Option(False, "--detach", "-d", help="Start the scan and return its id without following it."),
+        model: Optional[str] = typer.Option(None, "--model", "-m", metavar="MODEL",
+                                            help="Local model for this scan, e.g. qwen2.5:7b (default: asked in a terminal)."),
     ) -> None:
         with session(typer_ctx) as (ctx, be):
             _api_only(ctx)
@@ -116,6 +134,10 @@ def register(app: typer.Typer, groups: dict[str, typer.Typer]) -> None:
                 ctx.out.heading(f"Scan mode: {MODE_LABELS[mode]}")
             if body.get("url"):
                 ctx.out.warn(AUTH_NOTE)          # always shown (stderr), even with --json or -q
+            pick_model(ctx, be, model)           # "AI for this scan": the scan keeps this model to the end
+            cfg = before_model_use(ctx, be)      # this run's Gemini key if Online waits; what goes to the cloud
+            if cfg:
+                ctx.out.note(f"AI for this scan: {model_label(cfg)}")
             scan_id = be.start_scan(body)
             if detach:
                 ctx.out.emit({"scan_id": scan_id, "mode": mode}, lambda out: out.line(

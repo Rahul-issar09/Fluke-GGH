@@ -12,14 +12,15 @@ It never creates a database: an editor may start the server in any working direc
 from __future__ import annotations
 
 import sqlite3
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
 
-from aegis.config import AppSettings
+from aegis.config import AppSettings, resolve_chat_settings
 from aegis.evidence.store import EvidenceStore
+from aegis.llm.manager import ProviderManager
 from aegis.observability import get_logger
 from aegis.services.chat_service import ChatService
 from aegis.services.query_service import QueryService
@@ -39,6 +40,7 @@ class ReadServices:
     store: EvidenceStore
     query: QueryService
     chat: ChatService
+    llm: ProviderManager | None = None   # the model choice, read-only (LLM_PROVIDER_PHASES LP10)
 
 
 def read_only_engine(db_path: Path):
@@ -59,9 +61,10 @@ def build_read_services(settings: AppSettings) -> ReadServices:
             f"no AEGIS data at {db_path}: run a scan first, or set AEGIS_DATA_DIR to the folder that holds aegis.db"
         )
     store = EvidenceStore(read_only_engine(db_path))
-    chat_cfg = settings.chat
-    if not Path(chat_cfg.chroma_path).is_absolute():  # same place the API keeps the chat index
-        chat_cfg = replace(chat_cfg, chroma_path=str(data / "chroma"))
-    chat = ChatService(store, chat_cfg, ollama_url=settings.model.ollama_url, model_settings=settings.model)
+    chat_cfg = resolve_chat_settings(settings, str(data))  # same index path and embedding URL as the API
+    # the same model choice as the API (environment → data/config/llm.json); this process never writes it
+    llm_manager = ProviderManager(settings, data, read_only=True)
+    chat = ChatService(store, chat_cfg, ollama_url=settings.model.ollama_url, model_settings=settings.model,
+                       llm_manager=llm_manager)
     log.info("read_services.ready", data_dir=str(data), model=settings.model.name, embed_model=chat_cfg.embed_model)
-    return ReadServices(data_dir=data, store=store, query=QueryService(store, data), chat=chat)
+    return ReadServices(data_dir=data, store=store, query=QueryService(store, data), chat=chat, llm=llm_manager)

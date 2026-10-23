@@ -290,6 +290,17 @@ def doctor_view(report: dict) -> Callable[[Output], None]:
             rows.append(("Ollama", f"{ok} {ollama.get('url')}"))
             rows.append(("Model", f"{ok} {ollama.get('model')}" if ollama.get("model_present")
                          else f"{bad} {ollama.get('model')} is not pulled - run: ollama pull {ollama.get('model')}"))
+        llm = h.get("llm")
+        if llm:   # the model AEGIS reasons with (LLM_PROVIDER_PHASES LP9)
+            where = "online" if llm.get("location") == "cloud" else "offline"
+            state = ok if llm.get("ready") else (bad if llm.get("ready") is False else warn)
+            rows.append(("AI model", f"{state} {llm.get('provider')} {llm.get('model')} ({where})"
+                         + (f" - {llm['reason']}" if llm.get("reason") else "")))
+        emb = h.get("embeddings")
+        if emb:
+            index = emb.get("index") or {}
+            rows.append(("Embeddings", f"{ok if emb.get('model_present') else bad} {emb.get('model')} ({emb.get('dim')} dims, local)"
+                         + (f" - {index['reason']}" if index.get("compatible") is False else "")))
         rows.append(("Scanners", f"{len(found)} of {len(tools)} found" + (f"; missing: {', '.join(missing)}" if missing else "")))
         rows.append(("Repo scans", f"{ok} from {', '.join(repo.get('git_hosts') or [])}" if repo.get("enabled")
                      else f"{warn} off (the API needs AEGIS_SAFETY__GIT_HOSTS, e.g. github.com:443)"))

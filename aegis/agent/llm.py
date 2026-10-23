@@ -23,9 +23,11 @@ from langchain_ollama import ChatOllama
 from pydantic import BaseModel, ValidationError
 
 from aegis.config import ModelSettings, get_model_settings
+from aegis.llm.base import LlmError, LlmSnapshot
+from aegis.llm.providers.ollama import OllamaProvider
 from aegis.observability import get_logger
 
-__all__ = ["make_llm", "structured_call"]
+__all__ = ["llm_unavailable", "make_llm", "structured_call"]
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -43,11 +45,18 @@ def _transient(exc: BaseException) -> bool:
     return isinstance(status, int) and status >= 500
 
 
-async def _ainvoke(structured: Any, messages: list[Any]) -> Any:
+def llm_unavailable(exc: BaseException) -> str:
+    """The reason a node records when the model could not be used: the classified kind for a
+    provider error (``revoked``, ``model_not_found``…), else the client exception's type, as before."""
+    kind = getattr(exc, "kind", None) if isinstance(exc, LlmError) else None
+    return f"llm unavailable: {kind or type(exc).__name__}"
+
+
+async def _ainvoke(structured: Any, messages: list[Any], retryable: Callable[[BaseException], bool] = _transient) -> Any:
     try:
         return await structured.ainvoke(messages)
     except Exception as exc:  # noqa: BLE001 - re-raised unless it is a server-side hiccup
-        if not _transient(exc):
+        if not retryable(exc):
             raise
         log.warning("llm.transient_error", status=getattr(exc, "status_code", None), error=str(exc)[:200], retry_in_s=TRANSIENT_RETRY_DELAY_S)
         await asyncio.sleep(TRANSIENT_RETRY_DELAY_S)
@@ -60,6 +69,10 @@ def make_llm(settings: ModelSettings | None = None) -> ChatOllama:
     Constructing the client does not open a network connection; it is only
     contacted on invocation, so this is safe to call anywhere (including under
     the offline test guard).
+
+    Kept for backward compatibility: the client is built by
+    :class:`aegis.llm.providers.ollama.OllamaProvider` (LLM_PROVIDER_PHASES LP2),
+    with the same arguments as before.
     """
     cfg = settings or get_model_settings()
     global _logged_once
@@ -72,13 +85,8 @@ def make_llm(settings: ModelSettings | None = None) -> ChatOllama:
             num_ctx=cfg.num_ctx,
         )
         _logged_once = True
-    return ChatOllama(
-        model=cfg.name,
-        base_url=cfg.ollama_url,
-        temperature=cfg.temperature,
-        num_ctx=cfg.num_ctx,
-        format="json",
-    )
+    provider = OllamaProvider(cfg)
+    return provider.chat_model(provider.snapshot())
 
 
 async def structured_call(
@@ -90,6 +98,9 @@ async def structured_call(
     llm: Any | None = None,
     settings: ModelSettings | None = None,
     trace: list[dict[str, Any]] | None = None,
+    manager: Any | None = None,
+    snapshot: LlmSnapshot | None = None,
+    scope: str | None = None,
 ) -> tuple[T | None, str]:
     """Make a schema-constrained LLM call: validate → retry once → fallback.
 
@@ -98,8 +109,15 @@ async def structured_call(
     :param payload: the sole user-visible input — must already be built from
         whitelisted, injection-safe fields (AG01.3 prompt guard).
     :param validate: returns a list of error strings ([] means valid).
-    :param llm: optional pre-built structured runnable (tests inject a fake);
-        when omitted, ``make_llm(settings).with_structured_output`` is used.
+    :param llm: optional pre-built structured runnable (tests inject a fake).
+    :param manager: the :class:`~aegis.llm.manager.ProviderManager`. When given (and
+        ``llm`` is not), the runnable comes from it — for ``snapshot`` (a model pinned
+        earlier, e.g. the scan's) or else the active model — after its gate
+        (``authorize``) has allowed the call. Without either, the legacy
+        ``make_llm(settings).with_structured_output`` path is used.
+    :param scope: the circuit-breaker scope (a scan id, or ``"chat"``). After a fatal
+        provider error (model missing, key invalid, revoked…), later calls in the same
+        scope fail at once with that error instead of asking the model again.
     :returns: ``(result, source)`` where ``source`` is ``"llm"`` (valid first
         try), ``"llm_retry"`` (valid after one corrective retry) or
         ``"fallback"`` (``result`` is ``None``; caller applies a rule default).
@@ -116,18 +134,53 @@ async def structured_call(
     invalid result yields ``(None, "fallback")``. The graph never crashes on a
     bad model response.
     """
-    structured = (
-        llm
-        if llm is not None
-        else make_llm(settings).with_structured_output(schema, method="json_schema")
-    )
+    if manager is None:
+        structured = llm if llm is not None else make_llm(settings).with_structured_output(schema, method="json_schema")
+        return await _attempts(structured, system, payload, validate, trace, _transient)
+
+    snap = snapshot or manager.snapshot
+    try:
+        if scope is not None:
+            manager.breaker.check(scope, snap)
+        structured = _Authorized(llm if llm is not None else manager.structured(schema, snap), manager, snap)
+        return await _attempts(structured, system, payload, validate, trace,
+                               lambda exc: manager.classify(exc, snap).retryable)
+    except Exception as exc:
+        if scope is not None:
+            err = manager.classify(exc, snap)
+            if manager.breaker.record(scope, snap, err):
+                log.warning("llm.breaker_open", scope=scope, provider=snap.provider.value, model=snap.model,
+                            kind=err.kind)
+        raise
+
+
+class _Authorized:
+    """Checks the manager's gate before **every** attempt, not only when the runnable was built: a
+    corrective retry must not reach a cloud model the user switched off a moment ago (LP12)."""
+
+    def __init__(self, inner: Any, manager: Any, snapshot: LlmSnapshot):
+        self.inner, self.manager, self.snapshot = inner, manager, snapshot
+
+    async def ainvoke(self, messages: list[Any]) -> Any:
+        self.manager.authorize(self.snapshot)
+        return await self.inner.ainvoke(messages)
+
+
+async def _attempts(
+    structured: Any,
+    system: str,
+    payload: dict[str, Any],
+    validate: Callable[[Any], list[str]],
+    trace: list[dict[str, Any]] | None,
+    retryable: Callable[[BaseException], bool],
+) -> tuple[Any, str]:
     messages: list[Any] = [
         SystemMessage(content=system),
         HumanMessage(content=json.dumps(payload, default=str)),
     ]
     for attempt in ("llm", "llm_retry"):
         try:
-            out = await _ainvoke(structured, messages)
+            out = await _ainvoke(structured, messages, retryable)
         except (ValidationError, OutputParserException, ValueError) as exc:
             log.warning("llm.unparseable", attempt=attempt, error=str(exc)[:200])
             if trace is not None:

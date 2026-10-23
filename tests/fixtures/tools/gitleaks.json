@@ -1,0 +1,12 @@
+[
+  {
+    "RuleID": "generic-api-key",
+    "Description": "Generic API Key",
+    "File": "config.py",
+    "StartLine": 8,
+    "EndLine": 8,
+    "Secret": "sk_live_PLACEHOLDER_DO_NOT_USE_0000",
+    "Match": "API_KEY = \"sk_live_PLACEHOLDER_DO_NOT_USE_0000\"",
+    "Entropy": 4.2
+  }
+]

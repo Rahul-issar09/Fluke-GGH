@@ -1,0 +1,54 @@
+# Golden questions for the RAG eval (RAG13). Deterministic: FakeEmbedder + model-down extractive
+# fallback, so an explain answer cites whatever retrieval surfaced — the eval checks routing and
+# citation grounding, not model prose. Finding ids are stable from the fixed seed order:
+#   F-0001 account leak (A01)  F-0002 sql injection (A03)  F-0003 hardcoded secret
+#   F-0004 weak TLS (A02)      F-0005 is a DIFFERENT scan's finding (must never be cited).
+
+# --- structured path ---
+- q: "how many findings are there?"
+  path: structured
+  must_cite: [F-0001, F-0002, F-0003, F-0004]
+  must_not_cite: [F-0005]
+- q: "list the A01 issues"
+  path: structured
+  must_cite: [F-0001]
+  must_not_cite: [F-0002, F-0005]
+- q: "which findings are sql injection?"
+  path: structured
+  must_cite: [F-0002]
+  must_not_cite: [F-0001, F-0005]
+- q: "what's in app/config.py?"
+  path: structured
+  must_cite: [F-0003]
+  must_not_cite: [F-0005]
+- q: "show the A02 findings"
+  path: structured
+  must_cite: [F-0004]
+  must_not_cite: [F-0005]
+- q: "count the critical findings"
+  path: structured
+  must_cite: [F-0001, F-0002]          # severity >= 0.9: access control + sqli
+  must_not_cite: [F-0005]
+
+# --- explain path (fallback cites the single top-retrieved finding) ---
+- q: "why can a user read another account's balance without an ownership check?"
+  path: explain
+  must_cite: [F-0001]
+  must_not_cite: [F-0005]
+- q: "explain how the sql query is built by concatenating the name parameter"
+  path: explain
+  must_cite: [F-0002]
+  must_not_cite: [F-0005]
+- q: "why is the hardcoded stripe api key in the configuration a risk?"
+  path: explain
+  must_cite: [F-0003]
+  must_not_cite: [F-0005]
+- q: "why is accepting the outdated tls protocol dangerous?"
+  path: explain
+  must_cite: [F-0004]
+  must_not_cite: [F-0005]
+
+# --- out of scope: nothing in this scan matches ---
+- q: "why does the kubernetes ingress dashboard get exposed?"
+  path: explain
+  expect_no_match: true

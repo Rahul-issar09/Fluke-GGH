@@ -1,0 +1,486 @@
+{
+  "aegis_report": "1.0",
+  "generated_at": "2026-10-07T18:28:20.490517+00:00",
+  "scan": {
+    "id": "S-0006",
+    "mode": "runtime",
+    "status": "running",
+    "target_url": "http://127.0.0.1:5000",
+    "source": null,
+    "repo_url": null,
+    "created_at": "2026-10-07T18:23:53.728332+00:00",
+    "started_at": "2026-10-07T18:23:53.743258+00:00",
+    "finished_at": null
+  },
+  "summary": {
+    "findings": 4,
+    "open": 4,
+    "resolved": 0,
+    "by_state": {
+      "candidate": 2,
+      "confirmed": 2
+    },
+    "top_risk": "F-0016",
+    "evidence": 5
+  },
+  "risk": {
+    "formula": "Risk = Severity × Confidence × (1 + Exploitability + Exposure + Criticality + PathFactor) / 5",
+    "kmax": 5.0,
+    "confidence_by_state": {
+      "candidate": 0.4,
+      "corroborated": 0.7,
+      "confirmed": 1.0,
+      "resolved": 1.0
+    }
+  },
+  "db_snapshot_dates": {
+    "nuclei": null,
+    "osv": null,
+    "trivy": null
+  },
+  "findings": [
+    {
+      "id": "F-0016",
+      "type": "broken_access_control",
+      "owasp": "A01",
+      "title": "Broken object-level access control on GET /api/accounts/{id}",
+      "severity": 0.9,
+      "state": "confirmed",
+      "mode": "runtime",
+      "route": "GET /api/accounts/{id}",
+      "function": null,
+      "file": null,
+      "line": null,
+      "risk": 0.792,
+      "correlation_score": null,
+      "what": "The API allows unauthorized users to access sensitive account details by making GET requests to /api/accounts/{id}.",
+      "where": "GET /api/accounts/{id}",
+      "impact": "Attackers can view other users' account information, potentially exposing personal data.",
+      "exploit": "An attacker can send a GET request to /api/accounts/{id} with a different user ID to access their account details.",
+      "fix": null,
+      "scores": {
+        "confidence": 1.0,
+        "exploitability": 1.0,
+        "exposure": 0.6,
+        "criticality": 1.0,
+        "path_factor": 0.8,
+        "risk": 0.792,
+        "correlation": null
+      },
+      "claims": [
+        {
+          "field": "what",
+          "text": "The API allows unauthorized users to access sensitive account details by making GET requests to /api/accounts/{id}.",
+          "evidence_ids": [
+            "E-0027"
+          ]
+        },
+        {
+          "field": "impact",
+          "text": "Attackers can view other users' account information, potentially exposing personal data.",
+          "evidence_ids": [
+            "E-0027"
+          ]
+        },
+        {
+          "field": "exploit",
+          "text": "An attacker can send a GET request to /api/accounts/{id} with a different user ID to access their account details.",
+          "evidence_ids": [
+            "E-0027"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E-0027"
+      ],
+      "sources": [
+        "worker1.bola"
+      ],
+      "risk_breakdown": {
+        "formula": "Risk = Severity × Confidence × (1 + Exploitability + Exposure + Criticality + PathFactor) / 5",
+        "factors": {
+          "severity": 0.9,
+          "confidence": 1.0,
+          "exploitability": 1.0,
+          "exposure": 0.6,
+          "criticality": 1.0,
+          "path_factor": 0.8
+        },
+        "expression": "0.9 × 1 × (1 + 1 + 0.6 + 1 + 0.8) / 5 = 0.792",
+        "risk": 0.792
+      },
+      "merged": [],
+      "history": [
+        {
+          "from": "candidate",
+          "to": "confirmed",
+          "actor": "worker",
+          "reason": "differential replay: the second identity received the first identity's record",
+          "evidence_ids": [
+            "E-0027"
+          ],
+          "at": "2026-10-07T18:23:54.321723+00:00"
+        }
+      ],
+      "rank": 1
+    },
+    {
+      "id": "F-0017",
+      "type": "ssrf",
+      "owasp": "A10",
+      "title": "Server-side request forgery via 'url' on GET /api/fetch",
+      "severity": 0.8,
+      "state": "confirmed",
+      "mode": "runtime",
+      "route": "GET /api/fetch",
+      "function": null,
+      "file": null,
+      "line": null,
+      "risk": 0.464,
+      "correlation_score": null,
+      "what": "The application allows an attacker to forge server-side requests using the 'url' parameter in GET /api/fetch.",
+      "where": "GET /api/fetch",
+      "impact": "An attacker can exploit this to perform unauthorized actions, such as accessing internal services or sensitive data.",
+      "exploit": "An attacker could craft a malicious URL and send it to the '/api/fetch' endpoint, potentially leading to unauthorized access or data exfiltration.",
+      "fix": null,
+      "scores": {
+        "confidence": 1.0,
+        "exploitability": 1.0,
+        "exposure": 0.6,
+        "criticality": 0.3,
+        "path_factor": 0.0,
+        "risk": 0.464,
+        "correlation": null
+      },
+      "claims": [
+        {
+          "field": "what",
+          "text": "The application allows an attacker to forge server-side requests using the 'url' parameter in GET /api/fetch.",
+          "evidence_ids": [
+            "E-0028"
+          ]
+        },
+        {
+          "field": "impact",
+          "text": "An attacker can exploit this to perform unauthorized actions, such as accessing internal services or sensitive data.",
+          "evidence_ids": [
+            "E-0028"
+          ]
+        },
+        {
+          "field": "exploit",
+          "text": "An attacker could craft a malicious URL and send it to the '/api/fetch' endpoint, potentially leading to unauthorized access or data exfiltration.",
+          "evidence_ids": [
+            "E-0028"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E-0028"
+      ],
+      "sources": [
+        "worker1.ssrf"
+      ],
+      "risk_breakdown": {
+        "formula": "Risk = Severity × Confidence × (1 + Exploitability + Exposure + Criticality + PathFactor) / 5",
+        "factors": {
+          "severity": 0.8,
+          "confidence": 1.0,
+          "exploitability": 1.0,
+          "exposure": 0.6,
+          "criticality": 0.3,
+          "path_factor": 0.0
+        },
+        "expression": "0.8 × 1 × (1 + 1 + 0.6 + 0.3 + 0) / 5 = 0.464",
+        "risk": 0.464
+      },
+      "merged": [],
+      "history": [
+        {
+          "from": "candidate",
+          "to": "confirmed",
+          "actor": "worker",
+          "reason": "out-of-band callback received from the target server",
+          "evidence_ids": [
+            "E-0028"
+          ],
+          "at": "2026-10-07T18:23:54.533644+00:00"
+        }
+      ],
+      "rank": 2
+    },
+    {
+      "id": "F-0019",
+      "type": "api_conformance",
+      "owasp": "A05",
+      "title": "API conformance failure on GET /api/accounts/{id}: Undocumented HTTP status code",
+      "severity": 0.3,
+      "state": "candidate",
+      "mode": "runtime",
+      "route": "GET /api/accounts/{id}",
+      "function": null,
+      "file": null,
+      "line": null,
+      "risk": 0.089,
+      "correlation_score": null,
+      "what": "The API returns an undocumented 404 status code for account retrieval requests.",
+      "where": "GET /api/accounts/{id}",
+      "impact": "This could mislead clients, making it harder to diagnose issues and potentially expose sensitive information.",
+      "exploit": "An attacker could exploit this by sending a GET request to a non-existent account ID, receiving a 404 response.",
+      "fix": null,
+      "scores": {
+        "confidence": 0.4,
+        "exploitability": 0.3,
+        "exposure": 0.6,
+        "criticality": 1.0,
+        "path_factor": 0.8,
+        "risk": 0.089,
+        "correlation": null
+      },
+      "claims": [
+        {
+          "field": "what",
+          "text": "The API returns an undocumented 404 status code for account retrieval requests.",
+          "evidence_ids": [
+            "E-0030"
+          ]
+        },
+        {
+          "field": "impact",
+          "text": "This could mislead clients, making it harder to diagnose issues and potentially expose sensitive information.",
+          "evidence_ids": [
+            "E-0030"
+          ]
+        },
+        {
+          "field": "exploit",
+          "text": "An attacker could exploit this by sending a GET request to a non-existent account ID, receiving a 404 response.",
+          "evidence_ids": [
+            "E-0030"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E-0030"
+      ],
+      "sources": [
+        "worker1.schemathesis"
+      ],
+      "risk_breakdown": {
+        "formula": "Risk = Severity × Confidence × (1 + Exploitability + Exposure + Criticality + PathFactor) / 5",
+        "factors": {
+          "severity": 0.3,
+          "confidence": 0.4,
+          "exploitability": 0.3,
+          "exposure": 0.6,
+          "criticality": 1.0,
+          "path_factor": 0.8
+        },
+        "expression": "0.3 × 0.4 × (1 + 0.3 + 0.6 + 1 + 0.8) / 5 = 0.089",
+        "risk": 0.089
+      },
+      "merged": [],
+      "history": [],
+      "rank": 3
+    },
+    {
+      "id": "F-0018",
+      "type": "api_conformance",
+      "owasp": "A05",
+      "title": "API conformance failure on GET /api/fetch: Server error",
+      "severity": 0.3,
+      "state": "candidate",
+      "mode": "runtime",
+      "route": "GET /api/fetch",
+      "function": null,
+      "file": null,
+      "line": null,
+      "risk": 0.053,
+      "correlation_score": null,
+      "what": "The API endpoint /api/fetch returns a 502 error, indicating a server misconfiguration or failure.",
+      "where": "GET /api/fetch",
+      "impact": "This can lead to service disruption and loss of functionality for API consumers, potentially impacting user experience and system availability.",
+      "exploit": "An attacker could exploit this by sending a request to /api/fetch, which would result in a 502 error, disrupting the service.",
+      "fix": null,
+      "scores": {
+        "confidence": 0.4,
+        "exploitability": 0.3,
+        "exposure": 0.6,
+        "criticality": 0.3,
+        "path_factor": 0.0,
+        "risk": 0.053,
+        "correlation": null
+      },
+      "claims": [
+        {
+          "field": "what",
+          "text": "The API endpoint /api/fetch returns a 502 error, indicating a server misconfiguration or failure.",
+          "evidence_ids": [
+            "E-0029"
+          ]
+        },
+        {
+          "field": "impact",
+          "text": "This can lead to service disruption and loss of functionality for API consumers, potentially impacting user experience and system availability.",
+          "evidence_ids": [
+            "E-0029"
+          ]
+        },
+        {
+          "field": "exploit",
+          "text": "An attacker could exploit this by sending a request to /api/fetch, which would result in a 502 error, disrupting the service.",
+          "evidence_ids": [
+            "E-0029"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E-0029"
+      ],
+      "sources": [
+        "worker1.schemathesis"
+      ],
+      "risk_breakdown": {
+        "formula": "Risk = Severity × Confidence × (1 + Exploitability + Exposure + Criticality + PathFactor) / 5",
+        "factors": {
+          "severity": 0.3,
+          "confidence": 0.4,
+          "exploitability": 0.3,
+          "exposure": 0.6,
+          "criticality": 0.3,
+          "path_factor": 0.0
+        },
+        "expression": "0.3 × 0.4 × (1 + 0.3 + 0.6 + 0.3 + 0) / 5 = 0.053",
+        "risk": 0.053
+      },
+      "merged": [],
+      "history": [],
+      "rank": 4
+    }
+  ],
+  "attack_paths": [],
+  "evidence": [
+    {
+      "id": "E-0026",
+      "finding_id": null,
+      "scan_id": "S-0006",
+      "kind": "http_exchange",
+      "tool": "httpx",
+      "tool_version": "",
+      "db_date": null,
+      "payload": {
+        "method": "GET",
+        "route": "/openapi.json",
+        "status": 200,
+        "routes_found": 6,
+        "routes": [
+          "GET /api/accounts",
+          "GET /api/accounts/{id}",
+          "GET /api/fetch",
+          "GET /api/users/search",
+          "GET /health",
+          "POST /login"
+        ]
+      },
+      "created_at": "2026-10-07T18:23:53.963027+00:00"
+    },
+    {
+      "id": "E-0027",
+      "finding_id": "F-0016",
+      "scan_id": "S-0006",
+      "kind": "http_exchange",
+      "tool": "bola",
+      "tool_version": "0.1.0",
+      "db_date": null,
+      "payload": {
+        "method": "GET",
+        "route": "/api/accounts/1",
+        "route_template": "GET /api/accounts/{id}",
+        "object_id": 1,
+        "identity": "B",
+        "auth_context": "authenticated",
+        "status": 200,
+        "timing_ms": 14,
+        "contains_owner_fields": true,
+        "baseline": {
+          "identity": "A",
+          "status": 200
+        },
+        "request": "GET /api/accounts/1 (as identity B)",
+        "response": "{\"id\": 1, \"owner_id\": 1, \"owner\": \"alice\", \"account_number\": \"ACC-1001\", \"balance\": 1200.5}"
+      },
+      "created_at": "2026-10-07T18:23:54.287998+00:00"
+    },
+    {
+      "id": "E-0028",
+      "finding_id": "F-0017",
+      "scan_id": "S-0006",
+      "kind": "oob_hit",
+      "tool": "ssrf",
+      "tool_version": "0.1.0",
+      "db_date": null,
+      "payload": {
+        "method": "GET",
+        "route": "/api/fetch",
+        "route_template": "GET /api/fetch",
+        "param": "url",
+        "auth_context": "authenticated",
+        "test_input_id": "SSRF-CB-001",
+        "probe_status": 200,
+        "hits": 1,
+        "request": "GET /api/fetch?url=<approved test input SSRF-CB-001>"
+      },
+      "created_at": "2026-10-07T18:23:54.506154+00:00"
+    },
+    {
+      "id": "E-0029",
+      "finding_id": "F-0018",
+      "scan_id": "S-0006",
+      "kind": "http_exchange",
+      "tool": "schemathesis",
+      "tool_version": "schemathesis-4",
+      "db_date": null,
+      "payload": {
+        "method": "GET",
+        "route": "/api/fetch",
+        "route_template": "GET /api/fetch",
+        "status": 502,
+        "auth_context": "authenticated",
+        "checks": [
+          "Server error",
+          "Undocumented HTTP status code"
+        ],
+        "request": "GET /api/fetch"
+      },
+      "created_at": "2026-10-07T18:23:57.425261+00:00"
+    },
+    {
+      "id": "E-0030",
+      "finding_id": "F-0019",
+      "scan_id": "S-0006",
+      "kind": "http_exchange",
+      "tool": "schemathesis",
+      "tool_version": "schemathesis-4",
+      "db_date": null,
+      "payload": {
+        "method": "GET",
+        "route": "/api/accounts/{id}",
+        "route_template": "GET /api/accounts/{id}",
+        "status": 404,
+        "auth_context": "authenticated",
+        "checks": [
+          "Undocumented HTTP status code"
+        ],
+        "request": "GET /api/accounts/{id}"
+      },
+      "created_at": "2026-10-07T18:23:57.475514+00:00"
+    }
+  ],
+  "audit": {
+    "tool_calls": 1,
+    "blocked": 0,
+    "by_tool": {
+      "schemathesis": 1
+    }
+  }
+}

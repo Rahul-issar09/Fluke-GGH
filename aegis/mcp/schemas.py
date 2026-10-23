@@ -12,8 +12,8 @@ from aegis.api.schemas import AskOut, EvidenceOut, FindingDetail, FindingOut, Sc
 
 __all__ = [
     "SCAN_ID", "FINDING_ID", "EVIDENCE_ID", "OWASP",
-    "AskOut", "AttackPathsOut", "EvidenceDigestOut", "EvidenceOut", "FindingDetail", "FindingOut",
-    "FindingsOut", "ScanOut",
+    "AnsweredBy", "AskOut", "AttackPathsOut", "EvidenceDigestOut", "EvidenceOut", "FindingDetail", "FindingOut",
+    "FindingsOut", "LlmStatusOut", "McpAskOut", "ScanOut",
 ]
 
 # the same id patterns the REST routers enforce
@@ -45,3 +45,32 @@ class FindingsOut(BaseModel):
 class AttackPathsOut(BaseModel):
     scan_id: str
     paths: list[list[str]] = Field(description="Chains like [endpoint, function, sink, finding]")
+
+
+class AnsweredBy(BaseModel):
+    provider: str
+    model: str
+    location: str = Field(description="local (this machine) or cloud")
+
+
+class McpAskOut(AskOut):
+    """The REST answer plus which model answered (LLM_PROVIDER_PHASES LP10). ``AskOut`` itself is a
+    frozen REST contract, so the addition lives here."""
+
+    answered_by: AnsweredBy | None = None
+    note: str | None = Field(None, description="Why the answer did not come from the configured model, if so")
+
+
+class LlmStatusOut(BaseModel):
+    """The model AEGIS reasons with, as configured in AEGIS (an MCP client cannot change it).
+    Carries nothing about the API key — not even whether one exists."""
+
+    provider: str
+    model: str
+    location: str = Field(description="local (this machine) or cloud (Google Gemini)")
+    online_model: str | None = Field(None, description="The Gemini model chosen for Online mode")
+    online_chosen_but_inactive: bool = Field(False, description="Online mode is chosen but this server cannot use it now")
+    note: str | None = None
+    consent_given: bool = False
+    allow_source_code: bool = False
+    embeddings: dict = Field(default_factory=dict, description="The embedding model: always local")

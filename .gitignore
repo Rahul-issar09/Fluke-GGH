@@ -47,6 +47,8 @@ frontend/dist/
 # remediation code (aegis/fix/draft.py), so a fresh clone needs them
 *.md
 !rules/fix_templates/*.md
+# the multi-provider LLM build plan travels with the code
+!LLM_PROVIDER_PHASES.md
 
 # --- Generated per-machine config -----------------------------------------
 # made by `python -m aegis.mcp.cli print-config`: holds this machine's absolute paths

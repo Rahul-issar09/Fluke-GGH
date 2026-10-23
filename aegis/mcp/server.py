@@ -3,7 +3,8 @@
 Lets an MCP client (a code editor such as Antigravity) read a scan's results and ask about them:
 
     tools      list_findings · get_finding · get_evidence · get_attack_paths · get_cbom · scan_status · ask
-    resources  aegis://findings/{id} · aegis://scans/{id}/graph · aegis://scans/{id}/cbom
+               · llm_status
+    resources  aegis://findings/{id} · aegis://scans/{id}/graph · aegis://scans/{id}/cbom · aegis://config/llm
                (+ aegis://scans/{id}/report.json only when raw evidence is exposed)
 
 Run it over stdio (what editors launch)::
@@ -18,8 +19,11 @@ Rules it keeps:
 * **Evidence (M-3).** Digests by default; raw payloads only with ``AEGIS_MCP__EXPOSE_RAW_EVIDENCE``,
   and redacted even then (:mod:`aegis.mcp.redaction`).
 * **Audit (M-4).** Every call appends one line to ``<data_dir>/audit/mcp.jsonl``.
-* **Offline models only (M-7).** ``ask`` uses AEGIS's own local Ollama model; the server refuses
-  to start if the model URL is not on this machine or the local network.
+* **The model is AEGIS's choice, not the client's (M-7′, LLM_PROVIDER_PHASES LP10).** ``ask`` uses the
+  model configured in AEGIS (``data/config/llm.json``); ``llm_status`` shows it, and nothing here can
+  change it. The Gemini key is typed into the AEGIS app for each run and never saved, so this
+  separate process normally has none: in Online mode it then answers with the offline model and
+  says so. The Ollama URL must still be on this machine or the local network (refused otherwise).
 * **stdout is the protocol (M-9).** Logging is configured to stderr before anything else runs.
 """
 
@@ -43,7 +47,8 @@ from aegis.mcp.audit import AuditLog
 from aegis.mcp.redaction import project_evidence, scrub_payload
 from aegis.mcp.schemas import (
     EVIDENCE_ID, FINDING_ID, OWASP, SCAN_ID,
-    AskOut, AttackPathsOut, EvidenceDigestOut, EvidenceOut, FindingDetail, FindingsOut, ScanOut,
+    AnsweredBy, AttackPathsOut, EvidenceDigestOut, EvidenceOut, FindingDetail, FindingsOut, LlmStatusOut, McpAskOut,
+    ScanOut,
 )
 from aegis.observability import get_logger
 from aegis.services.query_service import QueryNotFound
@@ -52,7 +57,8 @@ __all__ = ["TOOL_NAMES", "build_mcp", "main"]
 
 log = get_logger("mcp")
 
-TOOL_NAMES = ("list_findings", "get_finding", "get_evidence", "get_attack_paths", "get_cbom", "scan_status", "ask")
+TOOL_NAMES = ("list_findings", "get_finding", "get_evidence", "get_attack_paths", "get_cbom", "scan_status", "ask",
+              "llm_status")
 
 NO_SCANS = "No scans yet. Run a scan with the AEGIS API first; this server only reads scan results."
 UNTRUSTED = (
@@ -107,6 +113,29 @@ def build_mcp(services, settings, *, audit: AuditLog | None = None) -> MCPServer
 
     async def off_loop(fn, *args, **kwargs):
         return await anyio.to_thread.run_sync(lambda: fn(*args, **kwargs))
+
+    def llm_status() -> LlmStatusOut:
+        """The configured model, from the same file the AEGIS app writes (reloaded if it changed)."""
+        manager = services.llm
+        if manager is None:
+            raise ToolError("the model configuration is not available in this server")
+        manager.reload_if_changed()
+        st = manager.status()
+        note = st.get("config_error")
+        if st.get("awaiting_key"):
+            note = (f"Online mode (Gemini {st.get('online_model')}) is chosen in AEGIS, but the Gemini key is entered in "
+                    "the AEGIS app for each run and never saved, so this MCP server cannot use it: answers come from "
+                    f"the offline model {st['model']}.")
+        consent = st.get("consent") or {}
+        from aegis.config import resolve_chat_settings
+
+        chat_cfg = resolve_chat_settings(manager.settings)
+        return LlmStatusOut(
+            provider=st["provider"], model=st["model"], location=st["location"], online_model=st.get("online_model"),
+            online_chosen_but_inactive=bool(st.get("awaiting_key")), note=note, consent_given=bool(consent.get("granted")),
+            allow_source_code=bool(st.get("allow_source_code")) and st["location"] == "cloud",
+            embeddings={"model": chat_cfg.embed_model, "dim": chat_cfg.embed_dim, "location": "local"},
+        )
 
     # ------------------------------------------------------------------ tools (all read-only)
     @mcp.tool(annotations=READ_ONLY, description=(
@@ -168,19 +197,24 @@ def build_mcp(services, settings, *, audit: AuditLog | None = None) -> MCPServer
 
     @mcp.tool(annotations=READ_ONLY, description=(
         "Ask about a scan's findings in plain language, e.g. 'why is F-0079 a risk?' or 'how many critical findings?'. "
-        "Answered by AEGIS's own LOCAL model, citing finding and evidence ids. Only questions about this scan's "
-        "findings are answered; anything else returns 'No finding matches.'. Explanations can take a minute on a "
-        "local model; counts and lists are instant. " + UNTRUSTED))
+        "Answered by the model configured in AEGIS (see llm_status; offline by default), citing finding and evidence "
+        "ids; the answer says which model answered. Only questions about this scan's findings are answered; anything "
+        "else returns 'No finding matches.'. Explanations can take a minute on a local model; counts and lists are "
+        "instant. " + UNTRUSTED))
     async def ask(
         question: Annotated[str, Field(min_length=1, max_length=2000, description="A question about the scan's findings")],
         scan_id: Annotated[str | None, Field(pattern=SCAN_ID, description="Scan id; default: latest scan")] = None,
-    ) -> AskOut:
-        with audited("ask", {"scan_id": scan_id, "question": question}):
+    ) -> McpAskOut:
+        status = llm_status() if services.llm is not None else None
+        model = f"{status.provider}:{status.model}" if status else None
+        with audited("ask", {"scan_id": scan_id, "question": question, "model": model}):
             sid = scan_or_latest(scan_id)
             if store.get_scan(sid) is None:
                 raise QueryNotFound(f"unknown scan {sid}", [sid])
             try:
-                return await asyncio.wait_for(chat.ask(sid, question), timeout=settings.ask_timeout_s)
+                answer = await asyncio.wait_for(chat.ask(sid, question), timeout=settings.ask_timeout_s)
+                by = AnsweredBy(provider=status.provider, model=status.model, location=status.location) if status else None
+                return McpAskOut(**answer.model_dump(), answered_by=by, note=status.note if status else None)
             except asyncio.TimeoutError:
                 raise ToolError(
                     f"The local model did not answer within {settings.ask_timeout_s:g}s. Try a narrower question, "
@@ -205,6 +239,21 @@ def build_mcp(services, settings, *, audit: AuditLog | None = None) -> MCPServer
     async def cbom_resource(scan_id: str) -> str:
         with audited("cbom", {"scan_id": scan_id}, kind="resource"):
             return json.dumps(await off_loop(query.get_cbom, scan_id))
+
+    @mcp.tool(name="llm_status", annotations=READ_ONLY, description=(
+        "The model AEGIS reasons with, as configured in AEGIS: offline (Ollama, this machine) or online (Google "
+        "Gemini), and whether Online mode is chosen but cannot be used by this server. Embeddings are always local. "
+        "Read-only: the model is changed in the AEGIS app or CLI, never through MCP. Never includes any API key."))
+    async def llm_status_tool() -> LlmStatusOut:
+        with audited("llm_status", {}):
+            return llm_status()
+
+
+    @mcp.resource("aegis://config/llm", name="llm", mime_type="application/json",
+                  description="The model AEGIS reasons with (same as llm_status). Never includes any API key.")
+    async def llm_resource() -> str:
+        with audited("llm", {}, kind="resource"):
+            return llm_status().model_dump_json()
 
     if settings.expose_raw_evidence:  # the report embeds evidence payloads, so it follows the raw-evidence policy
         from aegis.services.report_service import report_paths

@@ -17,12 +17,17 @@ import httpx
 
 from aegis.observability import get_logger
 
-__all__ = ["EmbeddingUnavailable", "OllamaEmbedder", "l2_normalize", "DOC_PREFIX", "QUERY_PREFIX"]
+__all__ = ["EmbeddingUnavailable", "OllamaEmbedder", "UnavailableEmbedder", "l2_normalize", "make_embedder",
+           "DOC_PREFIX", "QUERY_PREFIX", "PREFIX_SCHEME"]
 
 log = get_logger("chat.embedder")
 
 DOC_PREFIX = "search_document: "
 QUERY_PREFIX = "search_query: "
+# recorded in the index manifest (LP4): changing the prefixes changes the vectors. These are
+# nomic-embed-text's prefixes and are applied to every model, bge-m3 included (finding F-9: a
+# retrieval-quality quirk; changing it needs a full reindex, so it is left as is).
+PREFIX_SCHEME = "search_document/search_query"
 
 
 class EmbeddingUnavailable(RuntimeError):
@@ -84,6 +89,35 @@ class OllamaEmbedder:
             return await self._embed_one(client, QUERY_PREFIX + text)
 
 
-def make_embedder(chat_settings, ollama_url: str, *, transport: httpx.AsyncBaseTransport | None = None) -> OllamaEmbedder:
-    """Build the embedder from the chat settings (model, dim) and the Ollama host."""
-    return OllamaEmbedder(chat_settings.embed_model, ollama_url, dim=chat_settings.embed_dim, transport=transport)
+class UnavailableEmbedder:
+    """An embedder that refuses with a fixed reason — e.g. a public embedding URL, or an index built
+    by another model. Callers already treat :class:`EmbeddingUnavailable` as "use keyword search"."""
+
+    def __init__(self, model: str, dim: int | None, reason: str):
+        self.model = model
+        self.dim = dim
+        self.reason = reason
+
+    async def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        raise EmbeddingUnavailable(self.reason)
+
+    async def embed_query(self, text: str) -> list[float]:
+        raise EmbeddingUnavailable(self.reason)
+
+
+def make_embedder(chat_settings, ollama_url: str = "", *, transport: httpx.AsyncBaseTransport | None = None,
+                  guard: bool = False) -> OllamaEmbedder | UnavailableEmbedder:
+    """Build the embedder from the chat settings (model, dim, ``embed_url``; LP4). ``ollama_url`` is
+    the fallback for settings without an embedding URL. With ``guard``, a URL that is not on this
+    machine or the local network is refused (M-7: embeddings always stay local) — nothing is sent."""
+    url = getattr(chat_settings, "embed_url", None) or ollama_url
+    if guard:
+        from aegis.safety.model_host import ModelHostRefused, check_model_url
+
+        try:
+            check_model_url(url)
+        except ModelHostRefused as exc:
+            log.error("embedder.url_refused", url=url, reason=str(exc)[:200])
+            return UnavailableEmbedder(chat_settings.embed_model, chat_settings.embed_dim,
+                                       f"embeddings stay local; the embedding URL was refused: {exc}")
+    return OllamaEmbedder(chat_settings.embed_model, url, dim=chat_settings.embed_dim, transport=transport)

@@ -1,0 +1,1969 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AEGIS report S-0017</title>
+<style>
+:root {
+  --bg: #f7f8fa; --panel: #ffffff; --text: #1d2330; --muted: #5f6b7a; --line: #dde2ea; --code: #f1f3f7;
+  --accent: #2f5bd3; --confirmed: #b42318; --corroborated: #b54708; --candidate: #475467; --resolved: #067647;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #11151c; --panel: #181e27; --text: #e6e9ef; --muted: #9aa4b2; --line: #2a3340; --code: #10141a;
+    --accent: #7ea2ff; --confirmed: #f97066; --corroborated: #fdb022; --candidate: #98a2b3; --resolved: #47cd89;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+header h1 { margin: 0 0 4px; font-size: 26px; }
+h2 { margin: 36px 0 12px; font-size: 20px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { margin: 0; font-size: 17px; }
+h4 { margin: 18px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin: 12px 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat b { display: block; font-size: 24px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+pre { background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-x: auto; font: 13px/1.45 ui-monospace, "Cascadia Mono", Consolas, monospace; white-space: pre; }
+code { font: 13px ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.badge { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #fff; text-transform: uppercase; letter-spacing: .03em; }
+.badge.confirmed { background: var(--confirmed); } .badge.corroborated { background: var(--corroborated); }
+.badge.candidate { background: var(--candidate); } .badge.resolved { background: var(--resolved); }
+.formula { font-size: 16px; font-weight: 600; }
+.warning { border-left: 4px solid var(--confirmed); padding: 8px 12px; background: var(--code); border-radius: 6px; }
+.claims li { margin: 4px 0; }
+.ev { scroll-margin-top: 12px; }
+.ev:target, .finding:target { outline: 2px solid var(--accent); outline-offset: 3px; }
+.paths-wrap { overflow-x: auto; }
+svg.paths text { font: 12px system-ui, sans-serif; fill: var(--text); }
+svg.paths .node { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+svg.paths .node.finding { stroke: var(--confirmed); stroke-width: 2; }
+svg.paths .edge { stroke: var(--muted); stroke-width: 1.5; }
+svg.paths .arrowhead { fill: var(--muted); }
+footer { margin-top: 48px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>AEGIS security report</h1>
+  <div class="muted">
+    Scan <code>S-0017</code> · mode <b>correlated</b> · status running
+ · target <code>http://127.0.0.1:5000</code> · source <code>demo-app</code>    <br>Generated 2026-10-10T00:36:26.280126+00:00 · report format 1.0
+  </div>
+</header>
+
+<h2 id="summary">Summary</h2>
+<div class="grid">
+  <div class="panel stat"><b>19</b>findings</div>
+  <div class="panel stat"><b>19</b>open</div>
+  <div class="panel stat"><b>0</b>resolved</div>
+  <div class="panel stat"><b>16</b><span class="badge candidate">candidate</span></div>
+  <div class="panel stat"><b>2</b><span class="badge confirmed">confirmed</span></div>
+  <div class="panel stat"><b>1</b><span class="badge corroborated">corroborated</span></div>
+</div>
+<p>Highest risk: <a href="#F-0127">F-0127</a>.</p>
+
+<h2 id="runtime-coverage">Runtime coverage</h2>
+<table>
+  <thead><tr><th>Check</th><th>Result</th><th>Detail</th></tr></thead>
+  <tbody><tr><td>Route discovery</td><td>PASS</td><td class="muted">6 routes from the OpenAPI document</td></tr><tr><td>Authentication</td><td>PASS</td><td class="muted">signed in A, B</td></tr><tr><td>Access control (BOLA)</td><td>FAILED</td><td class="muted">compared 1 object(s) across identities</td></tr><tr><td>Server-side request forgery</td><td>FAILED</td><td class="muted">probed 1 parameter(s)</td></tr><tr><td>Misconfiguration / exposure</td><td>FAILED</td><td class="muted">nuclei templates run</td></tr><tr><td>API conformance</td><td>FAILED</td><td class="muted">schemathesis run against the spec</td></tr></tbody>
+</table>
+
+<h2 id="ranked">Findings by risk</h2>
+<table>
+  <thead><tr><th class="num">#</th><th>Finding</th><th class="num">Risk</th><th>State</th><th>Type</th><th>Where</th></tr></thead>
+  <tbody>
+  <tr>
+    <td class="num">1</td>
+    <td><a href="#F-0127">F-0127</a> Broken object-level access control on GET /api/accounts/{id}</td>
+    <td class="num">0.792</td>
+    <td><span class="badge confirmed">confirmed</span></td>
+    <td>broken_access_control <span class="muted">(A01)</span></td>
+    <td><code>GET /api/accounts/{id}</code><br><code>app/routes/accounts.py:37</code></td>
+  </tr>
+  <tr>
+    <td class="num">2</td>
+    <td><a href="#F-0128">F-0128</a> Server-side request forgery via &#39;url&#39; on GET /api/fetch</td>
+    <td class="num">0.464</td>
+    <td><span class="badge confirmed">confirmed</span></td>
+    <td>ssrf <span class="muted">(A10)</span></td>
+    <td><code>GET /api/fetch</code><br><code>app/routes/fetch.py:17</code></td>
+  </tr>
+  <tr>
+    <td class="num">3</td>
+    <td><a href="#F-0137">F-0137</a> Found a Stripe Access Token, posing a risk to payment processing services and sensitive financial data.</td>
+    <td class="num">0.258</td>
+    <td><span class="badge corroborated">corroborated</span></td>
+    <td>secret <span class="muted">(A05)</span></td>
+    <td><code>app/config.py:6</code></td>
+  </tr>
+  <tr>
+    <td class="num">4</td>
+    <td><a href="#F-0136">F-0136</a> A SQL query is built from a variable with string formatting or concatenation, then executed.</td>
+    <td class="num">0.202</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>sqli <span class="muted">(A03)</span></td>
+    <td><code>app/routes/users.py:16</code></td>
+  </tr>
+  <tr>
+    <td class="num">5</td>
+    <td><a href="#F-0141">F-0141</a> Weak cryptography: MD5 is broken: collisions are trivial — and it is used for passwords</td>
+    <td class="num">0.106</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>weak_crypto <span class="muted">(A02)</span></td>
+    <td><code>app/auth.py:12</code></td>
+  </tr>
+  <tr>
+    <td class="num">6</td>
+    <td><a href="#F-0133">F-0133</a> API conformance failure on GET /api/accounts/{id}: Undocumented HTTP status code</td>
+    <td class="num">0.089</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>api_conformance <span class="muted">(A05)</span></td>
+    <td><code>GET /api/accounts/{id}</code><br><code>app/routes/accounts.py:34</code></td>
+  </tr>
+  <tr>
+    <td class="num">7</td>
+    <td><a href="#F-0142">F-0142</a> Weak cryptography: RSA key of 1024 bits (at least 2048 required)</td>
+    <td class="num">0.086</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>weak_crypto <span class="muted">(A02)</span></td>
+    <td><code>app/signing.py:15</code></td>
+  </tr>
+  <tr>
+    <td class="num">8</td>
+    <td><a href="#F-0143">F-0143</a> Weak cryptography: SHA-1 is broken: practical collisions exist</td>
+    <td class="num">0.086</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>weak_crypto <span class="muted">(A02)</span></td>
+    <td><code>app/signing.py:21</code></td>
+  </tr>
+  <tr>
+    <td class="num">9</td>
+    <td><a href="#F-0144">F-0144</a> Weak cryptography: TLS settings allow TLSv1.0; TLS 1.2 is the minimum</td>
+    <td class="num">0.086</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>weak_crypto <span class="muted">(A02)</span></td>
+    <td><code>app/tls.py:9</code></td>
+  </tr>
+  <tr>
+    <td class="num">10</td>
+    <td><a href="#F-0145">F-0145</a> Weak cryptography: cipher string &#39;ALL:@SECLEVEL=0&#39; enables legacy or broken cipher suites</td>
+    <td class="num">0.086</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>weak_crypto <span class="muted">(A02)</span></td>
+    <td><code>app/tls.py:10</code></td>
+  </tr>
+  <tr>
+    <td class="num">11</td>
+    <td><a href="#F-0129">F-0129</a> Public Swagger API - Detect</td>
+    <td class="num">0.083</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>misconfig <span class="muted">(A05)</span></td>
+    <td><code>GET /docs</code><br></td>
+  </tr>
+  <tr>
+    <td class="num">12</td>
+    <td><a href="#F-0130">F-0130</a> ReDoc API Docs - Detect</td>
+    <td class="num">0.083</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>misconfig <span class="muted">(A05)</span></td>
+    <td><code>GET /redoc</code><br></td>
+  </tr>
+  <tr>
+    <td class="num">13</td>
+    <td><a href="#F-0131">F-0131</a> OpenAPI - Detect</td>
+    <td class="num">0.083</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>misconfig <span class="muted">(A05)</span></td>
+    <td><code>GET /openapi.json</code><br></td>
+  </tr>
+  <tr>
+    <td class="num">14</td>
+    <td><a href="#F-0138">F-0138</a> requests 2.31.0 has known vulnerabilities (CVE-2024-35195, CVE-2024-47081, CVE-2026-25645)</td>
+    <td class="num">0.072</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>vulnerable_dependency <span class="muted">(A06)</span></td>
+    <td><code>requirements.txt:8</code></td>
+  </tr>
+  <tr>
+    <td class="num">15</td>
+    <td><a href="#F-0139">F-0139</a> DS-0002: Image user should not be &#39;root&#39;</td>
+    <td class="num">0.058</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>misconfig <span class="muted">(A05)</span></td>
+    <td><code>Dockerfile</code></td>
+  </tr>
+  <tr>
+    <td class="num">16</td>
+    <td><a href="#F-0140">F-0140</a> DS-0026: No HEALTHCHECK defined</td>
+    <td class="num">0.058</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>misconfig <span class="muted">(A05)</span></td>
+    <td><code>Dockerfile</code></td>
+  </tr>
+  <tr>
+    <td class="num">17</td>
+    <td><a href="#F-0146">F-0146</a> Quantum risk: RSA-1024 is not quantum-safe: signatures made with it can be forged once a large quantum computer exists; plan a move to ML-KEM / ML-DSA</td>
+    <td class="num">0.058</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>quantum_risk <span class="muted">(A02)</span></td>
+    <td><code>app/signing.py:15</code></td>
+  </tr>
+  <tr>
+    <td class="num">18</td>
+    <td><a href="#F-0147">F-0147</a> Quantum risk: RSA-2048 is not quantum-safe: signatures made with it can be forged once a large quantum computer exists; plan a move to ML-KEM / ML-DSA</td>
+    <td class="num">0.058</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>quantum_risk <span class="muted">(A02)</span></td>
+    <td><code>serve_https.py:27</code></td>
+  </tr>
+  <tr>
+    <td class="num">19</td>
+    <td><a href="#F-0132">F-0132</a> API conformance failure on GET /api/fetch: Server error</td>
+    <td class="num">0.053</td>
+    <td><span class="badge candidate">candidate</span></td>
+    <td>api_conformance <span class="muted">(A05)</span></td>
+    <td><code>GET /api/fetch</code><br><code>app/routes/fetch.py:13</code></td>
+  </tr>
+  </tbody>
+</table>
+
+<h2 id="risk">How risk is computed</h2>
+<div class="panel">
+  <p class="formula">Risk = Severity × Confidence × (1 + Exploitability + Exposure + Criticality + PathFactor) / 5</p>
+  <p class="muted">K<sub>max</sub> = 5 keeps risk between 0 and 1. Confidence comes from the finding's state:
+candidate = 0.4, corroborated = 0.7, confirmed = 1, resolved = 1.
+  Every finding below lists its factor values and the arithmetic, so each score can be recomputed by hand.</p>
+</div>
+
+<h2 id="db-dates">Vulnerability database snapshot dates</h2>
+<div class="panel">
+  <table>
+    <thead><tr><th>Database</th><th>Snapshot date</th></tr></thead>
+    <tbody><tr><td>nuclei</td><td>2026-10-08</td></tr><tr><td>osv</td><td>2026-10-07</td></tr><tr><td>trivy</td><td>2026-10-07</td></tr></tbody>
+  </table>
+  <p class="muted">Results that depend on these databases are only as current as these dates.</p>
+</div>
+
+<h2 id="attack-paths">Attack paths</h2>
+<div class="panel paths-wrap"><svg role="img" aria-label="Attack paths" viewBox="0 0 1010 318" width="1010" height="318" class="paths"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker></defs><rect x="16" y="16" width="210" height="38" rx="6" class="node"/><text x="121.0" y="40.0" text-anchor="middle">GET /api/accounts/{param}</text><title>GET /api/accounts/{param}</title><line x1="226" y1="35.0" x2="268" y2="35.0" class="edge" marker-end="url(#arrow)"/><rect x="272" y="16" width="210" height="38" rx="6" class="node"/><text x="377.0" y="40.0" text-anchor="middle">get_account</text><title>get_account</title><line x1="482" y1="35.0" x2="524" y2="35.0" class="edge" marker-end="url(#arrow)"/><rect x="528" y="16" width="210" height="38" rx="6" class="node"/><text x="633.0" y="40.0" text-anchor="middle">row = request.app.state.db.ex…</text><title>row = request.app.state.db.execute(_SELECT + &#34; WHERE a.id = ?&#34;, (id,)).fetchone()</title><line x1="738" y1="35.0" x2="780" y2="35.0" class="edge" marker-end="url(#arrow)"/><a href="#F-0127"><rect x="784" y="16" width="210" height="38" rx="6" class="node finding"/><text x="889.0" y="40.0" text-anchor="middle">F-0127</text><title>F-0127</title></a><rect x="16" y="78" width="210" height="38" rx="6" class="node"/><text x="121.0" y="102.0" text-anchor="middle">GET /api/fetch</text><title>GET /api/fetch</title><line x1="226" y1="97.0" x2="268" y2="97.0" class="edge" marker-end="url(#arrow)"/><rect x="272" y="78" width="210" height="38" rx="6" class="node"/><text x="377.0" y="102.0" text-anchor="middle">fetch</text><title>fetch</title><line x1="482" y1="97.0" x2="524" y2="97.0" class="edge" marker-end="url(#arrow)"/><rect x="528" y="78" width="210" height="38" rx="6" class="node"/><text x="633.0" y="102.0" text-anchor="middle">resp = await request.app.stat…</text><title>resp = await request.app.state.http.get(url)</title><line x1="738" y1="97.0" x2="780" y2="97.0" class="edge" marker-end="url(#arrow)"/><a href="#F-0128"><rect x="784" y="78" width="210" height="38" rx="6" class="node finding"/><text x="889.0" y="102.0" text-anchor="middle">F-0128</text><title>F-0128</title></a><rect x="16" y="140" width="210" height="38" rx="6" class="node"/><text x="121.0" y="164.0" text-anchor="middle">GET /api/fetch</text><title>GET /api/fetch</title><line x1="226" y1="159.0" x2="268" y2="159.0" class="edge" marker-end="url(#arrow)"/><rect x="272" y="140" width="210" height="38" rx="6" class="node"/><text x="377.0" y="164.0" text-anchor="middle">fetch</text><title>fetch</title><line x1="482" y1="159.0" x2="524" y2="159.0" class="edge" marker-end="url(#arrow)"/><rect x="528" y="140" width="210" height="38" rx="6" class="node"/><text x="633.0" y="164.0" text-anchor="middle">resp = await request.app.stat…</text><title>resp = await request.app.state.http.get(url)</title><line x1="738" y1="159.0" x2="780" y2="159.0" class="edge" marker-end="url(#arrow)"/><a href="#F-0132"><rect x="784" y="140" width="210" height="38" rx="6" class="node finding"/><text x="889.0" y="164.0" text-anchor="middle">F-0132</text><title>F-0132</title></a><rect x="16" y="202" width="210" height="38" rx="6" class="node"/><text x="121.0" y="226.0" text-anchor="middle">GET /api/accounts/{param}</text><title>GET /api/accounts/{param}</title><line x1="226" y1="221.0" x2="268" y2="221.0" class="edge" marker-end="url(#arrow)"/><rect x="272" y="202" width="210" height="38" rx="6" class="node"/><text x="377.0" y="226.0" text-anchor="middle">get_account</text><title>get_account</title><line x1="482" y1="221.0" x2="524" y2="221.0" class="edge" marker-end="url(#arrow)"/><rect x="528" y="202" width="210" height="38" rx="6" class="node"/><text x="633.0" y="226.0" text-anchor="middle">row = request.app.state.db.ex…</text><title>row = request.app.state.db.execute(_SELECT + &#34; WHERE a.id = ?&#34;, (id,)).fetchone()</title><line x1="738" y1="221.0" x2="780" y2="221.0" class="edge" marker-end="url(#arrow)"/><a href="#F-0133"><rect x="784" y="202" width="210" height="38" rx="6" class="node finding"/><text x="889.0" y="226.0" text-anchor="middle">F-0133</text><title>F-0133</title></a><rect x="16" y="264" width="210" height="38" rx="6" class="node"/><text x="121.0" y="288.0" text-anchor="middle">GET /api/users/search</text><title>GET /api/users/search</title><line x1="226" y1="283.0" x2="268" y2="283.0" class="edge" marker-end="url(#arrow)"/><rect x="272" y="264" width="210" height="38" rx="6" class="node"/><text x="377.0" y="288.0" text-anchor="middle">search_users</text><title>search_users</title><line x1="482" y1="283.0" x2="524" y2="283.0" class="edge" marker-end="url(#arrow)"/><rect x="528" y="264" width="210" height="38" rx="6" class="node"/><text x="633.0" y="288.0" text-anchor="middle">rows = request.app.state.db.e…</text><title>rows = request.app.state.db.execute(query).fetchall()</title><line x1="738" y1="283.0" x2="780" y2="283.0" class="edge" marker-end="url(#arrow)"/><a href="#F-0136"><rect x="784" y="264" width="210" height="38" rx="6" class="node finding"/><text x="889.0" y="288.0" text-anchor="middle">F-0136</text><title>F-0136</title></a></svg></div>
+
+<h2 id="details">Finding details</h2>
+<section class="panel finding" id="F-0127">
+  <h3>1. F-0127 — Broken object-level access control on GET /api/accounts/{id} <span class="badge confirmed">confirmed</span></h3>
+  <div class="muted">broken_access_control · OWASP A01 · risk 0.792 · correlation 1 · sources: worker1.bola, worker2.semgrep</div>
+<div class="muted">Merged duplicates: F-0134</div>
+  <h4>what</h4>
+<p>The application allows unauthorized access to account details by reading them based on ID without checking the user’s ownership. GET /api/accounts/{id} returns owner-specific fields, even when accessed by non-owner users.</p>
+  <h4>where</h4>
+<pre>app/routes/accounts.py:37 (get_account)
+    35 |     current_user(request)  # authenticated, but...
+    36 |     # PLANTED WEAKNESS (IDOR): no check that the account belongs to the caller.
+&gt;   37 |     row = request.app.state.db.execute(_SELECT + &#34; WHERE a.id = ?&#34;, (id,)).fetchone()
+    38 |     if row is None:
+    39 |         raise HTTPException(status_code=404, detail=&#34;account not found&#34;)</pre>
+  <h4>impact</h4>
+<p>Attackers can view sensitive information about other users, potentially leading to data breaches and loss of privacy.</p>
+  <h4>exploit</h4>
+<p>An attacker can send a GET request to /api/accounts/{id} with a different user ID to access their account details.</p>
+
+  <h4>fix</h4>
+    <p><code>X-0013</code> · status <b>drafted</b></p>
+<p>Add an owner check before the object is returned.</p><pre>--- a/app/routes/accounts.py
++++ b/app/routes/accounts.py
+@@ -32,9 +32,10 @@
+ 
+ @router.get(&#34;/api/accounts/{id}&#34;)
+ def get_account(id: int, request: Request):
+-    current_user(request)  # authenticated, but...
+-    # PLANTED WEAKNESS (IDOR): no check that the account belongs to the caller.
++    user = current_user(request)
+     row = request.app.state.db.execute(_SELECT + &#34; WHERE a.id = ?&#34;, (id,)).fetchone()
+     if row is None:
+         raise HTTPException(status_code=404, detail=&#34;account not found&#34;)
++    if row[&#34;owner_id&#34;] != user[&#34;id&#34;]:
++        raise HTTPException(status_code=403, detail=&#34;forbidden&#34;)
+     return _row(row)
+</pre>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The application allows unauthorized access to account details by reading them based on ID without checking the user’s ownership. —
+<a href="#E-0304">E-0304</a></li>
+    <li><b>what</b>: GET /api/accounts/{id} returns owner-specific fields, even when accessed by non-owner users. —
+<a href="#E-0282">E-0282</a></li>
+    <li><b>impact</b>: Attackers can view sensitive information about other users, potentially leading to data breaches and loss of privacy. —
+<a href="#E-0282">E-0282</a></li>
+    <li><b>exploit</b>: An attacker can send a GET request to /api/accounts/{id} with a different user ID to access their account details. —
+<a href="#E-0304">E-0304</a>, <a href="#E-0305">E-0305</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.9</td><td>1</td><td>1</td>
+      <td>0.6</td><td>1</td><td>0.8</td><td class="num">0.792</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.9 × 1 × (1 + 1 + 0.6 + 1 + 0.8) / 5 = 0.792</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0282">E-0282</a>, <a href="#E-0304">E-0304</a>, <a href="#E-0305">E-0305</a></p>
+
+  <h4>State history</h4>
+  <table>
+    <thead><tr><th>From</th><th>To</th><th>By</th><th>Why</th><th>Evidence</th></tr></thead>
+    <tbody>
+    <tr><td>candidate</td><td><span class="badge confirmed">confirmed</span></td><td>worker</td><td>differential replay: the second identity received the first identity&#39;s record</td>
+      <td><a href="#E-0282">E-0282</a></td></tr>
+    </tbody>
+  </table>
+</section>
+<section class="panel finding" id="F-0128">
+  <h3>2. F-0128 — Server-side request forgery via &#39;url&#39; on GET /api/fetch <span class="badge confirmed">confirmed</span></h3>
+  <div class="muted">ssrf · OWASP A10 · risk 0.464 · correlation 1 · sources: worker1.ssrf, worker2.semgrep</div>
+<div class="muted">Merged duplicates: F-0135</div>
+  <h4>what</h4>
+<p>The application fetches a URL from user input without validation, allowing an attacker to control the request target. This can lead to unauthorized access to internal services or sensitive information.</p>
+  <h4>where</h4>
+<pre>app/routes/fetch.py:17 (fetch)
+    15 |     # PLANTED WEAKNESS (SSRF): the server fetches any URL the caller supplies.
+    16 |     try:
+&gt;   17 |         resp = await request.app.state.http.get(url)
+    18 |     except httpx.HTTPError:
+    19 |         raise HTTPException(status_code=502, detail=&#34;upstream fetch failed&#34;)</pre>
+  <h4>impact</h4>
+<p>An attacker can exploit this to perform SSRF attacks, potentially leading to data exfiltration or unauthorized access.</p>
+  <h4>exploit</h4>
+<p>An attacker sends a crafted request with a malicious URL, which the application fetches, potentially leading to internal network traversal.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The application fetches a URL from user input without validation, allowing an attacker to control the request target. —
+<a href="#E-0306">E-0306</a></li>
+    <li><b>what</b>: This can lead to unauthorized access to internal services or sensitive information. —
+<a href="#E-0284">E-0284</a></li>
+    <li><b>impact</b>: An attacker can exploit this to perform SSRF attacks, potentially leading to data exfiltration or unauthorized access. —
+<a href="#E-0284">E-0284</a></li>
+    <li><b>exploit</b>: An attacker sends a crafted request with a malicious URL, which the application fetches, potentially leading to internal network traversal. —
+<a href="#E-0306">E-0306</a>, <a href="#E-0307">E-0307</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.8</td><td>1</td><td>1</td>
+      <td>0.6</td><td>0.3</td><td>0</td><td class="num">0.464</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.8 × 1 × (1 + 1 + 0.6 + 0.3 + 0) / 5 = 0.464</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0284">E-0284</a>, <a href="#E-0306">E-0306</a>, <a href="#E-0307">E-0307</a></p>
+
+  <h4>State history</h4>
+  <table>
+    <thead><tr><th>From</th><th>To</th><th>By</th><th>Why</th><th>Evidence</th></tr></thead>
+    <tbody>
+    <tr><td>candidate</td><td><span class="badge confirmed">confirmed</span></td><td>worker</td><td>out-of-band callback received from the target server</td>
+      <td><a href="#E-0284">E-0284</a></td></tr>
+    </tbody>
+  </table>
+</section>
+<section class="panel finding" id="F-0137">
+  <h3>3. F-0137 — Found a Stripe Access Token, posing a risk to payment processing services and sensitive financial data. <span class="badge corroborated">corroborated</span></h3>
+  <div class="muted">secret · OWASP A05 · risk 0.258 · sources: worker2.gitleaks, worker2.trufflehog</div>
+
+  <h4>what</h4>
+<p>The Stripe access token is exposed in plain text in the configuration file.</p>
+  <h4>where</h4>
+<pre>app/config.py:6
+     4 | # service — but it has the shape of a real Stripe live key, so real secret scanners
+     5 | # (gitleaks: stripe-access-token) detect it the way they would a real leak.
+&gt;    6 | API_KEY = &#34;&lt;redacted&gt;&#34;</pre>
+  <h4>impact</h4>
+<p>Anyone who can read the code can use the credential until it is replaced.</p>
+  <h4>exploit</h4>
+<p>By accessing the configuration file, an attacker could extract the token and make API calls, compromising payment processing services and sensitive financial data.</p>
+
+  <h4>fix</h4>
+    <p><code>X-0014</code> · status <b>drafted</b></p>
+<p>Read the secret from the environment instead of source code. The key was already committed - rotate it.</p><p class="muted">The secret value is masked in this diff.</p><pre>--- a/app/config.py
++++ b/app/config.py
+@@ -1,6 +1,7 @@
+ &#34;&#34;&#34;Demo configuration — INTENTIONALLY VULNERABLE (planted hardcoded secret).&#34;&#34;&#34;
++import os
+ 
+ # PLANTED WEAKNESS: a secret committed to source. The value is FAKE — it is not a key for any
+ # service — but it has the shape of a real Stripe live key, so real secret scanners
+ # (gitleaks: stripe-access-token) detect it the way they would a real leak.
+-API_KEY = &#34;&lt;redacted&gt;&#34;
++API_KEY = os.environ.get(&#34;API_KEY&#34;, &#34;&#34;)
+</pre>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The Stripe access token is exposed in plain text in the configuration file. —
+<a href="#E-0312">E-0312</a></li>
+    <li><b>exploit</b>: By accessing the configuration file, an attacker could extract the token and make API calls, compromising payment processing services and sensitive financial data. —
+<a href="#E-0312">E-0312</a>, <a href="#E-0313">E-0313</a></li>
+    <li><b>impact</b>: Anyone who can read the code can use the credential until it is replaced. —
+<a href="#E-0312">E-0312</a>, <a href="#E-0313">E-0313</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.8</td><td>0.7</td><td>0.3</td>
+      <td>0.2</td><td>0.8</td><td>0</td><td class="num">0.258</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.8 × 0.7 × (1 + 0.3 + 0.2 + 0.8 + 0) / 5 = 0.258</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0312">E-0312</a>, <a href="#E-0313">E-0313</a></p>
+
+  <h4>State history</h4>
+  <table>
+    <thead><tr><th>From</th><th>To</th><th>By</th><th>Why</th><th>Evidence</th></tr></thead>
+    <tbody>
+    <tr><td>candidate</td><td><span class="badge corroborated">corroborated</span></td><td>normalizer</td><td>second independent tool</td>
+      <td><a href="#E-0312">E-0312</a>, <a href="#E-0313">E-0313</a></td></tr>
+    </tbody>
+  </table>
+</section>
+<section class="panel finding" id="F-0136">
+  <h3>4. F-0136 — A SQL query is built from a variable with string formatting or concatenation, then executed. <span class="badge candidate">candidate</span></h3>
+  <div class="muted">sqli · OWASP A03 · risk 0.202 · sources: worker2.semgrep</div>
+
+  <h4>what</h4>
+<p>A SQL query is constructed using user input through string formatting or concatenation.</p>
+  <h4>where</h4>
+<pre>app/routes/users.py:16
+    14 |     # PLANTED WEAKNESS: user input concatenated into the SQL text.
+    15 |     query = &#34;SELECT id, username FROM users WHERE username LIKE &#39;%&#34; + name + &#34;%&#39;&#34;
+&gt;   16 |     rows = request.app.state.db.execute(query).fetchall()
+    17 |     return [{&#34;id&#34;: r[&#34;id&#34;], &#34;username&#34;: r[&#34;username&#34;]} for r in rows]</pre>
+  <h4>impact</h4>
+<p>An attacker could manipulate the input to execute arbitrary SQL commands, potentially leading to data theft or corruption.</p>
+  <h4>exploit</h4>
+<p>By crafting specific input, an attacker can inject SQL commands that alter or retrieve data from the database.</p>
+
+  <h4>fix</h4>
+    <p><code>X-0015</code> · status <b>drafted</b></p>
+<p>Use a parameterized query instead of building the SQL text from input.</p><pre>--- a/app/routes/users.py
++++ b/app/routes/users.py
+@@ -12,6 +12,6 @@
+ def search_users(name: str, request: Request):
+     current_user(request)
+     # PLANTED WEAKNESS: user input concatenated into the SQL text.
+-    query = &#34;SELECT id, username FROM users WHERE username LIKE &#39;%&#34; + name + &#34;%&#39;&#34;
+-    rows = request.app.state.db.execute(query).fetchall()
++    query = &#34;SELECT id, username FROM users WHERE username LIKE ?&#34;
++    rows = request.app.state.db.execute(query, (&#39;%&#39; + name + &#39;%&#39;,)).fetchall()
+     return [{&#34;id&#34;: r[&#34;id&#34;], &#34;username&#34;: r[&#34;username&#34;]} for r in rows]
+</pre>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: A SQL query is constructed using user input through string formatting or concatenation. —
+<a href="#E-0308">E-0308</a>, <a href="#E-0310">E-0310</a></li>
+    <li><b>impact</b>: An attacker could manipulate the input to execute arbitrary SQL commands, potentially leading to data theft or corruption. —
+<a href="#E-0308">E-0308</a>, <a href="#E-0310">E-0310</a></li>
+    <li><b>exploit</b>: By crafting specific input, an attacker can inject SQL commands that alter or retrieve data from the database. —
+<a href="#E-0309">E-0309</a>, <a href="#E-0311">E-0311</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.9</td><td>0.4</td><td>0.5</td>
+      <td>0.6</td><td>0.7</td><td>0</td><td class="num">0.202</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.9 × 0.4 × (1 + 0.5 + 0.6 + 0.7 + 0) / 5 = 0.202</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0308">E-0308</a>, <a href="#E-0309">E-0309</a>, <a href="#E-0310">E-0310</a>, <a href="#E-0311">E-0311</a></p>
+
+</section>
+<section class="panel finding" id="F-0141">
+  <h3>5. F-0141 — Weak cryptography: MD5 is broken: collisions are trivial — and it is used for passwords <span class="badge candidate">candidate</span></h3>
+  <div class="muted">weak_crypto · OWASP A02 · risk 0.106 · sources: worker3.crypto</div>
+
+  <h4>what</h4>
+<p>The code uses MD5 for hashing passwords, which is a weak and broken algorithm.</p>
+  <h4>where</h4>
+<pre>app/auth.py:12 (hash_password)
+    10 | def hash_password(password: str) -&gt; str:
+    11 |     # PLANTED WEAKNESS: MD5 is not a password hash (weak crypto finding).
+&gt;   12 |     return hashlib.md5(password.encode(&#34;utf-8&#34;)).hexdigest()
+    13 | 
+    14 | </pre>
+  <h4>impact</h4>
+<p>This allows attackers to trivially generate collisions, potentially revealing user passwords.</p>
+  <h4>exploit</h4>
+<p>An attacker who obtains the protected values can defeat the weak protection offline.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The code uses MD5 for hashing passwords, which is a weak and broken algorithm. —
+<a href="#E-0325">E-0325</a></li>
+    <li><b>impact</b>: This allows attackers to trivially generate collisions, potentially revealing user passwords. —
+<a href="#E-0325">E-0325</a></li>
+    <li><b>exploit</b>: An attacker who obtains the protected values can defeat the weak protection offline. —
+<a href="#E-0325">E-0325</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.6</td><td>0.4</td><td>0.3</td>
+      <td>0.2</td><td>0.7</td><td>0</td><td class="num">0.106</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.6 × 0.4 × (1 + 0.3 + 0.2 + 0.7 + 0) / 5 = 0.106</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0325">E-0325</a></p>
+
+</section>
+<section class="panel finding" id="F-0133">
+  <h3>6. F-0133 — API conformance failure on GET /api/accounts/{id}: Undocumented HTTP status code <span class="badge candidate">candidate</span></h3>
+  <div class="muted">api_conformance · OWASP A05 · risk 0.089 · correlation 0.7 · sources: worker1.schemathesis</div>
+
+  <h4>what</h4>
+<p>The API returns an undocumented 404 status code for account retrieval requests. The `get_account` function in `app/routes/accounts.py` does not handle the 404 status code properly.</p>
+  <h4>where</h4>
+<pre>app/routes/accounts.py:34 (get_account)
+    32 | 
+    33 | @router.get(&#34;/api/accounts/{id}&#34;)
+&gt;   34 | def get_account(id: int, request: Request):
+    35 |     current_user(request)  # authenticated, but...
+    36 |     # PLANTED WEAKNESS (IDOR): no check that the account belongs to the caller.</pre>
+  <h4>impact</h4>
+<p>This could lead to inconsistent error handling and potentially expose internal system details to attackers.</p>
+  <h4>exploit</h4>
+<p>An attacker could exploit this by sending crafted requests to retrieve non-existent accounts, observing the 404 response.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The API returns an undocumented 404 status code for account retrieval requests. —
+<a href="#E-0291">E-0291</a></li>
+    <li><b>what</b>: The `get_account` function in `app/routes/accounts.py` does not handle the 404 status code properly. —
+<a href="#E-0305">E-0305</a></li>
+    <li><b>impact</b>: This could lead to inconsistent error handling and potentially expose internal system details to attackers. —
+<a href="#E-0291">E-0291</a></li>
+    <li><b>exploit</b>: An attacker could exploit this by sending crafted requests to retrieve non-existent accounts, observing the 404 response. —
+<a href="#E-0291">E-0291</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.3</td><td>0.4</td><td>0.3</td>
+      <td>0.6</td><td>1</td><td>0.8</td><td class="num">0.089</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.3 × 0.4 × (1 + 0.3 + 0.6 + 1 + 0.8) / 5 = 0.089</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0291">E-0291</a></p>
+
+</section>
+<section class="panel finding" id="F-0142">
+  <h3>7. F-0142 — Weak cryptography: RSA key of 1024 bits (at least 2048 required) <span class="badge candidate">candidate</span></h3>
+  <div class="muted">weak_crypto · OWASP A02 · risk 0.086 · sources: worker3.crypto</div>
+
+  <h4>what</h4>
+<p>The code uses a 1024-bit RSA key for signing, which is considered weak and can be broken by attackers.</p>
+  <h4>where</h4>
+<pre>app/signing.py:15 (signing_key)
+    13 |         # PLANTED WEAKNESS: a 1024-bit RSA key — too short today, and RSA of any size is exposed to
+    14 |         # future quantum computers (signatures and key exchange recorded now can be broken later).
+&gt;   15 |         _KEY = rsa.generate_private_key(public_exponent=65537, key_size=1024)
+    16 |     return _KEY
+    17 | </pre>
+  <h4>impact</h4>
+<p>Protected data or passwords can be recovered or forged far more easily than intended.</p>
+  <h4>exploit</h4>
+<p>An attacker could exploit the weak key by performing a brute-force attack or using known vulnerabilities in 1024-bit RSA.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The code uses a 1024-bit RSA key for signing, which is considered weak and can be broken by attackers. —
+<a href="#E-0326">E-0326</a></li>
+    <li><b>exploit</b>: An attacker could exploit the weak key by performing a brute-force attack or using known vulnerabilities in 1024-bit RSA. —
+<a href="#E-0326">E-0326</a></li>
+    <li><b>impact</b>: Protected data or passwords can be recovered or forged far more easily than intended. —
+<a href="#E-0326">E-0326</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.6</td><td>0.4</td><td>0.3</td>
+      <td>0.2</td><td>0.3</td><td>0</td><td class="num">0.086</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.6 × 0.4 × (1 + 0.3 + 0.2 + 0.3 + 0) / 5 = 0.086</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0326">E-0326</a></p>
+
+</section>
+<section class="panel finding" id="F-0143">
+  <h3>8. F-0143 — Weak cryptography: SHA-1 is broken: practical collisions exist <span class="badge candidate">candidate</span></h3>
+  <div class="muted">weak_crypto · OWASP A02 · risk 0.086 · sources: worker3.crypto</div>
+
+  <h4>what</h4>
+<p>The code uses SHA-1 for signing receipts, which is a weak cryptographic algorithm.</p>
+  <h4>where</h4>
+<pre>app/signing.py:21 (sign_receipt)
+    19 | def sign_receipt(data: bytes) -&gt; bytes:
+    20 |     # PLANTED WEAKNESS: SHA-1 signatures (collisions are practical).
+&gt;   21 |     return signing_key().sign(data, padding.PKCS1v15(), hashes.SHA1())</pre>
+  <h4>impact</h4>
+<p>Protected data or passwords can be recovered or forged far more easily than intended.</p>
+  <h4>exploit</h4>
+<p>Attackers could exploit this by generating a collision with a valid receipt, replacing it with a malicious one.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The code uses SHA-1 for signing receipts, which is a weak cryptographic algorithm. —
+<a href="#E-0327">E-0327</a></li>
+    <li><b>exploit</b>: Attackers could exploit this by generating a collision with a valid receipt, replacing it with a malicious one. —
+<a href="#E-0327">E-0327</a></li>
+    <li><b>impact</b>: Protected data or passwords can be recovered or forged far more easily than intended. —
+<a href="#E-0327">E-0327</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.6</td><td>0.4</td><td>0.3</td>
+      <td>0.2</td><td>0.3</td><td>0</td><td class="num">0.086</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.6 × 0.4 × (1 + 0.3 + 0.2 + 0.3 + 0) / 5 = 0.086</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0327">E-0327</a></p>
+
+</section>
+<section class="panel finding" id="F-0144">
+  <h3>9. F-0144 — Weak cryptography: TLS settings allow TLSv1.0; TLS 1.2 is the minimum <span class="badge candidate">candidate</span></h3>
+  <div class="muted">weak_crypto · OWASP A02 · risk 0.086 · sources: worker3.crypto</div>
+
+  <h4>what</h4>
+<p>The application allows TLSv1.0, which is vulnerable and should be disabled in favor of TLS 1.2 or higher.</p>
+  <h4>where</h4>
+<pre>app/tls.py:9 (server_context)
+     7 | def server_context(certfile: str, keyfile: str) -&gt; ssl.SSLContext:
+     8 |     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+&gt;    9 |     ctx.minimum_version = ssl.TLSVersion.TLSv1  # PLANTED WEAKNESS: TLS 1.0 and 1.1 are still accepted
+    10 |     ctx.set_ciphers(&#34;ALL:@SECLEVEL=0&#34;)  # PLANTED WEAKNESS: legacy cipher suites are allowed
+    11 |     ctx.load_cert_chain(certfile, keyfile)</pre>
+  <h4>impact</h4>
+<p>Attackers could exploit this to perform man-in-the-middle attacks, compromising data integrity and confidentiality.</p>
+  <h4>exploit</h4>
+<p>An attacker could downgrade the connection to TLSv1.0 and intercept or modify the communication between the client and server.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The application allows TLSv1.0, which is vulnerable and should be disabled in favor of TLS 1.2 or higher. —
+<a href="#E-0328">E-0328</a></li>
+    <li><b>impact</b>: Attackers could exploit this to perform man-in-the-middle attacks, compromising data integrity and confidentiality. —
+<a href="#E-0328">E-0328</a></li>
+    <li><b>exploit</b>: An attacker could downgrade the connection to TLSv1.0 and intercept or modify the communication between the client and server. —
+<a href="#E-0328">E-0328</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.6</td><td>0.4</td><td>0.3</td>
+      <td>0.2</td><td>0.3</td><td>0</td><td class="num">0.086</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.6 × 0.4 × (1 + 0.3 + 0.2 + 0.3 + 0) / 5 = 0.086</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0328">E-0328</a></p>
+
+</section>
+<section class="panel finding" id="F-0145">
+  <h3>10. F-0145 — Weak cryptography: cipher string &#39;ALL:@SECLEVEL=0&#39; enables legacy or broken cipher suites <span class="badge candidate">candidate</span></h3>
+  <div class="muted">weak_crypto · OWASP A02 · risk 0.086 · sources: worker3.crypto</div>
+
+  <h4>what</h4>
+<p>The configuration uses a weak cipher string &#39;ALL:@SECLEVEL=0&#39;, which enables insecure or outdated cipher suites.</p>
+  <h4>where</h4>
+<pre>app/tls.py:10 (server_context)
+     8 |     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+     9 |     ctx.minimum_version = ssl.TLSVersion.TLSv1  # PLANTED WEAKNESS: TLS 1.0 and 1.1 are still accepted
+&gt;   10 |     ctx.set_ciphers(&#34;ALL:@SECLEVEL=0&#34;)  # PLANTED WEAKNESS: legacy cipher suites are allowed
+    11 |     ctx.load_cert_chain(certfile, keyfile)
+    12 |     return ctx</pre>
+  <h4>impact</h4>
+<p>This allows attackers to potentially exploit vulnerabilities in legacy or broken cipher suites, compromising the security of the communication.</p>
+  <h4>exploit</h4>
+<p>Attackers could exploit this by using known weaknesses in the enabled cipher suites to decrypt or manipulate the data being transmitted.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The configuration uses a weak cipher string &#39;ALL:@SECLEVEL=0&#39;, which enables insecure or outdated cipher suites. —
+<a href="#E-0329">E-0329</a></li>
+    <li><b>impact</b>: This allows attackers to potentially exploit vulnerabilities in legacy or broken cipher suites, compromising the security of the communication. —
+<a href="#E-0329">E-0329</a></li>
+    <li><b>exploit</b>: Attackers could exploit this by using known weaknesses in the enabled cipher suites to decrypt or manipulate the data being transmitted. —
+<a href="#E-0329">E-0329</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.6</td><td>0.4</td><td>0.3</td>
+      <td>0.2</td><td>0.3</td><td>0</td><td class="num">0.086</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.6 × 0.4 × (1 + 0.3 + 0.2 + 0.3 + 0) / 5 = 0.086</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0329">E-0329</a></p>
+
+</section>
+<section class="panel finding" id="F-0129">
+  <h3>11. F-0129 — Public Swagger API - Detect <span class="badge candidate">candidate</span></h3>
+  <div class="muted">misconfig · OWASP A05 · risk 0.083 · sources: worker1.nuclei</div>
+
+  <h4>what</h4>
+<p>The Swagger API is publicly accessible, exposing internal documentation.</p>
+  <h4>where</h4>
+<pre>GET /docs</pre>
+  <h4>impact</h4>
+<p>Attackers can gain insights into the application&#39;s architecture and potential vulnerabilities.</p>
+  <h4>exploit</h4>
+<p>GET /docs can be accessed by anyone, revealing API endpoints and methods.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The Swagger API is publicly accessible, exposing internal documentation. —
+<a href="#E-0286">E-0286</a></li>
+    <li><b>impact</b>: Attackers can gain insights into the application&#39;s architecture and potential vulnerabilities. —
+<a href="#E-0286">E-0286</a></li>
+    <li><b>exploit</b>: GET /docs can be accessed by anyone, revealing API endpoints and methods. —
+<a href="#E-0286">E-0286</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.4</td><td>0.4</td><td>0.3</td>
+      <td>1</td><td>0.3</td><td>0</td><td class="num">0.083</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.4 × 0.4 × (1 + 0.3 + 1 + 0.3 + 0) / 5 = 0.083</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0286">E-0286</a></p>
+
+</section>
+<section class="panel finding" id="F-0130">
+  <h3>12. F-0130 — ReDoc API Docs - Detect <span class="badge candidate">candidate</span></h3>
+  <div class="muted">misconfig · OWASP A05 · risk 0.083 · sources: worker1.nuclei</div>
+
+  <h4>what</h4>
+<p>The ReDoc API documentation is publicly accessible, exposing internal API endpoints.</p>
+  <h4>where</h4>
+<pre>GET /redoc</pre>
+  <h4>impact</h4>
+<p>Attackers can discover and potentially exploit internal APIs, leading to data exposure or manipulation.</p>
+  <h4>exploit</h4>
+<p>By accessing the ReDoc documentation, attackers can identify sensitive API endpoints and craft malicious requests.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The ReDoc API documentation is publicly accessible, exposing internal API endpoints. —
+<a href="#E-0287">E-0287</a></li>
+    <li><b>impact</b>: Attackers can discover and potentially exploit internal APIs, leading to data exposure or manipulation. —
+<a href="#E-0287">E-0287</a></li>
+    <li><b>exploit</b>: By accessing the ReDoc documentation, attackers can identify sensitive API endpoints and craft malicious requests. —
+<a href="#E-0287">E-0287</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.4</td><td>0.4</td><td>0.3</td>
+      <td>1</td><td>0.3</td><td>0</td><td class="num">0.083</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.4 × 0.4 × (1 + 0.3 + 1 + 0.3 + 0) / 5 = 0.083</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0287">E-0287</a></p>
+
+</section>
+<section class="panel finding" id="F-0131">
+  <h3>13. F-0131 — OpenAPI - Detect <span class="badge candidate">candidate</span></h3>
+  <div class="muted">misconfig · OWASP A05 · risk 0.083 · sources: worker1.nuclei</div>
+
+  <h4>what</h4>
+<p>The application exposes its OpenAPI documentation, which contains sensitive information about the API endpoints and methods.</p>
+  <h4>where</h4>
+<pre>GET /openapi.json</pre>
+  <h4>impact</h4>
+<p>An attacker can use this information to craft targeted attacks, such as identifying potential injection points or crafting malicious requests.</p>
+  <h4>exploit</h4>
+<p>An attacker relies on the missing protection, which the application does not enforce.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The application exposes its OpenAPI documentation, which contains sensitive information about the API endpoints and methods. —
+<a href="#E-0288">E-0288</a></li>
+    <li><b>impact</b>: An attacker can use this information to craft targeted attacks, such as identifying potential injection points or crafting malicious requests. —
+<a href="#E-0288">E-0288</a></li>
+    <li><b>exploit</b>: An attacker relies on the missing protection, which the application does not enforce. —
+<a href="#E-0288">E-0288</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.4</td><td>0.4</td><td>0.3</td>
+      <td>1</td><td>0.3</td><td>0</td><td class="num">0.083</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.4 × 0.4 × (1 + 0.3 + 1 + 0.3 + 0) / 5 = 0.083</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0288">E-0288</a></p>
+
+</section>
+<section class="panel finding" id="F-0138">
+  <h3>14. F-0138 — requests 2.31.0 has known vulnerabilities (CVE-2024-35195, CVE-2024-47081, CVE-2026-25645) <span class="badge candidate">candidate</span></h3>
+  <div class="muted">vulnerable_dependency · OWASP A06 · risk 0.072 · sources: worker2.trivy</div>
+
+  <h4>what</h4>
+<p>The project uses requests version 2.31.0, which contains known vulnerabilities.</p>
+  <h4>where</h4>
+<pre>requirements.txt:8
+     6 | # PLANTED WEAKNESS: an outdated dependency with a known advisory (fixed in requests 2.32.x).
+     7 | # The app never imports it; it is here so dependency scanners (OSV, Trivy) have something to find.
+&gt;    8 | requests==2.31.0</pre>
+  <h4>impact</h4>
+<p>The known weakness may be reachable through the application, with the library&#39;s own impact.</p>
+  <h4>exploit</h4>
+<p>An attacker uses the published details of the vulnerability against the affected component.</p>
+
+  <h4>fix</h4>
+    <p><code>X-0016</code> · status <b>drafted</b></p>
+<p>Upgrade requests 2.31.0 to 2.32.0 — the published fixed version (fixed versions: 2.32.0, 2.32.4, 2.33.0). Advisories: CVE-2024-35195, CVE-2024-47081, CVE-2026-25645.</p><pre>--- a/requirements.txt
++++ b/requirements.txt
+@@ -5,4 +5,4 @@
+ cryptography
+ # PLANTED WEAKNESS: an outdated dependency with a known advisory (fixed in requests 2.32.x).
+ # The app never imports it; it is here so dependency scanners (OSV, Trivy) have something to find.
+-requests==2.31.0
++requests==2.32.0
+</pre>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The project uses requests version 2.31.0, which contains known vulnerabilities. —
+<a href="#E-0314">E-0314</a></li>
+    <li><b>impact</b>: The known weakness may be reachable through the application, with the library&#39;s own impact. —
+<a href="#E-0314">E-0314</a></li>
+    <li><b>exploit</b>: An attacker uses the published details of the vulnerability against the affected component. —
+<a href="#E-0314">E-0314</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.5</td><td>0.4</td><td>0.3</td>
+      <td>0.2</td><td>0.3</td><td>0</td><td class="num">0.072</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.5 × 0.4 × (1 + 0.3 + 0.2 + 0.3 + 0) / 5 = 0.072</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0314">E-0314</a></p>
+
+</section>
+<section class="panel finding" id="F-0139">
+  <h3>15. F-0139 — DS-0002: Image user should not be &#39;root&#39; <span class="badge candidate">candidate</span></h3>
+  <div class="muted">misconfig · OWASP A05 · risk 0.058 · sources: worker2.trivy</div>
+
+  <h4>what</h4>
+<p>The Dockerfile uses &#39;root&#39; as the default user, which is insecure.</p>
+  <h4>where</h4>
+<pre>Dockerfile</pre>
+  <h4>impact</h4>
+<p>The protection that setting is meant to provide is absent.</p>
+  <h4>exploit</h4>
+<p>By exploiting the default root user, an attacker might execute arbitrary commands within the container or host.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The Dockerfile uses &#39;root&#39; as the default user, which is insecure. —
+<a href="#E-0315">E-0315</a></li>
+    <li><b>exploit</b>: By exploiting the default root user, an attacker might execute arbitrary commands within the container or host. —
+<a href="#E-0315">E-0315</a></li>
+    <li><b>impact</b>: The protection that setting is meant to provide is absent. —
+<a href="#E-0315">E-0315</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.4</td><td>0.4</td><td>0.3</td>
+      <td>0.2</td><td>0.3</td><td>0</td><td class="num">0.058</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.4 × 0.4 × (1 + 0.3 + 0.2 + 0.3 + 0) / 5 = 0.058</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0315">E-0315</a></p>
+
+</section>
+<section class="panel finding" id="F-0140">
+  <h3>16. F-0140 — DS-0026: No HEALTHCHECK defined <span class="badge candidate">candidate</span></h3>
+  <div class="muted">misconfig · OWASP A05 · risk 0.058 · sources: worker2.trivy</div>
+
+  <h4>what</h4>
+<p>The Dockerfile lacks a HEALTHCHECK instruction, which is crucial for monitoring container health.</p>
+  <h4>where</h4>
+<pre>Dockerfile</pre>
+  <h4>impact</h4>
+<p>Without a HEALTHCHECK, the container&#39;s health cannot be monitored, potentially leading to undetected failures and service disruptions.</p>
+  <h4>exploit</h4>
+<p>An attacker could exploit this by causing the container to fail silently, making it difficult to detect and address issues promptly.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The Dockerfile lacks a HEALTHCHECK instruction, which is crucial for monitoring container health. —
+<a href="#E-0316">E-0316</a></li>
+    <li><b>impact</b>: Without a HEALTHCHECK, the container&#39;s health cannot be monitored, potentially leading to undetected failures and service disruptions. —
+<a href="#E-0316">E-0316</a></li>
+    <li><b>exploit</b>: An attacker could exploit this by causing the container to fail silently, making it difficult to detect and address issues promptly. —
+<a href="#E-0316">E-0316</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.4</td><td>0.4</td><td>0.3</td>
+      <td>0.2</td><td>0.3</td><td>0</td><td class="num">0.058</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.4 × 0.4 × (1 + 0.3 + 0.2 + 0.3 + 0) / 5 = 0.058</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0316">E-0316</a></p>
+
+</section>
+<section class="panel finding" id="F-0146">
+  <h3>17. F-0146 — Quantum risk: RSA-1024 is not quantum-safe: signatures made with it can be forged once a large quantum computer exists; plan a move to ML-KEM / ML-DSA <span class="badge candidate">candidate</span></h3>
+  <div class="muted">quantum_risk · OWASP A02 · risk 0.058 · sources: worker3.crypto</div>
+
+  <h4>what</h4>
+<p>The code uses RSA-1024 for signing, which is vulnerable to quantum attacks.</p>
+  <h4>where</h4>
+<pre>app/signing.py:15 (signing_key)
+    13 |         # PLANTED WEAKNESS: a 1024-bit RSA key — too short today, and RSA of any size is exposed to
+    14 |         # future quantum computers (signatures and key exchange recorded now can be broken later).
+&gt;   15 |         _KEY = rsa.generate_private_key(public_exponent=65537, key_size=1024)
+    16 |     return _KEY
+    17 | </pre>
+  <h4>impact</h4>
+<p>Once a large quantum computer exists, existing signatures can be forged, compromising data integrity and security.</p>
+  <h4>exploit</h4>
+<p>A quantum computer could factor the RSA-1024 modulus, allowing attackers to forge signatures.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The code uses RSA-1024 for signing, which is vulnerable to quantum attacks. —
+<a href="#E-0330">E-0330</a></li>
+    <li><b>impact</b>: Once a large quantum computer exists, existing signatures can be forged, compromising data integrity and security. —
+<a href="#E-0330">E-0330</a></li>
+    <li><b>exploit</b>: A quantum computer could factor the RSA-1024 modulus, allowing attackers to forge signatures. —
+<a href="#E-0330">E-0330</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.4</td><td>0.4</td><td>0.3</td>
+      <td>0.2</td><td>0.3</td><td>0</td><td class="num">0.058</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.4 × 0.4 × (1 + 0.3 + 0.2 + 0.3 + 0) / 5 = 0.058</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0330">E-0330</a></p>
+
+</section>
+<section class="panel finding" id="F-0147">
+  <h3>18. F-0147 — Quantum risk: RSA-2048 is not quantum-safe: signatures made with it can be forged once a large quantum computer exists; plan a move to ML-KEM / ML-DSA <span class="badge candidate">candidate</span></h3>
+  <div class="muted">quantum_risk · OWASP A02 · risk 0.058 · sources: worker3.crypto</div>
+
+  <h4>what</h4>
+<p>The code uses RSA-2048 for signatures, which is vulnerable to quantum attacks.</p>
+  <h4>where</h4>
+<pre>serve_https.py:27 (self_signed)
+    25 | 
+    26 | def self_signed(folder: Path) -&gt; tuple[str, str]:
+&gt;   27 |     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    28 |     name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, &#34;localhost&#34;)])
+    29 |     now = datetime.datetime.now(datetime.timezone.utc)</pre>
+  <h4>impact</h4>
+<p>Once a large quantum computer exists, existing signatures can be forged, compromising the security of the system.</p>
+  <h4>exploit</h4>
+<p>A quantum computer could potentially break RSA-2048, allowing attackers to forge signatures and impersonate the server.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The code uses RSA-2048 for signatures, which is vulnerable to quantum attacks. —
+<a href="#E-0331">E-0331</a></li>
+    <li><b>impact</b>: Once a large quantum computer exists, existing signatures can be forged, compromising the security of the system. —
+<a href="#E-0331">E-0331</a></li>
+    <li><b>exploit</b>: A quantum computer could potentially break RSA-2048, allowing attackers to forge signatures and impersonate the server. —
+<a href="#E-0331">E-0331</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.4</td><td>0.4</td><td>0.3</td>
+      <td>0.2</td><td>0.3</td><td>0</td><td class="num">0.058</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.4 × 0.4 × (1 + 0.3 + 0.2 + 0.3 + 0) / 5 = 0.058</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0331">E-0331</a></p>
+
+</section>
+<section class="panel finding" id="F-0132">
+  <h3>19. F-0132 — API conformance failure on GET /api/fetch: Server error <span class="badge candidate">candidate</span></h3>
+  <div class="muted">api_conformance · OWASP A05 · risk 0.053 · correlation 0.7 · sources: worker1.schemathesis</div>
+
+  <h4>what</h4>
+<p>The API endpoint /api/fetch returns a 502 error, indicating a server misconfiguration or failure. The function fetch in app/routes/fetch.py directly reaches a potential security sink, possibly leading to a misconfiguration issue.</p>
+  <h4>where</h4>
+<pre>app/routes/fetch.py:13 (fetch)
+    11 | 
+    12 | @router.get(&#34;/api/fetch&#34;)
+&gt;   13 | async def fetch(url: str, request: Request):
+    14 |     current_user(request)
+    15 |     # PLANTED WEAKNESS (SSRF): the server fetches any URL the caller supplies.</pre>
+  <h4>impact</h4>
+<p>This error could expose the application to availability issues and might indicate a misconfigured backend service.</p>
+  <h4>exploit</h4>
+<p>An attacker could exploit this by sending a GET request to /api/fetch, which might reveal misconfiguration details or cause service disruptions.</p>
+
+  <h4>fix</h4>
+<p class="muted">No fix drafted.</p>
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+    <li><b>what</b>: The API endpoint /api/fetch returns a 502 error, indicating a server misconfiguration or failure. —
+<a href="#E-0290">E-0290</a></li>
+    <li><b>what</b>: The function fetch in app/routes/fetch.py directly reaches a potential security sink, possibly leading to a misconfiguration issue. —
+<a href="#E-0307">E-0307</a></li>
+    <li><b>impact</b>: This error could expose the application to availability issues and might indicate a misconfigured backend service. —
+<a href="#E-0290">E-0290</a></li>
+    <li><b>exploit</b>: An attacker could exploit this by sending a GET request to /api/fetch, which might reveal misconfiguration details or cause service disruptions. —
+<a href="#E-0290">E-0290</a></li>
+  </ul>
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      <td>0.3</td><td>0.4</td><td>0.3</td>
+      <td>0.6</td><td>0.3</td><td>0</td><td class="num">0.053</td>
+    </tr></tbody>
+  </table>
+  <p><code>0.3 × 0.4 × (1 + 0.3 + 0.6 + 0.3 + 0) / 5 = 0.053</code></p>
+
+  <h4>Evidence</h4>
+  <p><a href="#E-0290">E-0290</a></p>
+
+</section>
+
+<h2 id="evidence">Evidence appendix</h2>
+<section class="panel ev" id="E-0279">
+  <h3>E-0279 <span class="muted">· http_exchange · httpx</span></h3>
+  <div class="muted">recorded 2026-10-10T00:24:12.082073+00:00</div>
+  <pre>{
+  &#34;method&#34;: &#34;GET&#34;,
+  &#34;route&#34;: &#34;/openapi.json&#34;,
+  &#34;routes&#34;: [
+    &#34;GET /api/accounts&#34;,
+    &#34;GET /api/accounts/{id}&#34;,
+    &#34;GET /api/fetch&#34;,
+    &#34;GET /api/users/search&#34;,
+    &#34;GET /health&#34;,
+    &#34;POST /login&#34;
+  ],
+  &#34;routes_found&#34;: 6,
+  &#34;status&#34;: 200
+}</pre>
+</section>
+<section class="panel ev" id="E-0280">
+  <h3>E-0280 <span class="muted">· coverage · aegis.runtime</span></h3>
+  <div class="muted">recorded 2026-10-10T00:24:12.099843+00:00</div>
+  <pre>{
+  &#34;capability&#34;: &#34;discovery&#34;,
+  &#34;detail&#34;: &#34;6 routes from the OpenAPI document&#34;,
+  &#34;role&#34;: &#34;coverage&#34;,
+  &#34;status&#34;: &#34;PASS&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0281">
+  <h3>E-0281 <span class="muted">· coverage · aegis.runtime</span></h3>
+  <div class="muted">recorded 2026-10-10T00:24:12.137691+00:00</div>
+  <pre>{
+  &#34;capability&#34;: &#34;authentication&#34;,
+  &#34;detail&#34;: &#34;signed in A, B&#34;,
+  &#34;role&#34;: &#34;coverage&#34;,
+  &#34;status&#34;: &#34;PASS&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0282">
+  <h3>E-0282 <span class="muted">· http_exchange · bola 0.1.0</span></h3>
+  <div class="muted">Finding <a href="#F-0127">F-0127</a> · recorded 2026-10-10T00:24:12.293848+00:00</div>
+  <pre>{
+  &#34;auth_context&#34;: &#34;authenticated&#34;,
+  &#34;baseline&#34;: {
+    &#34;identity&#34;: &#34;A&#34;,
+    &#34;status&#34;: 200
+  },
+  &#34;contains_owner_fields&#34;: true,
+  &#34;identity&#34;: &#34;B&#34;,
+  &#34;method&#34;: &#34;GET&#34;,
+  &#34;object_id&#34;: 1,
+  &#34;request&#34;: &#34;GET /api/accounts/1 (as identity B)&#34;,
+  &#34;response&#34;: &#34;{\&#34;id\&#34;: 1, \&#34;owner_id\&#34;: 1, \&#34;owner\&#34;: \&#34;alice\&#34;, \&#34;account_number\&#34;: \&#34;ACC-1001\&#34;, \&#34;balance\&#34;: 1200.5}&#34;,
+  &#34;route&#34;: &#34;/api/accounts/1&#34;,
+  &#34;route_template&#34;: &#34;GET /api/accounts/{id}&#34;,
+  &#34;status&#34;: 200,
+  &#34;timing_ms&#34;: 0
+}</pre>
+</section>
+<section class="panel ev" id="E-0283">
+  <h3>E-0283 <span class="muted">· coverage · aegis.runtime</span></h3>
+  <div class="muted">recorded 2026-10-10T00:24:12.339894+00:00</div>
+  <pre>{
+  &#34;capability&#34;: &#34;access_control&#34;,
+  &#34;detail&#34;: &#34;compared 1 object(s) across identities&#34;,
+  &#34;role&#34;: &#34;coverage&#34;,
+  &#34;status&#34;: &#34;FAILED&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0284">
+  <h3>E-0284 <span class="muted">· oob_hit · ssrf 0.1.0</span></h3>
+  <div class="muted">Finding <a href="#F-0128">F-0128</a> · recorded 2026-10-10T00:24:12.478922+00:00</div>
+  <pre>{
+  &#34;auth_context&#34;: &#34;authenticated&#34;,
+  &#34;hits&#34;: 1,
+  &#34;method&#34;: &#34;GET&#34;,
+  &#34;param&#34;: &#34;url&#34;,
+  &#34;probe_status&#34;: 200,
+  &#34;request&#34;: &#34;GET /api/fetch?url=&lt;approved test input SSRF-CB-001&gt;&#34;,
+  &#34;route&#34;: &#34;/api/fetch&#34;,
+  &#34;route_template&#34;: &#34;GET /api/fetch&#34;,
+  &#34;test_input_id&#34;: &#34;SSRF-CB-001&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0285">
+  <h3>E-0285 <span class="muted">· coverage · aegis.runtime</span></h3>
+  <div class="muted">recorded 2026-10-10T00:24:12.510338+00:00</div>
+  <pre>{
+  &#34;capability&#34;: &#34;ssrf&#34;,
+  &#34;detail&#34;: &#34;probed 1 parameter(s)&#34;,
+  &#34;role&#34;: &#34;coverage&#34;,
+  &#34;status&#34;: &#34;FAILED&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0286">
+  <h3>E-0286 <span class="muted">· http_exchange · nuclei nuclei-v3</span></h3>
+  <div class="muted">Finding <a href="#F-0129">F-0129</a> · recorded 2026-10-10T00:25:46.089016+00:00</div>
+  <pre>{
+  &#34;auth_context&#34;: &#34;unauthenticated&#34;,
+  &#34;matcher&#34;: &#34;&#34;,
+  &#34;method&#34;: &#34;GET&#34;,
+  &#34;request&#34;: &#34;GET /docs&#34;,
+  &#34;route&#34;: &#34;/docs&#34;,
+  &#34;route_template&#34;: &#34;GET /docs&#34;,
+  &#34;severity&#34;: &#34;info&#34;,
+  &#34;status&#34;: null,
+  &#34;template_id&#34;: &#34;swagger-api&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0287">
+  <h3>E-0287 <span class="muted">· http_exchange · nuclei nuclei-v3</span></h3>
+  <div class="muted">Finding <a href="#F-0130">F-0130</a> · recorded 2026-10-10T00:25:46.136266+00:00</div>
+  <pre>{
+  &#34;auth_context&#34;: &#34;unauthenticated&#34;,
+  &#34;matcher&#34;: &#34;&#34;,
+  &#34;method&#34;: &#34;GET&#34;,
+  &#34;request&#34;: &#34;GET /redoc&#34;,
+  &#34;route&#34;: &#34;/redoc&#34;,
+  &#34;route_template&#34;: &#34;GET /redoc&#34;,
+  &#34;severity&#34;: &#34;info&#34;,
+  &#34;status&#34;: null,
+  &#34;template_id&#34;: &#34;redoc-api-docs&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0288">
+  <h3>E-0288 <span class="muted">· http_exchange · nuclei nuclei-v3</span></h3>
+  <div class="muted">Finding <a href="#F-0131">F-0131</a> · recorded 2026-10-10T00:25:46.181864+00:00</div>
+  <pre>{
+  &#34;auth_context&#34;: &#34;unauthenticated&#34;,
+  &#34;matcher&#34;: &#34;&#34;,
+  &#34;method&#34;: &#34;GET&#34;,
+  &#34;request&#34;: &#34;GET /openapi.json&#34;,
+  &#34;route&#34;: &#34;/openapi.json&#34;,
+  &#34;route_template&#34;: &#34;GET /openapi.json&#34;,
+  &#34;severity&#34;: &#34;info&#34;,
+  &#34;status&#34;: null,
+  &#34;template_id&#34;: &#34;openapi&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0289">
+  <h3>E-0289 <span class="muted">· coverage · aegis.runtime</span></h3>
+  <div class="muted">recorded 2026-10-10T00:25:46.206980+00:00</div>
+  <pre>{
+  &#34;capability&#34;: &#34;misconfig&#34;,
+  &#34;detail&#34;: &#34;nuclei templates run&#34;,
+  &#34;role&#34;: &#34;coverage&#34;,
+  &#34;status&#34;: &#34;FAILED&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0290">
+  <h3>E-0290 <span class="muted">· http_exchange · schemathesis schemathesis-4</span></h3>
+  <div class="muted">Finding <a href="#F-0132">F-0132</a> · recorded 2026-10-10T00:25:49.235057+00:00</div>
+  <pre>{
+  &#34;auth_context&#34;: &#34;authenticated&#34;,
+  &#34;checks&#34;: [
+    &#34;Server error&#34;,
+    &#34;Undocumented HTTP status code&#34;
+  ],
+  &#34;method&#34;: &#34;GET&#34;,
+  &#34;request&#34;: &#34;GET /api/fetch&#34;,
+  &#34;route&#34;: &#34;/api/fetch&#34;,
+  &#34;route_template&#34;: &#34;GET /api/fetch&#34;,
+  &#34;status&#34;: 502
+}</pre>
+</section>
+<section class="panel ev" id="E-0291">
+  <h3>E-0291 <span class="muted">· http_exchange · schemathesis schemathesis-4</span></h3>
+  <div class="muted">Finding <a href="#F-0133">F-0133</a> · recorded 2026-10-10T00:25:49.261310+00:00</div>
+  <pre>{
+  &#34;auth_context&#34;: &#34;authenticated&#34;,
+  &#34;checks&#34;: [
+    &#34;Undocumented HTTP status code&#34;
+  ],
+  &#34;method&#34;: &#34;GET&#34;,
+  &#34;request&#34;: &#34;GET /api/accounts/{id}&#34;,
+  &#34;route&#34;: &#34;/api/accounts/{id}&#34;,
+  &#34;route_template&#34;: &#34;GET /api/accounts/{id}&#34;,
+  &#34;status&#34;: 404
+}</pre>
+</section>
+<section class="panel ev" id="E-0292">
+  <h3>E-0292 <span class="muted">· coverage · aegis.runtime</span></h3>
+  <div class="muted">recorded 2026-10-10T00:25:49.274396+00:00</div>
+  <pre>{
+  &#34;capability&#34;: &#34;api_conformance&#34;,
+  &#34;detail&#34;: &#34;schemathesis run against the spec&#34;,
+  &#34;role&#34;: &#34;coverage&#34;,
+  &#34;status&#34;: &#34;FAILED&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0293">
+  <h3>E-0293 <span class="muted">· dependency · syft</span></h3>
+  <div class="muted">recorded 2026-10-10T00:25:52.255604+00:00</div>
+  <pre>{
+  &#34;components&#34;: [
+    {
+      &#34;name&#34;: &#34;fastapi&#34;,
+      &#34;purl&#34;: &#34;pkg:pypi/fastapi@0.139.0&#34;,
+      &#34;type&#34;: &#34;library&#34;,
+      &#34;version&#34;: &#34;0.139.0&#34;
+    },
+    {
+      &#34;name&#34;: &#34;requests&#34;,
+      &#34;purl&#34;: &#34;pkg:pypi/requests@2.31.0&#34;,
+      &#34;type&#34;: &#34;library&#34;,
+      &#34;version&#34;: &#34;2.31.0&#34;
+    }
+  ],
+  &#34;count&#34;: 2
+}</pre>
+</section>
+<section class="panel ev" id="E-0294">
+  <h3>E-0294 <span class="muted">· code_location · route_extractor</span></h3>
+  <div class="muted">recorded 2026-10-10T00:25:52.343783+00:00</div>
+  <pre>{
+  &#34;end_line&#34;: 40,
+  &#34;file&#34;: &#34;app/main.py&#34;,
+  &#34;function&#34;: &#34;health&#34;,
+  &#34;line&#34;: 39,
+  &#34;methods&#34;: [
+    &#34;GET&#34;
+  ],
+  &#34;path&#34;: &#34;/health&#34;,
+  &#34;qualname&#34;: &#34;app/main.py::health&#34;,
+  &#34;role&#34;: &#34;route_handler&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0295">
+  <h3>E-0295 <span class="muted">· code_location · route_extractor</span></h3>
+  <div class="muted">recorded 2026-10-10T00:25:52.355489+00:00</div>
+  <pre>{
+  &#34;end_line&#34;: 55,
+  &#34;file&#34;: &#34;app/main.py&#34;,
+  &#34;function&#34;: &#34;login&#34;,
+  &#34;line&#34;: 43,
+  &#34;methods&#34;: [
+    &#34;POST&#34;
+  ],
+  &#34;path&#34;: &#34;/login&#34;,
+  &#34;qualname&#34;: &#34;app/main.py::login&#34;,
+  &#34;role&#34;: &#34;route_handler&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0296">
+  <h3>E-0296 <span class="muted">· code_location · route_extractor</span></h3>
+  <div class="muted">recorded 2026-10-10T00:25:52.368606+00:00</div>
+  <pre>{
+  &#34;end_line&#34;: 30,
+  &#34;file&#34;: &#34;app/routes/accounts.py&#34;,
+  &#34;function&#34;: &#34;list_accounts&#34;,
+  &#34;line&#34;: 27,
+  &#34;methods&#34;: [
+    &#34;GET&#34;
+  ],
+  &#34;path&#34;: &#34;/api/accounts&#34;,
+  &#34;qualname&#34;: &#34;app/routes/accounts.py::list_accounts&#34;,
+  &#34;role&#34;: &#34;route_handler&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0297">
+  <h3>E-0297 <span class="muted">· code_location · route_extractor</span></h3>
+  <div class="muted">recorded 2026-10-10T00:25:52.381143+00:00</div>
+  <pre>{
+  &#34;end_line&#34;: 40,
+  &#34;file&#34;: &#34;app/routes/accounts.py&#34;,
+  &#34;function&#34;: &#34;get_account&#34;,
+  &#34;line&#34;: 34,
+  &#34;methods&#34;: [
+    &#34;GET&#34;
+  ],
+  &#34;path&#34;: &#34;/api/accounts/{id}&#34;,
+  &#34;qualname&#34;: &#34;app/routes/accounts.py::get_account&#34;,
+  &#34;role&#34;: &#34;route_handler&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0298">
+  <h3>E-0298 <span class="muted">· code_location · route_extractor</span></h3>
+  <div class="muted">recorded 2026-10-10T00:25:52.391330+00:00</div>
+  <pre>{
+  &#34;end_line&#34;: 20,
+  &#34;file&#34;: &#34;app/routes/fetch.py&#34;,
+  &#34;function&#34;: &#34;fetch&#34;,
+  &#34;line&#34;: 13,
+  &#34;methods&#34;: [
+    &#34;GET&#34;
+  ],
+  &#34;path&#34;: &#34;/api/fetch&#34;,
+  &#34;qualname&#34;: &#34;app/routes/fetch.py::fetch&#34;,
+  &#34;role&#34;: &#34;route_handler&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0299">
+  <h3>E-0299 <span class="muted">· code_location · route_extractor</span></h3>
+  <div class="muted">recorded 2026-10-10T00:25:52.405165+00:00</div>
+  <pre>{
+  &#34;end_line&#34;: 17,
+  &#34;file&#34;: &#34;app/routes/users.py&#34;,
+  &#34;function&#34;: &#34;search_users&#34;,
+  &#34;line&#34;: 12,
+  &#34;methods&#34;: [
+    &#34;GET&#34;
+  ],
+  &#34;path&#34;: &#34;/api/users/search&#34;,
+  &#34;qualname&#34;: &#34;app/routes/users.py::search_users&#34;,
+  &#34;role&#34;: &#34;route_handler&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0300">
+  <h3>E-0300 <span class="muted">· code_location · route_extractor</span></h3>
+  <div class="muted">recorded 2026-10-10T00:25:52.417787+00:00</div>
+  <pre>{
+  &#34;end_line&#34;: 108,
+  &#34;file&#34;: &#34;app/web.py&#34;,
+  &#34;function&#34;: &#34;home&#34;,
+  &#34;line&#34;: 107,
+  &#34;methods&#34;: [
+    &#34;GET&#34;
+  ],
+  &#34;path&#34;: &#34;/&#34;,
+  &#34;qualname&#34;: &#34;app/web.py::home&#34;,
+  &#34;role&#34;: &#34;route_handler&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0301">
+  <h3>E-0301 <span class="muted">· code_location · route_extractor</span></h3>
+  <div class="muted">recorded 2026-10-10T00:25:52.429515+00:00</div>
+  <pre>{
+  &#34;end_line&#34;: 113,
+  &#34;file&#34;: &#34;app/web.py&#34;,
+  &#34;function&#34;: &#34;script&#34;,
+  &#34;line&#34;: 112,
+  &#34;methods&#34;: [
+    &#34;GET&#34;
+  ],
+  &#34;path&#34;: &#34;/static/app.js&#34;,
+  &#34;qualname&#34;: &#34;app/web.py::script&#34;,
+  &#34;role&#34;: &#34;route_handler&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0302">
+  <h3>E-0302 <span class="muted">· code_location · route_extractor</span></h3>
+  <div class="muted">recorded 2026-10-10T00:25:52.442517+00:00</div>
+  <pre>{
+  &#34;end_line&#34;: 124,
+  &#34;file&#34;: &#34;app/web.py&#34;,
+  &#34;function&#34;: &#34;login_form&#34;,
+  &#34;line&#34;: 123,
+  &#34;methods&#34;: [
+    &#34;GET&#34;
+  ],
+  &#34;path&#34;: &#34;/login-form&#34;,
+  &#34;qualname&#34;: &#34;app/web.py::login_form&#34;,
+  &#34;role&#34;: &#34;route_handler&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0303">
+  <h3>E-0303 <span class="muted">· code_location · route_extractor</span></h3>
+  <div class="muted">recorded 2026-10-10T00:25:52.455595+00:00</div>
+  <pre>{
+  &#34;end_line&#34;: 144,
+  &#34;file&#34;: &#34;app/web.py&#34;,
+  &#34;function&#34;: &#34;login_form_submit&#34;,
+  &#34;line&#34;: 128,
+  &#34;methods&#34;: [
+    &#34;POST&#34;
+  ],
+  &#34;path&#34;: &#34;/login-form&#34;,
+  &#34;qualname&#34;: &#34;app/web.py::login_form_submit&#34;,
+  &#34;role&#34;: &#34;route_handler&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0304">
+  <h3>E-0304 <span class="muted">· code_location · semgrep</span></h3>
+  <div class="muted">Finding <a href="#F-0127">F-0127</a> · recorded 2026-10-10T00:26:03.471020+00:00</div>
+  <pre>{
+  &#34;file&#34;: &#34;app/routes/accounts.py&#34;,
+  &#34;line&#34;: 37,
+  &#34;note&#34;: &#34;Object is read by id without an owner check.&#34;,
+  &#34;rule&#34;: &#34;fastapi-missing-owner-check&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0305">
+  <h3>E-0305 <span class="muted">· dataflow_path · semgrep</span></h3>
+  <div class="muted">Finding <a href="#F-0127">F-0127</a> · recorded 2026-10-10T00:26:03.479532+00:00</div>
+  <pre>{
+  &#34;file&#34;: &#34;app/routes/accounts.py&#34;,
+  &#34;function&#34;: &#34;app/routes/accounts.py::get_account&#34;,
+  &#34;line&#34;: 37,
+  &#34;note&#34;: &#34;source reaches sink&#34;,
+  &#34;rule&#34;: &#34;fastapi-missing-owner-check&#34;,
+  &#34;sink&#34;: [
+    &#34;row = request.app.state.db.execute(_SELECT + \&#34; WHERE a.id = ?\&#34;, (id,)).fetchone()&#34;,
+    37
+  ],
+  &#34;source&#34;: [
+    &#34;get_account(id)&#34;,
+    34
+  ],
+  &#34;steps&#34;: [],
+  &#34;traced_by&#34;: &#34;aegis ast def-use (intra-function)&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0306">
+  <h3>E-0306 <span class="muted">· code_location · semgrep</span></h3>
+  <div class="muted">Finding <a href="#F-0128">F-0128</a> · recorded 2026-10-10T00:26:03.494447+00:00</div>
+  <pre>{
+  &#34;file&#34;: &#34;app/routes/fetch.py&#34;,
+  &#34;line&#34;: 17,
+  &#34;note&#34;: &#34;The server fetches a URL taken from the request, with no host allowlist check first.&#34;,
+  &#34;rule&#34;: &#34;python-ssrf&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0307">
+  <h3>E-0307 <span class="muted">· dataflow_path · semgrep</span></h3>
+  <div class="muted">Finding <a href="#F-0128">F-0128</a> · recorded 2026-10-10T00:26:03.502936+00:00</div>
+  <pre>{
+  &#34;file&#34;: &#34;app/routes/fetch.py&#34;,
+  &#34;function&#34;: &#34;app/routes/fetch.py::fetch&#34;,
+  &#34;line&#34;: 17,
+  &#34;note&#34;: &#34;source reaches sink&#34;,
+  &#34;rule&#34;: &#34;python-ssrf&#34;,
+  &#34;sink&#34;: [
+    &#34;resp = await request.app.state.http.get(url)&#34;,
+    17
+  ],
+  &#34;source&#34;: [
+    &#34;fetch(url)&#34;,
+    13
+  ],
+  &#34;steps&#34;: [],
+  &#34;traced_by&#34;: &#34;aegis ast def-use (intra-function)&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0308">
+  <h3>E-0308 <span class="muted">· code_location · semgrep</span></h3>
+  <div class="muted">Finding <a href="#F-0136">F-0136</a> · recorded 2026-10-10T00:26:03.521995+00:00</div>
+  <pre>{
+  &#34;file&#34;: &#34;app/routes/users.py&#34;,
+  &#34;line&#34;: 16,
+  &#34;note&#34;: &#34;A SQL query is built from a variable with string formatting or concatenation, then executed.&#34;,
+  &#34;rule&#34;: &#34;python-sqli&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0309">
+  <h3>E-0309 <span class="muted">· dataflow_path · semgrep</span></h3>
+  <div class="muted">Finding <a href="#F-0136">F-0136</a> · recorded 2026-10-10T00:26:03.541715+00:00</div>
+  <pre>{
+  &#34;file&#34;: &#34;app/routes/users.py&#34;,
+  &#34;function&#34;: &#34;app/routes/users.py::search_users&#34;,
+  &#34;line&#34;: 16,
+  &#34;note&#34;: &#34;source reaches sink&#34;,
+  &#34;rule&#34;: &#34;python-sqli&#34;,
+  &#34;sink&#34;: [
+    &#34;rows = request.app.state.db.execute(query).fetchall()&#34;,
+    16
+  ],
+  &#34;source&#34;: [
+    &#34;search_users(name)&#34;,
+    12
+  ],
+  &#34;steps&#34;: [
+    {
+      &#34;from&#34;: [
+        &#34;name&#34;
+      ],
+      &#34;line&#34;: 15,
+      &#34;var&#34;: &#34;query&#34;
+    }
+  ],
+  &#34;traced_by&#34;: &#34;aegis ast def-use (intra-function)&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0310">
+  <h3>E-0310 <span class="muted">· code_location · semgrep</span></h3>
+  <div class="muted">Finding <a href="#F-0136">F-0136</a> · recorded 2026-10-10T00:26:03.575955+00:00</div>
+  <pre>{
+  &#34;file&#34;: &#34;app/routes/users.py&#34;,
+  &#34;line&#34;: 16,
+  &#34;note&#34;: &#34;User input flows into a SQL query built by string concatenation.&#34;,
+  &#34;rule&#34;: &#34;fastapi-sqli&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0311">
+  <h3>E-0311 <span class="muted">· dataflow_path · semgrep</span></h3>
+  <div class="muted">Finding <a href="#F-0136">F-0136</a> · recorded 2026-10-10T00:26:03.591469+00:00</div>
+  <pre>{
+  &#34;file&#34;: &#34;app/routes/users.py&#34;,
+  &#34;function&#34;: &#34;app/routes/users.py::search_users&#34;,
+  &#34;line&#34;: 16,
+  &#34;note&#34;: &#34;source reaches sink&#34;,
+  &#34;rule&#34;: &#34;fastapi-sqli&#34;,
+  &#34;sink&#34;: [
+    &#34;rows = request.app.state.db.execute(query).fetchall()&#34;,
+    16
+  ],
+  &#34;source&#34;: [
+    &#34;search_users(name)&#34;,
+    12
+  ],
+  &#34;steps&#34;: [
+    {
+      &#34;from&#34;: [
+        &#34;name&#34;
+      ],
+      &#34;line&#34;: 15,
+      &#34;var&#34;: &#34;query&#34;
+    }
+  ],
+  &#34;traced_by&#34;: &#34;aegis ast def-use (intra-function)&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0312">
+  <h3>E-0312 <span class="muted">· secret · gitleaks</span></h3>
+  <div class="muted">Finding <a href="#F-0137">F-0137</a> · recorded 2026-10-10T00:26:06.148854+00:00</div>
+  <pre>{
+  &#34;file&#34;: &#34;app/config.py&#34;,
+  &#34;line&#34;: 6,
+  &#34;rule&#34;: &#34;stripe-access-token&#34;,
+  &#34;value&#34;: &#34;***REDACTED***&#34;,
+  &#34;value_fingerprint&#34;: &#34;&#34;,
+  &#34;verified&#34;: false
+}</pre>
+</section>
+<section class="panel ev" id="E-0313">
+  <h3>E-0313 <span class="muted">· secret · trufflehog</span></h3>
+  <div class="muted">Finding <a href="#F-0137">F-0137</a> · recorded 2026-10-10T00:26:09.327601+00:00</div>
+  <pre>{
+  &#34;file&#34;: &#34;app/config.py&#34;,
+  &#34;line&#34;: 6,
+  &#34;rule&#34;: &#34;Stripe&#34;,
+  &#34;value&#34;: &#34;***REDACTED***&#34;,
+  &#34;verified&#34;: false
+}</pre>
+</section>
+<section class="panel ev" id="E-0314">
+  <h3>E-0314 <span class="muted">· dependency · trivy · database 2026-10-07</span></h3>
+  <div class="muted">Finding <a href="#F-0138">F-0138</a> · recorded 2026-10-10T00:26:13.501681+00:00</div>
+  <pre>{
+  &#34;advisories&#34;: [
+    &#34;CVE-2024-35195&#34;,
+    &#34;CVE-2024-47081&#34;,
+    &#34;CVE-2026-25645&#34;
+  ],
+  &#34;ecosystem&#34;: &#34;pip&#34;,
+  &#34;fixed_in&#34;: [
+    &#34;2.32.0&#34;,
+    &#34;2.32.4&#34;,
+    &#34;2.33.0&#34;
+  ],
+  &#34;line&#34;: 8,
+  &#34;manifest&#34;: &#34;requirements.txt&#34;,
+  &#34;package&#34;: &#34;requests&#34;,
+  &#34;severities&#34;: [
+    &#34;MEDIUM&#34;
+  ],
+  &#34;version&#34;: &#34;2.31.0&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0315">
+  <h3>E-0315 <span class="muted">· code_location · trivy</span></h3>
+  <div class="muted">Finding <a href="#F-0139">F-0139</a> · recorded 2026-10-10T00:26:13.544094+00:00</div>
+  <pre>{
+  &#34;file&#34;: &#34;Dockerfile&#34;,
+  &#34;line&#34;: null,
+  &#34;note&#34;: &#34;Specify at least 1 USER command in Dockerfile with non-root user as argument&#34;,
+  &#34;resolution&#34;: &#34;Add &#39;USER &lt;non root user name&gt;&#39; line to the Dockerfile&#34;,
+  &#34;rule&#34;: &#34;DS-0002&#34;,
+  &#34;severity&#34;: &#34;HIGH&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0316">
+  <h3>E-0316 <span class="muted">· code_location · trivy</span></h3>
+  <div class="muted">Finding <a href="#F-0140">F-0140</a> · recorded 2026-10-10T00:26:13.587721+00:00</div>
+  <pre>{
+  &#34;file&#34;: &#34;Dockerfile&#34;,
+  &#34;line&#34;: null,
+  &#34;note&#34;: &#34;Add HEALTHCHECK instruction in your Dockerfile&#34;,
+  &#34;resolution&#34;: &#34;Add HEALTHCHECK instruction in Dockerfile&#34;,
+  &#34;rule&#34;: &#34;DS-0026&#34;,
+  &#34;severity&#34;: &#34;LOW&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0317">
+  <h3>E-0317 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">recorded 2026-10-10T00:26:19.750987+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;MD5&#34;,
+  &#34;asset_type&#34;: &#34;algorithm&#34;,
+  &#34;file&#34;: &#34;app/auth.py&#34;,
+  &#34;function&#34;: &#34;hash_password&#34;,
+  &#34;line&#34;: 12,
+  &#34;primitive&#34;: &#34;hash&#34;,
+  &#34;role&#34;: &#34;inventory&#34;,
+  &#34;usage&#34;: &#34;password_hash&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0318">
+  <h3>E-0318 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">recorded 2026-10-10T00:26:19.776178+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;RSA-1024&#34;,
+  &#34;asset_type&#34;: &#34;algorithm&#34;,
+  &#34;family&#34;: &#34;RSA&#34;,
+  &#34;file&#34;: &#34;app/signing.py&#34;,
+  &#34;function&#34;: &#34;signing_key&#34;,
+  &#34;key_size&#34;: 1024,
+  &#34;line&#34;: 15,
+  &#34;primitive&#34;: &#34;pke&#34;,
+  &#34;role&#34;: &#34;inventory&#34;,
+  &#34;usage&#34;: &#34;signature&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0319">
+  <h3>E-0319 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">recorded 2026-10-10T00:26:19.797491+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;SHA-1&#34;,
+  &#34;asset_type&#34;: &#34;algorithm&#34;,
+  &#34;file&#34;: &#34;app/signing.py&#34;,
+  &#34;function&#34;: &#34;sign_receipt&#34;,
+  &#34;line&#34;: 21,
+  &#34;primitive&#34;: &#34;hash&#34;,
+  &#34;role&#34;: &#34;inventory&#34;,
+  &#34;usage&#34;: &#34;signature&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0320">
+  <h3>E-0320 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">recorded 2026-10-10T00:26:19.823907+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;TLS&#34;,
+  &#34;asset_type&#34;: &#34;protocol&#34;,
+  &#34;file&#34;: &#34;app/tls.py&#34;,
+  &#34;function&#34;: &#34;server_context&#34;,
+  &#34;line&#34;: 8,
+  &#34;protocol&#34;: &#34;negotiated&#34;,
+  &#34;role&#34;: &#34;inventory&#34;,
+  &#34;setting&#34;: &#34;protocol&#34;,
+  &#34;usage&#34;: &#34;tls_config&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0321">
+  <h3>E-0321 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">recorded 2026-10-10T00:26:19.844810+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;TLS&#34;,
+  &#34;asset_type&#34;: &#34;protocol&#34;,
+  &#34;file&#34;: &#34;app/tls.py&#34;,
+  &#34;function&#34;: &#34;server_context&#34;,
+  &#34;line&#34;: 9,
+  &#34;protocol&#34;: &#34;TLSv1.0&#34;,
+  &#34;role&#34;: &#34;inventory&#34;,
+  &#34;setting&#34;: &#34;minimum_version&#34;,
+  &#34;usage&#34;: &#34;tls_config&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0322">
+  <h3>E-0322 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">recorded 2026-10-10T00:26:19.873606+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;TLS&#34;,
+  &#34;asset_type&#34;: &#34;protocol&#34;,
+  &#34;ciphers&#34;: &#34;ALL:@SECLEVEL=0&#34;,
+  &#34;file&#34;: &#34;app/tls.py&#34;,
+  &#34;function&#34;: &#34;server_context&#34;,
+  &#34;line&#34;: 10,
+  &#34;role&#34;: &#34;inventory&#34;,
+  &#34;setting&#34;: &#34;ciphers&#34;,
+  &#34;usage&#34;: &#34;tls_config&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0323">
+  <h3>E-0323 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">recorded 2026-10-10T00:26:19.902742+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;RSA-2048&#34;,
+  &#34;asset_type&#34;: &#34;algorithm&#34;,
+  &#34;family&#34;: &#34;RSA&#34;,
+  &#34;file&#34;: &#34;serve_https.py&#34;,
+  &#34;function&#34;: &#34;self_signed&#34;,
+  &#34;key_size&#34;: 2048,
+  &#34;line&#34;: 27,
+  &#34;primitive&#34;: &#34;pke&#34;,
+  &#34;role&#34;: &#34;inventory&#34;,
+  &#34;usage&#34;: &#34;signature&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0324">
+  <h3>E-0324 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">recorded 2026-10-10T00:26:19.931783+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;SHA-256&#34;,
+  &#34;asset_type&#34;: &#34;algorithm&#34;,
+  &#34;file&#34;: &#34;serve_https.py&#34;,
+  &#34;function&#34;: &#34;self_signed&#34;,
+  &#34;line&#34;: 39,
+  &#34;primitive&#34;: &#34;hash&#34;,
+  &#34;role&#34;: &#34;inventory&#34;,
+  &#34;usage&#34;: &#34;signature&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0325">
+  <h3>E-0325 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">Finding <a href="#F-0141">F-0141</a> · recorded 2026-10-10T00:26:19.990198+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;MD5&#34;,
+  &#34;asset_type&#34;: &#34;algorithm&#34;,
+  &#34;file&#34;: &#34;app/auth.py&#34;,
+  &#34;flag&#34;: &#34;weak_crypto&#34;,
+  &#34;function&#34;: &#34;hash_password&#34;,
+  &#34;line&#34;: 12,
+  &#34;primitive&#34;: &#34;hash&#34;,
+  &#34;reason&#34;: &#34;MD5 is broken: collisions are trivial — and it is used for passwords&#34;,
+  &#34;usage&#34;: &#34;password_hash&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0326">
+  <h3>E-0326 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">Finding <a href="#F-0142">F-0142</a> · recorded 2026-10-10T00:26:20.040346+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;RSA-1024&#34;,
+  &#34;asset_type&#34;: &#34;algorithm&#34;,
+  &#34;family&#34;: &#34;RSA&#34;,
+  &#34;file&#34;: &#34;app/signing.py&#34;,
+  &#34;flag&#34;: &#34;weak_crypto&#34;,
+  &#34;function&#34;: &#34;signing_key&#34;,
+  &#34;key_size&#34;: 1024,
+  &#34;line&#34;: 15,
+  &#34;primitive&#34;: &#34;pke&#34;,
+  &#34;reason&#34;: &#34;RSA key of 1024 bits (at least 2048 required)&#34;,
+  &#34;usage&#34;: &#34;signature&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0327">
+  <h3>E-0327 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">Finding <a href="#F-0143">F-0143</a> · recorded 2026-10-10T00:26:20.088872+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;SHA-1&#34;,
+  &#34;asset_type&#34;: &#34;algorithm&#34;,
+  &#34;file&#34;: &#34;app/signing.py&#34;,
+  &#34;flag&#34;: &#34;weak_crypto&#34;,
+  &#34;function&#34;: &#34;sign_receipt&#34;,
+  &#34;line&#34;: 21,
+  &#34;primitive&#34;: &#34;hash&#34;,
+  &#34;reason&#34;: &#34;SHA-1 is broken: practical collisions exist&#34;,
+  &#34;usage&#34;: &#34;signature&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0328">
+  <h3>E-0328 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">Finding <a href="#F-0144">F-0144</a> · recorded 2026-10-10T00:26:20.145880+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;TLS&#34;,
+  &#34;asset_type&#34;: &#34;protocol&#34;,
+  &#34;file&#34;: &#34;app/tls.py&#34;,
+  &#34;flag&#34;: &#34;weak_crypto&#34;,
+  &#34;function&#34;: &#34;server_context&#34;,
+  &#34;line&#34;: 9,
+  &#34;protocol&#34;: &#34;TLSv1.0&#34;,
+  &#34;reason&#34;: &#34;TLS settings allow TLSv1.0; TLS 1.2 is the minimum&#34;,
+  &#34;setting&#34;: &#34;minimum_version&#34;,
+  &#34;usage&#34;: &#34;tls_config&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0329">
+  <h3>E-0329 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">Finding <a href="#F-0145">F-0145</a> · recorded 2026-10-10T00:26:20.190279+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;TLS&#34;,
+  &#34;asset_type&#34;: &#34;protocol&#34;,
+  &#34;ciphers&#34;: &#34;ALL:@SECLEVEL=0&#34;,
+  &#34;file&#34;: &#34;app/tls.py&#34;,
+  &#34;flag&#34;: &#34;weak_crypto&#34;,
+  &#34;function&#34;: &#34;server_context&#34;,
+  &#34;line&#34;: 10,
+  &#34;reason&#34;: &#34;cipher string &#39;ALL:@SECLEVEL=0&#39; enables legacy or broken cipher suites&#34;,
+  &#34;setting&#34;: &#34;ciphers&#34;,
+  &#34;usage&#34;: &#34;tls_config&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0330">
+  <h3>E-0330 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">Finding <a href="#F-0146">F-0146</a> · recorded 2026-10-10T00:26:20.246843+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;RSA-1024&#34;,
+  &#34;asset_type&#34;: &#34;algorithm&#34;,
+  &#34;family&#34;: &#34;RSA&#34;,
+  &#34;file&#34;: &#34;app/signing.py&#34;,
+  &#34;flag&#34;: &#34;quantum_risk&#34;,
+  &#34;function&#34;: &#34;signing_key&#34;,
+  &#34;key_size&#34;: 1024,
+  &#34;line&#34;: 15,
+  &#34;primitive&#34;: &#34;pke&#34;,
+  &#34;reason&#34;: &#34;RSA-1024 is not quantum-safe: signatures made with it can be forged once a large quantum computer exists; plan a move to ML-KEM / ML-DSA&#34;,
+  &#34;usage&#34;: &#34;signature&#34;
+}</pre>
+</section>
+<section class="panel ev" id="E-0331">
+  <h3>E-0331 <span class="muted">· crypto_asset · crypto-discovery</span></h3>
+  <div class="muted">Finding <a href="#F-0147">F-0147</a> · recorded 2026-10-10T00:26:20.289382+00:00</div>
+  <pre>{
+  &#34;algo&#34;: &#34;RSA-2048&#34;,
+  &#34;asset_type&#34;: &#34;algorithm&#34;,
+  &#34;family&#34;: &#34;RSA&#34;,
+  &#34;file&#34;: &#34;serve_https.py&#34;,
+  &#34;flag&#34;: &#34;quantum_risk&#34;,
+  &#34;function&#34;: &#34;self_signed&#34;,
+  &#34;key_size&#34;: 2048,
+  &#34;line&#34;: 27,
+  &#34;primitive&#34;: &#34;pke&#34;,
+  &#34;reason&#34;: &#34;RSA-2048 is not quantum-safe: signatures made with it can be forged once a large quantum computer exists; plan a move to ML-KEM / ML-DSA&#34;,
+  &#34;usage&#34;: &#34;signature&#34;
+}</pre>
+</section>
+
+<footer>
+  Tool calls: 16 (0 blocked by the safety layer) · git 4 · gitleaks 1 · nuclei 1 · osv 1 · schemathesis 1 · semgrep 5 · syft 1 · trivy 1 · trufflehog 1.
+  Findings and states come from evidence and deterministic rules; explanation text is shown only where it passed validation against that evidence.
+  This file is self-contained and works offline.
+</footer>
+</main>
+</body>
+</html>

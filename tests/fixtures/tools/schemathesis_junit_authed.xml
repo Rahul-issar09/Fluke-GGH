@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites errors="0" failures="1" skipped="0" tests="4" time="0.384129">
+  <testsuite name="schemathesis" hostname="DESKTOP-7ERO0I3" errors="0" failures="1" skipped="0" tests="4" time="0.384129">
+    <testcase name="GET /api/accounts" time="0.223329" />
+    <testcase name="GET /api/users/search" time="0.112227" />
+    <testcase name="GET /health" time="0.008437" />
+    <testcase name="GET /api/accounts/{id}" time="0.040136">
+      <failure type="failure">1. Test Case ID: sMvdx6
+
+- Undocumented HTTP status code
+
+    Received: 404
+    Documented: 200, 422
+
+[404] Not Found:
+
+    `{"detail":"account not found"}`
+
+Reproduce with:
+
+    curl -X GET -H 'Cookie: [Filtered]' http://127.0.0.1:5056/api/accounts/127</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

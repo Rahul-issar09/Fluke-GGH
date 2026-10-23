@@ -28,6 +28,7 @@ from aegis.evidence.models import (
     ToolCallLog,
 )
 from aegis.observability import get_logger
+from aegis.secret_scrub import scrub
 
 __all__ = ["EvidenceStore"]
 
@@ -268,11 +269,12 @@ class EvidenceStore:
                 scan_id=scan_id,
                 finding_id=finding_id,
                 node=node,
-                input_summary_json=json.dumps(input_summary or {}, default=str),
-                output_json=json.dumps(output or {}, default=str),
+                # scrubbed: a provider error must never store a secret (LLM_PROVIDER_PHASES §9.3)
+                input_summary_json=scrub(json.dumps(input_summary or {}, default=str)),
+                output_json=scrub(json.dumps(output or {}, default=str)),
                 source=source,
                 valid=valid,
-                error=error,
+                error=scrub(error) if error is not None else None,
             )
             s.add(dec)
             s.commit()

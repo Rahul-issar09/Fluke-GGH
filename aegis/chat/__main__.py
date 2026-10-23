@@ -1,7 +1,9 @@
 """Re-index scans for the findings chatbot: ``python -m aegis.chat reindex S-0015`` (or ``--all``).
 
 A scan is indexed once, when it finishes. If that failed (the embedding model was missing or down)
-or you changed ``AEGIS_CHAT__EMBED_MODEL``, run this instead of re-scanning. It reads the same
+or you changed ``AEGIS_CHAT__EMBED_MODEL``, run this instead of re-scanning. After a change of
+embedding model, use ``--all``: the index is emptied and rebuilt, because vectors from two models
+must never be mixed (a single scan is refused until then). It reads the same
 settings and database as the API, replaces each scan's chunks (no duplicates), and records the
 outcome on the scan. Stop the API first when you are also changing the embedding model, so two
 processes do not hold the vector store open at once.
@@ -12,13 +14,13 @@ from __future__ import annotations
 import argparse
 import asyncio
 import sys
-from dataclasses import replace
 from pathlib import Path
 
+from aegis.chat import index_manifest
 from aegis.chat.chroma_store import ChromaStore
 from aegis.chat.embedder import EmbeddingUnavailable, make_embedder
 from aegis.chat.indexer import index_scan
-from aegis.config import get_app_settings
+from aegis.config import get_app_settings, resolve_chat_settings
 from aegis.evidence.db import init_db, make_engine
 from aegis.evidence.store import EvidenceStore
 
@@ -29,10 +31,20 @@ def _out(line: str) -> None:
     sys.stdout.write(line + "\n")
 
 
-async def reindex(store, chat_settings, ollama_url: str, scan_ids: list[str], *, chroma=None, embedder=None) -> list[dict]:
-    """Re-index each scan; a failure on one is reported and does not stop the rest."""
+async def reindex(store, chat_settings, ollama_url: str, scan_ids: list[str], *, chroma=None, embedder=None,
+                  rebuild: bool = False) -> list[dict]:
+    """Re-index each scan; a failure on one is reported and does not stop the rest.
+
+    If the index was built by another embedding model (LP4), ``rebuild`` (``--all``) empties it and
+    builds it again for every scan given; without it, each scan is refused with that reason.
+    """
     chroma = chroma or ChromaStore(chat_settings.chroma_path, chat_settings.collection)
-    embedder = embedder or make_embedder(chat_settings, ollama_url)
+    embedder = embedder or make_embedder(chat_settings, ollama_url, guard=True)
+    compat = index_manifest.check(chroma, embedder)
+    if not compat.compatible and rebuild:
+        _out(f"rebuilding the chat index: {compat.reason.split(';')[0]}")
+        chroma.reset()
+        (Path(chroma.path) / index_manifest.MANIFEST_FILE).unlink(missing_ok=True)
     results: list[dict] = []
     for scan_id in scan_ids:
         if store.get_scan(scan_id) is None:
@@ -55,9 +67,7 @@ def main(argv: list[str] | None = None) -> int:
 
     settings = get_app_settings()
     data = Path(settings.data_dir)
-    chat = settings.chat
-    if not Path(chat.chroma_path).is_absolute():
-        chat = replace(chat, chroma_path=str(data / "chroma"))   # same place the API puts it
+    chat = resolve_chat_settings(settings)   # same index path and embedding URL as the API
     engine = make_engine(f"sqlite:///{(data / 'aegis.db').resolve().as_posix()}")
     init_db(engine)
     store = EvidenceStore(engine)
@@ -66,9 +76,9 @@ def main(argv: list[str] | None = None) -> int:
     if not scan_ids:
         parser.error("give one or more scan ids, or --all")
 
-    _out(f"embedding model: {chat.embed_model} (dim {chat.embed_dim})")
+    _out(f"embedding model: {chat.embed_model} (dim {chat.embed_dim}) at {chat.embed_url}")
     try:
-        results = asyncio.run(reindex(store, chat, settings.model.ollama_url, scan_ids))
+        results = asyncio.run(reindex(store, chat, settings.model.ollama_url, scan_ids, rebuild=args.all))
     except EmbeddingUnavailable as exc:
         _out(f"embedding model unavailable: {exc}")
         return 2

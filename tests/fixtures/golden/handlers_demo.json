@@ -1,0 +1,10 @@
+[
+  {"path": "/api/accounts/<int:id>", "methods": ["GET"], "function": "get_account",
+   "qualname": "app/routes/accounts.py::get_account", "file": "app/routes/accounts.py", "line": 22, "end_line": 30},
+  {"path": "/api/accounts", "methods": ["GET"], "function": "list_accounts",
+   "qualname": "app/routes/accounts.py::list_accounts", "file": "app/routes/accounts.py", "line": 14, "end_line": 20},
+  {"path": "/api/users/search", "methods": ["GET"], "function": "search_users",
+   "qualname": "app/routes/users.py::search_users", "file": "app/routes/users.py", "line": 38, "end_line": 46},
+  {"path": "/api/fetch", "methods": ["GET"], "function": "fetch",
+   "qualname": "app/routes/fetch.py::fetch", "file": "app/routes/fetch.py", "line": 10, "end_line": 18}
+]

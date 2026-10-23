@@ -5,6 +5,10 @@ Reports what the backend can use right now — never a 500 for a missing piece:
 * ``ollama`` — reachable, and whether the configured model is pulled. The probe uses a plain
   infrastructure client with a short timeout, not the scan egress guard (conflict C33): Ollama
   is part of AEGIS, not a scan target.
+* ``llm`` — the active model (provider, model, local or cloud, where the choice came from) and
+  whether it is ready, with what to fix if not (LLM_PROVIDER_PHASES LP3).
+* ``embeddings`` — the embedding model (always local), whether it is pulled, and whether the chat
+  index was built by it (LP4).
 * ``tools`` — each scanner binary found (and where); a missing one is ``false``.
 * ``database`` — the evidence store answers.
 * ``db_snapshot_dates`` — the offline vulnerability-database dates scans would use.
@@ -24,7 +28,7 @@ from fastapi import APIRouter, Depends
 from sqlmodel import select
 
 from aegis.agent.nodes.prepare import snapshot_db_dates
-from aegis.api.deps import get_settings, get_store
+from aegis.api.deps import get_llm_manager, get_settings, get_store
 from aegis.config import AppSettings
 from aegis.evidence.models import Scan
 from aegis.evidence.store import EvidenceStore
@@ -75,8 +79,83 @@ def _playwright() -> dict:
     return {"found": True, "path": str(browsers)}
 
 
+def llm_block(manager, ollama: dict, provider_health=None) -> dict | None:
+    """The active model and whether it can answer (LLM_PROVIDER_PHASES LP3). For Ollama this reuses
+    the probe above — no second call; another provider reports its own (cached, no-cost) health.
+    ``reason`` says what to fix; AEGIS never switches provider."""
+    if manager is None:
+        return None
+    status = manager.status()
+    ready, reasons = None, []
+    if provider_health is not None:
+        ready = bool(provider_health.reachable and provider_health.model_present)
+        if not ready:
+            reasons.append(str(provider_health.detail.get("reason") or provider_health.error or "not ready")
+                           + "; AEGIS will not switch to another provider")
+    elif status["provider"] == "ollama":
+        model = status["model"]
+        names = set(ollama.get("models") or [])
+        present = model in names or f"{model}:latest" in names
+        ready = bool(ollama.get("reachable") and present)
+        if not ollama.get("reachable"):
+            reasons.append(f"Ollama is not reachable at {ollama.get('url')} - start Ollama; "
+                           "AEGIS will not switch to an online model")
+        elif not present:
+            reasons.append(f"{model} is not pulled - run: ollama pull {model}")
+    if status["config_error"]:
+        reasons.append(status["config_error"])
+    return {**{k: status[k] for k in ("provider", "model", "location", "generation", "managed_by",
+                                      "allow_cloud", "config_error")},
+            "ready": ready, "reason": "; ".join(reasons) or None}
+
+
+async def _other_provider_health(manager):
+    """Health of a non-Ollama active provider (its own cached lookup); ``None`` for Ollama."""
+    if manager is None or manager.snapshot.provider.value == "ollama":
+        return None
+    return await manager.health()
+
+
+async def embeddings_block(settings: AppSettings, ollama: dict) -> dict:
+    """The embedding model, where it runs, and which model built the chat index (LP4). Embeddings
+    are always local and independent of the LLM provider. Reads the index record file only."""
+    from aegis.chat.embedder import PREFIX_SCHEME
+    from aegis.chat.index_manifest import read_manifest
+    from aegis.config import resolve_chat_settings
+
+    chat = resolve_chat_settings(settings)
+    probe = ollama if chat.embed_url == settings.model.ollama_url else await probe_ollama(chat.embed_url, chat.embed_model)
+    names = set(probe.get("models") or [])
+    found = read_manifest(chat.chroma_path)
+    if found is None:
+        index = {"model": None, "dim": None, "adopted": None, "compatible": None,
+                 "reason": "no index record yet (written by the next index or reindex)"}
+    elif found.get("unreadable"):
+        index = {"model": None, "dim": None, "adopted": None, "compatible": False,
+                 "reason": "the index record cannot be read; run: python -m aegis.chat reindex --all"}
+    else:
+        norm = lambda m: m[: -len(":latest")] if isinstance(m, str) and m.endswith(":latest") else m  # noqa: E731
+        same = (norm(found.get("embed_model")), found.get("embed_dim"), found.get("prefix_scheme")) == (
+            norm(chat.embed_model), chat.embed_dim, PREFIX_SCHEME)
+        index = {"model": found.get("embed_model"), "dim": found.get("embed_dim"), "adopted": found.get("adopted"),
+                 "compatible": same,
+                 "reason": None if same else "the index was built with another embedding model; "
+                                             "run: python -m aegis.chat reindex --all"}
+    return {
+        "provider": "ollama",
+        "location": "local",
+        "url": chat.embed_url,
+        "model": chat.embed_model,
+        "dim": chat.embed_dim,
+        "reachable": bool(probe.get("reachable")),
+        "model_present": chat.embed_model in names or f"{chat.embed_model}:latest" in names,
+        "index": index,
+    }
+
+
 @router.get("/health", summary="What the backend can use right now")
-async def health(settings: AppSettings = Depends(get_settings), store: EvidenceStore = Depends(get_store)) -> dict:
+async def health(settings: AppSettings = Depends(get_settings), store: EvidenceStore = Depends(get_store),
+                 llm_manager=Depends(get_llm_manager)) -> dict:
     database = _database(store)
     ollama = await probe_ollama(settings.model.ollama_url, settings.model.name)
     tools = {}
@@ -88,6 +167,8 @@ async def health(settings: AppSettings = Depends(get_settings), store: EvidenceS
         "status": "ok" if database else "degraded",
         "database": database,
         "ollama": ollama,
+        "llm": llm_block(llm_manager, ollama, await _other_provider_health(llm_manager)),
+        "embeddings": await embeddings_block(settings, ollama),
         "tools": tools,
         "db_snapshot_dates": snapshot_db_dates(settings.offline_db_dir),
         # repo scans (TNW-1): on when at least one git host is configured

@@ -118,6 +118,24 @@ class ChromaStore:
     def count(self) -> int:
         return self._col.count()
 
+    def sample_dim(self) -> int | None:
+        """The dimension of one stored vector, or ``None`` for an empty index (LP4: legacy adoption)."""
+        try:
+            res = self._col.get(limit=1, include=["embeddings"])
+        except Exception as exc:  # noqa: BLE001
+            raise ChromaUnavailable(f"get failed: {type(exc).__name__}: {exc}") from exc
+        embeddings = res.get("embeddings")
+        return len(embeddings[0]) if embeddings is not None and len(embeddings) else None
+
+    def reset(self) -> None:
+        """Drop every vector (all scans) — only for a rebuild with another embedding model (LP4)."""
+        try:
+            self._client.delete_collection(self.collection_name)
+            self._col = self._client.get_or_create_collection(self.collection_name, metadata={"hnsw:space": "cosine"})
+        except Exception as exc:  # noqa: BLE001
+            raise ChromaUnavailable(f"reset failed: {type(exc).__name__}: {exc}") from exc
+        log.warning("chroma.reset", path=self.path, collection=self.collection_name)
+
     @staticmethod
     def _rows(ids, distances, metadatas, documents):
         out = []

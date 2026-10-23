@@ -63,7 +63,8 @@ def tokenize(text: str) -> list[str]:
 
 def _searchable(meta: ChunkMetadata, document: str) -> str:
     """The chunk text plus the metadata fields worth matching on exactly."""
-    extra = [meta.type, meta.owasp, meta.route, meta.function, meta.file]
+    # finding_id: the chunk text never names its finding, so "why is F-0020 exploitable?" needs it here
+    extra = [meta.finding_id, meta.type, meta.owasp, meta.route, meta.function, meta.file]
     return document + " " + " ".join(x for x in extra if x)
 
 

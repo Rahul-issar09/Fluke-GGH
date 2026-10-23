@@ -1,0 +1,43 @@
+/* Secure Prompt: uses the console's paper-forensic tokens (see styles.css :root). */
+.secure { max-width: 980px; }
+.secure-title { font: 400 38px/1.1 var(--serif); margin: 4px 0 6px; }
+.secure h2 { font: 400 22px/1.2 var(--serif); margin: 0 0 10px; }
+
+.secure-locked { border: 1px solid var(--warn); border-left: 4px solid var(--warn); background: var(--panel); padding: 12px 16px; margin: 16px 0; }
+.secure-locked p { margin: 4px 0 10px; }
+
+.secure-form { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+.secure-form textarea { width: 100%; resize: vertical; font: 14.5px/1.5 "Inter", system-ui, sans-serif; }
+.secure-form textarea:disabled, .secure-form select:disabled { opacity: 0.5; cursor: not-allowed; }
+.secure-label { font: 400 11.5px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.secure-label.inline { margin: 0; }
+.secure-actions { flex-wrap: wrap; margin-top: 4px; }
+.secure-examples { display: flex; flex-wrap: wrap; gap: 2px; justify-content: flex-end; }
+
+.secure-result { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
+.secure-disclaimer { border: 1px solid var(--line2); background: var(--panel); padding: 10px 14px; font-size: 13px; }
+.secure-card { border: 1px solid var(--line2); background: var(--panel); padding: 16px 18px; }
+.secure-code { margin: 8px 0 0; max-height: 520px; overflow: auto; }
+
+.secure-group { margin-top: 12px; }
+.secure-group-head { font-weight: 600; margin-bottom: 4px; }
+.secure-group ul, .secure-limits ul { margin: 4px 0 0; padding-left: 20px; }
+.secure-group li, .secure-limits li { margin: 3px 0; }
+.secure-chip { display: inline-block; padding: 1px 8px; background: var(--text); color: var(--panel); font: 400 11.5px/1.5 var(--mono); letter-spacing: 0.06em; }
+
+.secure-coverage { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 0; border: 1px solid var(--line2); }
+.secure-cell { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--bg); }
+.secure-cell-id { font: 400 12px var(--mono); letter-spacing: 0.08em; }
+.secure-cell-name { font-size: 12.5px; line-height: 1.3; }
+.secure-cell-status { font: 400 10.5px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.secure-covered { background: #e3efe9; border-left: 3px solid var(--ok); }
+.secure-covered .secure-cell-status { color: var(--ok); }
+.secure-not_applicable { opacity: 0.7; }
+.secure-not_covered { background: #f3dedb; border-left: 3px solid var(--bad); }
+.secure-not_covered .secure-cell-status { color: var(--bad); }
+.secure-limits { margin-top: 14px; }
+
+@media (max-width: 640px) {
+  .secure-title { font-size: 30px; }
+  .secure-examples { justify-content: flex-start; }
+}

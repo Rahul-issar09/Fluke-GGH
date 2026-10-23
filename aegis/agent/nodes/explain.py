@@ -22,7 +22,7 @@ from typing import Any
 from langchain_core.runnables import RunnableConfig
 
 from aegis.agent.deps import AgentDeps, get_deps
-from aegis.agent.llm import structured_call
+from aegis.agent.llm import llm_unavailable, structured_call
 from aegis.agent.prompt_guard import build_payload
 from aegis.agent.schemas import Explanation
 from aegis.agent.validator import correlated_evidence_ids, exploit_established, validate_claims
@@ -90,6 +90,7 @@ async def explain(state: dict, config: RunnableConfig) -> dict:
     scan = store.get_scan(scan_id)
     scan_mode = scan.mode.value if scan is not None and hasattr(scan.mode, "value") else str(state.get("mode"))
     graph: SecurityGraph = build_graph(store, scan_id, load_handlers(store, scan_id))
+    route = deps.llm_route(scan_id)  # the model this scan started with
 
     proposed = 0
     for finding in sorted(visible_findings(store, scan_id), key=lambda f: (-f.risk, f.id)):
@@ -118,13 +119,12 @@ async def explain(state: dict, config: RunnableConfig) -> dict:
                 _system_prompt(),
                 _payload(deps, finding, allowed, scan_mode),
                 validate,
-                llm=deps.llm,
-                settings=deps.llm_settings,
                 trace=trace,
+                **route,
             )
         except Exception as exc:  # noqa: BLE001 - the model being down must never fail the scan
             log.warning("explain.llm_unavailable", finding_id=finding.id, error=type(exc).__name__)
-            explanation, source, error = None, "fallback", f"llm unavailable: {type(exc).__name__}"
+            explanation, source, error = None, "fallback", llm_unavailable(exc)
 
         for attempt in trace:  # what the model produced that was refused
             store.add_decision(

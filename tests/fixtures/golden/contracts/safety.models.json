@@ -1,0 +1,146 @@
+{
+  "ToolCall": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "args": {
+          "additionalProperties": true,
+          "title": "Args",
+          "type": "object"
+        },
+        "scan_id": {
+          "title": "Scan Id",
+          "type": "string"
+        },
+        "target_host": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Host"
+        },
+        "test_input_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Test Input Ids",
+          "type": "array"
+        },
+        "tool": {
+          "enum": [
+            "httpx",
+            "katana",
+            "playwright",
+            "bola",
+            "ssrf",
+            "nuclei",
+            "schemathesis",
+            "semgrep",
+            "gitleaks",
+            "trufflehog",
+            "osv",
+            "trivy",
+            "syft",
+            "treesitter",
+            "cbom",
+            "sslyze",
+            "git",
+            "pytest"
+          ],
+          "title": "Tool",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tool",
+        "scan_id"
+      ],
+      "title": "ToolCall",
+      "type": "object"
+    }
+  },
+  "ToolResult": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "blocked_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Blocked Reason"
+        },
+        "duration_ms": {
+          "default": 0,
+          "title": "Duration Ms",
+          "type": "integer"
+        },
+        "exit_code": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Exit Code"
+        },
+        "ok": {
+          "title": "Ok",
+          "type": "boolean"
+        },
+        "output": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output"
+        },
+        "stderr_tail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stderr Tail"
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ok",
+        "tool"
+      ],
+      "title": "ToolResult",
+      "type": "object"
+    }
+  }
+}

@@ -32,6 +32,7 @@ from aegis.evidence.store import EvidenceStore
 from aegis.fix.draft import mask_literals, secret_literals
 from aegis.graph.correlator import build_graph, load_handlers
 from aegis.graph.security_graph import SecurityGraph, graph_path
+from aegis.llm.status import scan_llm_summary
 from aegis.observability import get_logger
 from aegis.risk import factors
 from aegis.risk.engine import KMAX, RISK_FORMULA, risk_breakdown
@@ -265,6 +266,8 @@ def build_json_report(store: EvidenceStore, scan_id: str, *, data_dir: str | Pat
             "tool_calls": len(tool_calls),
             "blocked": sum(1 for c in tool_calls if c.blocked_reason),
             "by_tool": dict(sorted({c.tool: sum(1 for d in tool_calls if d.tool == c.tool) for c in tool_calls}.items())),
+            # which model wrote the explanations and drafts, and whether it could answer
+            "ai": scan_llm_summary(scan, store.list_decisions(scan_id)),
         },
     }
     log.info("report.json_built", scan_id=scan_id, findings=len(details), evidence=len(evidence))

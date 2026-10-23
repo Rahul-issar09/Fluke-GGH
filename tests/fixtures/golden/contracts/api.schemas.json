@@ -1,0 +1,917 @@
+{
+  "AskOut": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "answer": {
+          "title": "Answer",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "finding_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Finding Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "answer"
+      ],
+      "title": "AskOut",
+      "type": "object"
+    }
+  },
+  "AskRequest": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "question": {
+          "title": "Question",
+          "type": "string"
+        },
+        "scan_id": {
+          "title": "Scan Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "scan_id",
+        "question"
+      ],
+      "title": "AskRequest",
+      "type": "object"
+    }
+  },
+  "CommitRequest": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "mode": {
+          "enum": [
+            "patch",
+            "apply",
+            "pr"
+          ],
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "title": "CommitRequest",
+      "type": "object"
+    }
+  },
+  "ErrorOut": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "error": {
+          "title": "Error",
+          "type": "string"
+        },
+        "ids": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ids"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "title": "ErrorOut",
+      "type": "object"
+    }
+  },
+  "EvidenceOut": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "created_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created At"
+        },
+        "db_date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Db Date"
+        },
+        "finding_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finding Id"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "payload": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Payload"
+        },
+        "scan_id": {
+          "title": "Scan Id",
+          "type": "string"
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        },
+        "tool_version": {
+          "default": "",
+          "title": "Tool Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "scan_id",
+        "kind",
+        "tool"
+      ],
+      "title": "EvidenceOut",
+      "type": "object"
+    }
+  },
+  "FindingDetail": {
+    "kind": "model",
+    "schema": {
+      "$defs": {
+        "Scores": {
+          "properties": {
+            "confidence": {
+              "default": 0.0,
+              "title": "Confidence",
+              "type": "number"
+            },
+            "correlation": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Correlation"
+            },
+            "criticality": {
+              "default": 0.0,
+              "title": "Criticality",
+              "type": "number"
+            },
+            "exploitability": {
+              "default": 0.0,
+              "title": "Exploitability",
+              "type": "number"
+            },
+            "exposure": {
+              "default": 0.0,
+              "title": "Exposure",
+              "type": "number"
+            },
+            "path_factor": {
+              "default": 0.0,
+              "title": "Path Factor",
+              "type": "number"
+            },
+            "risk": {
+              "default": 0.0,
+              "title": "Risk",
+              "type": "number"
+            }
+          },
+          "title": "Scores",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "claims": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Claims",
+          "type": "array"
+        },
+        "correlation_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Score"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "exploit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Exploit"
+        },
+        "file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "File"
+        },
+        "fix": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fix"
+        },
+        "function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Function"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "impact": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Impact"
+        },
+        "line": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "owasp": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owasp"
+        },
+        "risk": {
+          "default": 0.0,
+          "title": "Risk",
+          "type": "number"
+        },
+        "route": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Route"
+        },
+        "scores": {
+          "$ref": "#/$defs/Scores"
+        },
+        "severity": {
+          "default": 0.0,
+          "title": "Severity",
+          "type": "number"
+        },
+        "sources": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sources",
+          "type": "array"
+        },
+        "state": {
+          "title": "State",
+          "type": "string"
+        },
+        "title": {
+          "default": "",
+          "title": "Title",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "what": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "What"
+        },
+        "where": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Where"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "state"
+      ],
+      "title": "FindingDetail",
+      "type": "object"
+    }
+  },
+  "FindingOut": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "correlation_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Score"
+        },
+        "file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "File"
+        },
+        "function": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Function"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "line": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "owasp": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owasp"
+        },
+        "risk": {
+          "default": 0.0,
+          "title": "Risk",
+          "type": "number"
+        },
+        "route": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Route"
+        },
+        "severity": {
+          "default": 0.0,
+          "title": "Severity",
+          "type": "number"
+        },
+        "state": {
+          "title": "State",
+          "type": "string"
+        },
+        "title": {
+          "default": "",
+          "title": "Title",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "state"
+      ],
+      "title": "FindingOut",
+      "type": "object"
+    }
+  },
+  "FixOut": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "diff": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Diff"
+        },
+        "finding_id": {
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "fix_id": {
+          "title": "Fix Id",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "verify_report": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verify Report"
+        }
+      },
+      "required": [
+        "fix_id",
+        "finding_id",
+        "status"
+      ],
+      "title": "FixOut",
+      "type": "object"
+    }
+  },
+  "GateOut": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "blocking_findings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Blocking Findings",
+          "type": "array"
+        },
+        "exit_code": {
+          "title": "Exit Code",
+          "type": "integer"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "passed",
+        "exit_code"
+      ],
+      "title": "GateOut",
+      "type": "object"
+    }
+  },
+  "ProgressEvent": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "at": {
+          "title": "At",
+          "type": "string"
+        },
+        "ms": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ms"
+        },
+        "node": {
+          "title": "Node",
+          "type": "string"
+        },
+        "scan_id": {
+          "title": "Scan Id",
+          "type": "string"
+        },
+        "stage": {
+          "title": "Stage",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "scan_id",
+        "stage",
+        "node",
+        "status",
+        "at"
+      ],
+      "title": "ProgressEvent",
+      "type": "object"
+    }
+  },
+  "ScanOut": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "completed_stages": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Completed Stages",
+          "type": "array"
+        },
+        "counts": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Counts",
+          "type": "object"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finished At"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "mode": {
+          "title": "Mode",
+          "type": "string"
+        },
+        "stages": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Stages",
+          "type": "array"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Started At"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "mode",
+        "status"
+      ],
+      "title": "ScanOut",
+      "type": "object"
+    }
+  },
+  "ScanRequest": {
+    "kind": "model",
+    "schema": {
+      "examples": [
+        {
+          "identities": "/app/identities.yml",
+          "url": "http://demo-app:5000"
+        },
+        {
+          "folder": "/scan"
+        },
+        {
+          "folder": "/scan",
+          "identities": "/app/identities.yml",
+          "url": "http://demo-app:5000"
+        }
+      ],
+      "properties": {
+        "folder": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Folder"
+        },
+        "identities": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Identities"
+        },
+        "options": {
+          "additionalProperties": true,
+          "title": "Options",
+          "type": "object"
+        },
+        "repo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repo"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        }
+      },
+      "title": "ScanRequest",
+      "type": "object"
+    }
+  },
+  "Scores": {
+    "kind": "model",
+    "schema": {
+      "properties": {
+        "confidence": {
+          "default": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "correlation": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation"
+        },
+        "criticality": {
+          "default": 0.0,
+          "title": "Criticality",
+          "type": "number"
+        },
+        "exploitability": {
+          "default": 0.0,
+          "title": "Exploitability",
+          "type": "number"
+        },
+        "exposure": {
+          "default": 0.0,
+          "title": "Exposure",
+          "type": "number"
+        },
+        "path_factor": {
+          "default": 0.0,
+          "title": "Path Factor",
+          "type": "number"
+        },
+        "risk": {
+          "default": 0.0,
+          "title": "Risk",
+          "type": "number"
+        }
+      },
+      "title": "Scores",
+      "type": "object"
+    }
+  }
+}

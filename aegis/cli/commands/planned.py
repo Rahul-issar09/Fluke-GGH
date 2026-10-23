@@ -24,6 +24,7 @@ GROUPS: dict[str, str] = {
     "offline-db": "Stage the offline vulnerability databases (the only online step).",
     "api": "Run the AEGIS REST API.",
     "mcp": "The MCP server for code editors (e.g. Antigravity).",
+    "llm": "The AI model: Offline (Ollama) or Online (Gemini; the key is asked every run, never saved).",
     "demo": "Start and stop the local demo apps, the API and the UI.",
 }
 

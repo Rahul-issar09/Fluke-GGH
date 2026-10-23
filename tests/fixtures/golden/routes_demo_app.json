@@ -1,0 +1,112 @@
+[
+  {
+    "path": "/health",
+    "methods": [
+      "GET"
+    ],
+    "function": "health",
+    "qualname": "app/main.py::health",
+    "file": "app/main.py",
+    "line": 39,
+    "end_line": 40
+  },
+  {
+    "path": "/login",
+    "methods": [
+      "POST"
+    ],
+    "function": "login",
+    "qualname": "app/main.py::login",
+    "file": "app/main.py",
+    "line": 43,
+    "end_line": 55
+  },
+  {
+    "path": "/api/accounts",
+    "methods": [
+      "GET"
+    ],
+    "function": "list_accounts",
+    "qualname": "app/routes/accounts.py::list_accounts",
+    "file": "app/routes/accounts.py",
+    "line": 27,
+    "end_line": 30
+  },
+  {
+    "path": "/api/accounts/{id}",
+    "methods": [
+      "GET"
+    ],
+    "function": "get_account",
+    "qualname": "app/routes/accounts.py::get_account",
+    "file": "app/routes/accounts.py",
+    "line": 34,
+    "end_line": 40
+  },
+  {
+    "path": "/api/fetch",
+    "methods": [
+      "GET"
+    ],
+    "function": "fetch",
+    "qualname": "app/routes/fetch.py::fetch",
+    "file": "app/routes/fetch.py",
+    "line": 13,
+    "end_line": 20
+  },
+  {
+    "path": "/api/users/search",
+    "methods": [
+      "GET"
+    ],
+    "function": "search_users",
+    "qualname": "app/routes/users.py::search_users",
+    "file": "app/routes/users.py",
+    "line": 12,
+    "end_line": 17
+  },
+  {
+    "path": "/",
+    "methods": [
+      "GET"
+    ],
+    "function": "home",
+    "qualname": "app/web.py::home",
+    "file": "app/web.py",
+    "line": 107,
+    "end_line": 108
+  },
+  {
+    "path": "/static/app.js",
+    "methods": [
+      "GET"
+    ],
+    "function": "script",
+    "qualname": "app/web.py::script",
+    "file": "app/web.py",
+    "line": 112,
+    "end_line": 113
+  },
+  {
+    "path": "/login-form",
+    "methods": [
+      "GET"
+    ],
+    "function": "login_form",
+    "qualname": "app/web.py::login_form",
+    "file": "app/web.py",
+    "line": 123,
+    "end_line": 124
+  },
+  {
+    "path": "/login-form",
+    "methods": [
+      "POST"
+    ],
+    "function": "login_form_submit",
+    "qualname": "app/web.py::login_form_submit",
+    "file": "app/web.py",
+    "line": 128,
+    "end_line": 144
+  }
+]

@@ -27,7 +27,18 @@ __all__ = ["DEFAULT_API", "ApiClient", "RemoteBackend", "api_url", "make_http_cl
 DEFAULT_API = "http://127.0.0.1:8000"
 START_HINT = r"start it with scripts\run_local.cmd (or: uvicorn aegis.main:app --host 127.0.0.1 --port 8000), or pass --api URL"
 
-_STATUS = {404: NOT_FOUND, 409: CONFLICT, 413: USAGE, 422: USAGE, 400: USAGE, 501: UNAVAILABLE}
+_STATUS = {404: NOT_FOUND, 409: CONFLICT, 410: USAGE, 413: USAGE, 422: USAGE, 400: USAGE, 429: UNAVAILABLE,
+           501: UNAVAILABLE, 503: UNAVAILABLE}
+# 403s that are the API's own decision about the model configuration (LLM_PROVIDER_PHASES §8.3)
+_OWN_403 = ("cloud_disabled", "config_api_forbidden")
+
+
+def _error_code(response: httpx.Response) -> str | None:
+    try:
+        body = response.json()
+    except ValueError:
+        return None
+    return body.get("error") if isinstance(body, dict) else None
 
 
 def api_url(option: str | None = None) -> str:
@@ -76,12 +87,16 @@ class ApiClient:
         status = response.status_code
         if status < 400:
             return
+        if status == 403 and _error_code(response) in _OWN_403:   # the API's own refusal, not the token
+            raise CliError(_detail(response), UNAVAILABLE)
         if status in (401, 403):
             raise CliError("the AEGIS API needs a valid token", UNAVAILABLE,
                            hint="pass --token or set AEGIS_API__AUTH_TOKEN (the token the API was started with)")
         code = _STATUS.get(status, FAILED if status >= 500 else USAGE)
         message = _detail(response)
-        raise CliError(message if status < 500 else f"the AEGIS API failed ({status}): {message}", code)
+        if status >= 500 and not str(_error_code(response) or "").startswith(("provider_", "not available")):
+            message = f"the AEGIS API failed ({status}): {message}"   # a provider being down is not AEGIS failing
+        raise CliError(message, code)
 
     def get(self, path: str, **kwargs: Any) -> Any:
         return self.request("GET", path, **kwargs).json()

@@ -35,7 +35,7 @@ from typing import Any
 from langchain_core.runnables import RunnableConfig
 
 from aegis.agent.deps import AgentDeps, get_deps
-from aegis.agent.llm import structured_call
+from aegis.agent.llm import llm_unavailable, structured_call
 from aegis.agent.prompt_guard import build_payload
 from aegis.agent.schemas import FixDraft
 from aegis.agent.validator import correlated_evidence_ids
@@ -76,6 +76,10 @@ _PROMPT = Path(__file__).resolve().parent.parent / "prompts" / "remediate.txt"
 _MAX_SOURCE_BYTES = 1_000_000
 _MAX_DIGESTS = 6
 _PAYLOAD_BUDGET = 16_000  # the guard's default is for short fields; 80 lines of code need more
+
+# a cloud model is not shown source code without the separate consent (LLM_PROVIDER_PHASES Q-3);
+# the fix then comes from rules only — never from a silently substituted local model
+CLOUD_SOURCE_CONSENT = "source code not shared with the cloud model (no source-code consent)"
 
 
 class GitUnavailable(RuntimeError):
@@ -326,6 +330,13 @@ async def _draft_one(
         if by_rule is not None:
             return by_rule
 
+    # from here on the model would be shown the user's (masked) source code
+    route = deps.llm_route(finding.scan_id)
+    manager = route.get("manager")
+    if manager is not None and not manager.allows_source_code(route["snapshot"]):
+        log.info("remediate.source_not_shared", finding_id=finding.id, model=route["snapshot"].model)
+        return {"drafted": False, "reason": CLOUD_SOURCE_CONSENT, "audit": []}
+
     try:
         shown = hide_untrusted(text, secret_lines)
         window = handler_window(text, finding.line)
@@ -390,14 +401,13 @@ async def _draft_one(
     audit: list[dict[str, Any]] = []
     try:
         draft, source = await structured_call(
-            FixEdit, _system_prompt(), payload, validate,
-            llm=deps.llm, settings=deps.llm_settings, trace=trace,
+            FixEdit, _system_prompt(), payload, validate, trace=trace, **route,
         )
     except GitUnavailable as exc:
         return {"drafted": False, "reason": f"git is not available to verify the diff ({exc})", "audit": []}
     except Exception as exc:  # noqa: BLE001 - the model being down must never fail the scan
         log.warning("remediate.llm_unavailable", finding_id=finding.id, error=type(exc).__name__)
-        return {"drafted": False, "reason": f"llm unavailable: {type(exc).__name__}", "audit": []}
+        return {"drafted": False, "reason": llm_unavailable(exc), "audit": []}
 
     rejected_iter = iter(rejected)
     for attempt in trace:  # what the model produced that was refused, and why

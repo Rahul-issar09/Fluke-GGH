@@ -1,0 +1,57 @@
+[
+  {
+    "path": "/health",
+    "methods": [
+      "GET"
+    ],
+    "function": "health",
+    "qualname": "app.js::health",
+    "file": "app.js",
+    "line": 9,
+    "end_line": 11
+  },
+  {
+    "path": "/login",
+    "methods": [
+      "POST"
+    ],
+    "function": "post_login",
+    "qualname": "app.js::post_login",
+    "file": "app.js",
+    "line": 15,
+    "end_line": 18
+  },
+  {
+    "path": "/api/orders/:id",
+    "methods": [
+      "GET"
+    ],
+    "function": "getOrder",
+    "qualname": "routes/orders.js::getOrder",
+    "file": "routes/orders.js",
+    "line": 8,
+    "end_line": 11
+  },
+  {
+    "path": "/api/orders/:id/items",
+    "methods": [
+      "GET"
+    ],
+    "function": "listItems",
+    "qualname": "routes/orders.js::listItems",
+    "file": "routes/orders.js",
+    "line": 17,
+    "end_line": 19
+  },
+  {
+    "path": "/api/orders/:id/items",
+    "methods": [
+      "POST"
+    ],
+    "function": "post_id_items",
+    "qualname": "routes/orders.js::post_id_items",
+    "file": "routes/orders.js",
+    "line": 20,
+    "end_line": 22
+  }
+]

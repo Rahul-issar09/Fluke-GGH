@@ -22,8 +22,8 @@ import structlog
 from fastapi import FastAPI
 
 from aegis.api.errors import install_error_handlers
-from aegis.api.routers import ask, events, evidence, findings, fix, graph, health, reports, scans
-from aegis.api.security import BearerAuthMiddleware, BodyLimitMiddleware
+from aegis.api.routers import ask, events, evidence, findings, fix, graph, health, llm, reports, scans, secure_prompt
+from aegis.api.security import BearerAuthMiddleware, BodyLimitMiddleware, LocalHostGuardMiddleware
 from aegis.config import AppSettings, get_app_settings
 from aegis.observability import configure_logging, get_logger
 # re-exported: callers and tests import these from aegis.api.main
@@ -85,6 +85,7 @@ def _lifespan(settings: AppSettings, agent_overrides: dict[str, Any]):
             app.state.scan_service = rt.scan_service
             app.state.query_service = rt.query_service
             app.state.chat_service = rt.chat_service
+            app.state.llm_manager = rt.llm_manager
             yield
 
     return lifespan
@@ -119,17 +120,22 @@ def create_app(settings: AppSettings | None = None, *, agent_overrides: dict[str
             {"name": "fix", "description": "Verify a drafted fix on a copy, then approve its commit"},
             {"name": "reports", "description": "The HTML / JSON report"},
             {"name": "ask", "description": "Questions about a scan (chat assistant, later phase)"},
+            {"name": "llm", "description": "Choose the model AEGIS reasons with: offline (Ollama) or online (Gemini). "
+                                           "The Gemini key is asked for every run and never saved"},
+            {"name": "secure-prompt", "description": "Secure code for a plain request, explained against the OWASP Top 10 "
+                                                     "(Gemini Online mode only; the code is not scanned or run)"},
             {"name": "health", "description": "What the backend can use right now"},
         ],
     )
     install_error_handlers(app)
-    for module in (scans, events, findings, evidence, graph, fix, reports, ask, health):
+    for module in (scans, events, findings, evidence, graph, fix, reports, ask, llm, secure_prompt, health):
         app.include_router(module.router)
     if settings.mcp_enabled:
         _mount_mcp(app)
 
-    # outermost first at request time: request ID → auth → body limit → app
+    # outermost first at request time: request ID → host guard → auth → body limit → app
     app.add_middleware(BodyLimitMiddleware, max_bytes=settings.api.max_body_bytes)
     app.add_middleware(BearerAuthMiddleware, token=settings.api.auth_token)
+    app.add_middleware(LocalHostGuardMiddleware, token=settings.api.auth_token, allowed_hosts=settings.api.allowed_hosts)
     app.add_middleware(RequestContextMiddleware)
     return app

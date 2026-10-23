@@ -15,6 +15,7 @@ client. It is closed and discarded when the stage ends (``close_scratch``).
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
@@ -53,6 +54,9 @@ class AgentDeps:
     # Ollama model from ``llm_settings`` (env defaults). Tests inject a deterministic fake.
     llm: Any | None = None
     llm_settings: ModelSettings | None = None
+    # The provider manager (LLM_PROVIDER_PHASES LP3): which model answers, pinned per scan.
+    # None → the legacy path above (``make_llm(llm_settings)``).
+    llm_manager: Any | None = None
     # Inner transport under the egress guard. None → real network (allowlisted
     # hosts only); tests inject an in-process ASGI/mock transport.
     http_transport: httpx.AsyncBaseTransport | None = None
@@ -77,6 +81,27 @@ class AgentDeps:
     chat_indexer: Callable[[str], Any] | None = None
     background_tasks: set = field(default_factory=set)  # keeps fire-and-forget tasks alive
     scratch: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+    def pinned_snapshot(self, scan_id: str | None):
+        """The model *scan_id* started with (``Scan.config_json["llm"]``, written by ``prepare``),
+        or the active one for a scan from before pinning existed."""
+        from aegis.llm.base import LlmSnapshot
+
+        scan = self.store.get_scan(scan_id) if scan_id else None
+        try:
+            raw = json.loads(scan.config_json or "{}").get("llm") if scan is not None else None
+            if raw:
+                return LlmSnapshot.from_dict(raw)
+        except (ValueError, KeyError, TypeError, AttributeError):
+            pass
+        return self.llm_manager.snapshot
+
+    def llm_route(self, scan_id: str | None = None) -> dict[str, Any]:
+        """The keyword arguments a node passes to ``structured_call`` for *scan_id*."""
+        route: dict[str, Any] = {"llm": self.llm, "settings": self.llm_settings}
+        if self.llm_manager is not None:
+            route.update(manager=self.llm_manager, snapshot=self.pinned_snapshot(scan_id), scope=scan_id)
+        return route
 
     def scratch_for(self, scan_id: str, stage: str) -> dict[str, Any]:
         return self.scratch.setdefault(f"{scan_id}:{stage}", {"closers": []})

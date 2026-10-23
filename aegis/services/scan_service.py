@@ -15,6 +15,7 @@ from aegis.api.schemas import GateOut, ScanOut, ScanRequest
 from aegis.evidence.links import visible_findings
 from aegis.evidence.models import FindingState, ScanStatus
 from aegis.evidence.store import EvidenceStore
+from aegis.llm.status import scan_llm_summary
 from aegis.observability import get_logger
 from aegis.router import build_plan, select_mode, validate_request
 
@@ -74,8 +75,11 @@ def get_audit(store: EvidenceStore, scan_id: str) -> dict:
     content never appear here — IDs, hashes and outcomes only.
     """
     findings = store.list_findings(scan_id)
+    decisions = store.list_decisions(scan_id)
     return {
         "scan_id": scan_id,
+        # which model the scan used, and whether it could answer (LLM_PROVIDER_PHASES LP3)
+        "llm": scan_llm_summary(store.get_scan(scan_id), decisions),
         "tool_calls": [
             {
                 "tool": c.tool,
@@ -100,7 +104,7 @@ def get_audit(store: EvidenceStore, scan_id: str) -> dict:
                 "output": _loads(d.output_json),
                 "at": d.at.isoformat() if d.at else None,
             }
-            for d in store.list_decisions(scan_id)
+            for d in decisions
         ],
         "transitions": [
             {

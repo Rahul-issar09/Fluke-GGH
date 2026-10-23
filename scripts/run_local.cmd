@@ -34,6 +34,10 @@ start "AEGIS callback listener :8080" /D "%ROOT%\callback-listener" "%PY%" -m uv
 
 rem 127.0.0.1, not localhost: on Windows "localhost" can reach a different Ollama (e.g. a Docker one) over IPv6
 set "AEGIS_OLLAMA_URL=http://127.0.0.1:11434"
+rem the embedding model that builds the chat index: it must be the one that built data\chroma
+rem (bge-m3, 1024 dims; after changing it run: python -m aegis.chat reindex --all)
+set "AEGIS_CHAT__EMBED_MODEL=bge-m3"
+set "AEGIS_CHAT__EMBED_DIM=1024"
 set "AEGIS_SAFETY__ALLOWLIST=127.0.0.1:5000,127.0.0.1:5001,127.0.0.1:5443"
 set "AEGIS_SAFETY__CALLBACK_URL=http://127.0.0.1:8080"
 rem repo scans: the only host a scan may clone from (a shallow, public https clone; everything else stays offline)

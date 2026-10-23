@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo Bank</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- INTENTIONALLY VULNERABLE demo frontend. It drives the demo API (IDOR, SQLi, SSRF) so the
+       app is browsable; it is a test fixture for AEGIS and must never be deployed. -->
+  <header>
+    <h1>Demo Bank</h1>
+    <div id="who" class="muted">not signed in</div>
+  </header>
+
+  <main>
+    <section id="login-card" class="card">
+      <h2>Sign in</h2>
+      <p class="muted small">Demo accounts: <code>alice / alice-demo-pass</code>, <code>bob / bob-demo-pass</code>.</p>
+      <form id="login-form" autocomplete="off">
+        <label>User <input id="username" name="username" value="alice"></label>
+        <label>Password <input id="password" name="password" type="password" value="alice-demo-pass"></label>
+        <button type="submit">Sign in</button>
+      </form>
+      <p id="login-msg" class="msg"></p>
+    </section>
+
+    <section class="card" hidden id="app-card">
+      <h2>My accounts</h2>
+      <button id="load-accounts" type="button">Refresh</button>
+      <table id="accounts"><thead><tr><th>ID</th><th>Owner</th><th>Number</th><th>Balance</th></tr></thead><tbody></tbody></table>
+
+      <h2>Look up an account</h2>
+      <form id="lookup-form" class="row">
+        <label>Account ID <input id="account-id" value="2" inputmode="numeric"></label>
+        <button type="submit">View</button>
+      </form>
+      <pre id="lookup-out" class="out"></pre>
+
+      <h2>Find a user</h2>
+      <form id="search-form" class="row">
+        <label>Name contains <input id="search-name" value="a"></label>
+        <button type="submit">Search</button>
+      </form>
+      <pre id="search-out" class="out"></pre>
+
+      <h2>Preview a link</h2>
+      <form id="fetch-form" class="row">
+        <label>URL <input id="fetch-url" value="http://127.0.0.1:5000/health"></label>
+        <button type="submit">Preview</button>
+      </form>
+      <pre id="fetch-out" class="out"></pre>
+    </section>
+  </main>
+
+  <footer class="muted small">Intentionally vulnerable demo target — do not deploy.</footer>
+  <script src="app.js"></script>
+</body>
+</html>

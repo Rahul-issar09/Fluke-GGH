@@ -1,0 +1,169 @@
+{
+  "note": "Facts here come only from the listed sources. A field is left out when no source states it. aegis_check is written from what AEGIS's own checks do, not from the sources.",
+  "items": [
+    {
+      "id": "capital-one-2019",
+      "title": "Capital One",
+      "year": 2019,
+      "owasp": "A10",
+      "cwe": "CWE-918",
+      "summary": "An intruder used a misconfigured web application firewall running on AWS to reach the cloud metadata service, obtained temporary credentials and read data from storage buckets.",
+      "timeline": [
+        { "when": "2019-07-29 (the Monday before the article)", "what": "A former Amazon employee was arrested and charged with stealing more than 100 million consumer applications for credit from Capital One." },
+        { "when": "2019-08-02", "what": "Krebs on Security published an analysis of how the intrusion worked." }
+      ],
+      "root_cause": "The attack is described as Server Side Request Forgery. A misconfigured open-source firewall (ModSecurity) hosted on AWS could be tricked into relaying requests to the AWS metadata service, which hands out temporary credentials. The firewall's role had too many permissions, so it could list and read files in data buckets. Amazon attributed the intrusion to a misconfiguration of the web application firewall and disputed that its IAM, metadata service or AWS WAF caused it.",
+      "impact": "The criminal charge concerned more than 100 million consumer applications for credit.",
+      "aegis_check": "AEGIS's runtime SSRF check probes endpoints that fetch a URL you control and uses a callback listener as a witness, so the application-level pattern is something it looks for. A firewall role with excess cloud permissions is infrastructure configuration, which AEGIS does not inspect.",
+      "lessons": [
+        "Never let a server fetch a URL from user input without an allow-list, and block link-local and metadata addresses.",
+        "Give every cloud role only the permissions it needs; a proxy or firewall role should not be able to read data buckets.",
+        "Prefer the token-based metadata service version where your cloud offers one."
+      ],
+      "sources": [
+        "https://krebsonsecurity.com/2019/08/what-we-can-learn-from-the-capital-one-hack/"
+      ]
+    },
+    {
+      "id": "optus-2022",
+      "title": "Optus",
+      "year": 2022,
+      "owasp": "A01",
+      "cwe": null,
+      "summary": "Personal information of more than 9.5 million current and former customers was accessed through a dormant, internet-facing API whose access controls were ineffective. The regulator's account is an allegation in court proceedings, not a ruling.",
+      "timeline": [
+        { "when": "2021-08", "what": "According to the ACMA's claim, Optus fixed the access-control coding error on its main domain but did not detect or fix the same issue on the other domain." },
+        { "when": "2022-09-21", "what": "The vulnerable API was taken offline, four days after the attack, according to the report of the ACMA's claim." }
+      ],
+      "root_cause": "The ACMA alleges a coding error in the access controls of an API, which left the controls bypassable. It says the error was not detected for four years before the breach period. Optus has confirmed the vulnerability came from a historical coding error. No court finding was found in the sources.",
+      "impact": "The ACMA states that the personal information of more than 9.5 million former and current customers was accessed.",
+      "aegis_check": "AEGIS's BOLA check compares what the owner and a second identity can read for the same object, and its API checks look at the endpoints it discovers. An endpoint that skips authentication entirely is found only if discovery (OpenAPI document or crawl) reaches it, which is exactly what a forgotten API avoids.",
+      "lessons": [
+        "Keep an inventory of every internet-facing API and retire the ones nobody uses.",
+        "When you fix an access-control bug in one place, search for the same code on every other domain and service.",
+        "Test authorization from outside the network, with no credentials and with the wrong user's credentials."
+      ],
+      "sources": [
+        "https://www.cyberdaily.au/security/10731-acma-says-coding-error-to-blame-for-optus-cyber-attack"
+      ]
+    },
+    {
+      "id": "moveit-2023",
+      "title": "MOVEit Transfer",
+      "year": 2023,
+      "owasp": "A03",
+      "cwe": "CWE-89",
+      "summary": "A previously unknown SQL injection in Progress MOVEit Transfer was exploited by the CL0P ransomware gang to reach the database of internet-facing file-transfer servers.",
+      "timeline": [
+        { "when": "2023-05-27", "what": "Open-source information indicates exploitation began." },
+        { "when": "2023-06-02", "what": "CISA added CVE-2023-34362 to its Known Exploited Vulnerabilities catalog." }
+      ],
+      "root_cause": "CVE-2023-34362 is a SQL injection that could let an unauthenticated attacker gain unauthorized access to MOVEit Transfer's database. Depending on the database engine, an attacker may infer the database structure and contents and run statements that alter or delete data. The attackers installed a web shell named LEMURLOOT, written in C#.",
+      "aegis_check": "AEGIS does not exploit SQL injection against a running app; it finds the pattern in source with its code scan (a query built from a variable and executed), and it matches known CVEs against your dependencies once they are in the offline database. A product like this, which you run rather than build, is covered only by the second route.",
+      "lessons": [
+        "Use parameterised queries everywhere; never build SQL by joining strings.",
+        "Put internet-facing transfer and admin tools behind a gateway or VPN, and patch them first.",
+        "Watch for new files in web directories; a web shell is the usual next step after a web-application break-in."
+      ],
+      "sources": [
+        "https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-158a",
+        "https://www.cisa.gov/known-exploited-vulnerabilities-catalog"
+      ]
+    },
+    {
+      "id": "equifax-2017",
+      "title": "Equifax",
+      "year": 2017,
+      "owasp": "A06",
+      "cwe": "CWE-20",
+      "summary": "A known Apache Struts flaw, CVE-2017-5638, was left unpatched on an internet-facing system after a patch notice never reached the people responsible for it.",
+      "timeline": [
+        { "when": "2017-03", "what": "US-CERT issued an alert that all Apache Struts implementations should be patched immediately." },
+        { "when": "2017-03 (a week later)", "what": "A routine vulnerability scan did not flag the flaw in the Struts implementation that ran Equifax's online dispute portal." },
+        { "when": "2017-08", "what": "A Senate report's table of contents indicates the Struts flaw was not patched until August 2017." }
+      ],
+      "root_cause": "CVE-2017-5638: the Apache Struts Jakarta Multipart parser allowed malicious file upload through the Content-Type value, leading to remote code execution. The GAO found that the recipient list for the patch notice was out of date, so the notice did not reach the people who would have installed the patch. Its coverage also notes that a traffic-inspection device was not working because a required digital certificate had expired.",
+      "aegis_check": "AEGIS's dependency scan (OSV and Trivy databases, staged offline) flags a vulnerable Struts version in a project's manifests or lockfiles when you scan the source folder. It does not manage patch notices or certificate expiry.",
+      "lessons": [
+        "Track every dependency in an inventory and scan it on a schedule, not once.",
+        "Keep patch-notice distribution lists current and have a named owner per system.",
+        "Verify that a scanner actually found the thing; a clean scan of a vulnerable system is a finding in itself."
+      ],
+      "sources": [
+        "https://www.darkreading.com/attacks-breaches/gao-says-equifax-missed-flaws-intrusion-in-massive-breach/d/d-id/1332776",
+        "https://www.cisa.gov/known-exploited-vulnerabilities-catalog"
+      ]
+    },
+    {
+      "id": "log4shell-2021",
+      "title": "Log4Shell",
+      "year": 2021,
+      "owasp": "A06",
+      "cwe": "CWE-502",
+      "summary": "Apache Log4j2's JNDI lookups let an attacker who controls a log message or parameter make the application load and run code from an attacker-chosen server.",
+      "timeline": [
+        { "when": "2021-12-10", "what": "CISA added CVE-2021-44228 to its Known Exploited Vulnerabilities catalog." }
+      ],
+      "root_cause": "The JNDI features in configurations, log messages and parameters do not protect against attacker-controlled LDAP and other JNDI-related endpoints, so an attacker who controls log messages or parameters can execute code loaded from LDAP servers. Apache rates it CVSS 3.x 10.0 (critical) and lists fixes in 2.3.1 (Java 6), 2.12.2 (Java 7) and 2.15.0 (Java 8 and later).",
+      "aegis_check": "AEGIS's dependency scan and SBOM (Syft, Trivy, OSV) flag log4j-core versions below the fixed releases when you scan the source folder. It cannot see a Log4j bundled inside a third-party product you only run.",
+      "lessons": [
+        "Keep a software bill of materials so you can answer 'where do we use library X?' in minutes.",
+        "Treat anything that logs user input as an input path, and turn off features such as remote lookups you do not use.",
+        "Upgrade to the fixed releases rather than relying only on mitigations."
+      ],
+      "sources": [
+        "https://logging.apache.org/log4j/2.x/security.html",
+        "https://www.cisa.gov/news-events/news/apache-log4j-vulnerability-guidance",
+        "https://www.cisa.gov/known-exploited-vulnerabilities-catalog"
+      ]
+    },
+    {
+      "id": "heartbleed-2014",
+      "title": "Heartbleed",
+      "year": 2014,
+      "owasp": "A06",
+      "cwe": "CWE-125",
+      "summary": "A programming mistake in OpenSSL's TLS/DTLS heartbeat extension let anyone read chunks of a server's memory, including private keys and passwords.",
+      "timeline": [
+        { "when": "2011-12", "what": "The bug was introduced." },
+        { "when": "2012-03-14", "what": "The first affected release, OpenSSL 1.0.1, shipped." },
+        { "when": "2014-04-03", "what": "The bug was discovered." },
+        { "when": "2014-04-07", "what": "OpenSSL 1.0.1g was released and the bug was made public." }
+      ],
+      "root_cause": "An implementation problem in OpenSSL 1.0.1 through 1.0.1f (not a flaw in the TLS specification): heartbeat requests are not handled properly, so memory contents leak. Each request returns up to 64 KB and can be repeated. Exploitation leaves no trace in logs, according to the project's page.",
+      "aegis_check": "AEGIS's TLS check reports certificate and protocol weaknesses on an endpoint you give it, but it does not send heartbeat probes. Its dependency scan covers the libraries in your project, not the operating system's OpenSSL on the server.",
+      "lessons": [
+        "After a key-leaking bug, patching is not enough: revoke and reissue certificates and reset credentials that may have been exposed.",
+        "Know which library versions your servers and containers really run, including system libraries.",
+        "Memory-safety bugs in shared libraries become everyone's problem; keep them updated."
+      ],
+      "sources": [
+        "https://heartbleed.com/",
+        "https://www.cisa.gov/known-exploited-vulnerabilities-catalog"
+      ]
+    },
+    {
+      "id": "xz-2024",
+      "title": "xz backdoor",
+      "year": 2024,
+      "owasp": "A08",
+      "cwe": "CWE-506",
+      "summary": "Malicious code was hidden in the release tarballs of xz 5.6.0 and 5.6.1 and altered liblzma, which some distributions' sshd loads through systemd.",
+      "timeline": [
+        { "when": "2024-03-29", "what": "Andres Freund reported on the oss-security list that the upstream xz repository and tarballs had been backdoored. He noticed it from high CPU use and valgrind errors in SSH logins on Debian sid." }
+      ],
+      "root_cause": "The release tarballs contained an extra line in m4/build-to-host.m4, absent from the git source, that ran an obfuscated script at the end of configure and changed how liblzma was built. The injected code replaces ifunc resolvers, installs an audit hook, and redirects the RSA_public_decrypt entry so it runs during public-key authentication in sshd. Red Hat assigned CVE-2024-3094. Obfuscated test files were also committed upstream.",
+      "impact": "Per the report, the affected releases had not yet been widely integrated by Linux distributions at the time it was found.",
+      "aegis_check": "AEGIS cannot spot an unknown backdoor in a trusted upstream release. Once CVE-2024-3094 is in the offline OSV and Trivy databases, its dependency scan flags xz 5.6.0 and 5.6.1 in a project's manifests or lockfiles.",
+      "lessons": [
+        "Build from verified source where you can, and compare release tarballs against the git tag.",
+        "Small performance anomalies (a login that takes 0.8 s instead of 0.3 s) are worth investigating.",
+        "Maintainer trust is part of your supply chain; critical single-maintainer projects need support and review."
+      ],
+      "sources": [
+        "https://www.openwall.com/lists/oss-security/2024/03/29/4",
+        "https://snyk.io/blog/the-xz-backdoor-cve-2024-3094/"
+      ]
+    }
+  ]
+}

@@ -19,6 +19,7 @@ from typing import Any, Callable, Iterable, Sequence
 from rich import box
 from rich.console import Console
 from rich.table import Table
+from rich.text import Text
 
 from aegis.cli.ui.theme import safe_text, supports_unicode, symbols
 
@@ -95,7 +96,8 @@ class Output:
             last = i == len(columns) - 1
             table.add_column(self._safe(column), no_wrap=not last, overflow="fold" if last else "ellipsis")
         for row in rows:
-            table.add_row(*(self._safe("" if cell is None else str(cell)) for cell in row))
+            # Text, not str: a cell is data, so "[gemini]" or "[x]" in it is printed, not read as Rich markup
+            table.add_row(*(Text(self._safe("" if cell is None else str(cell))) for cell in row))
         self._console.print(table)
 
     # ------------------------------------------------------------------ messages (stderr)
