@@ -1,0 +1,17 @@
+rules:
+  - id: python-tls-verify-disabled
+    languages: [python]
+    severity: WARNING
+    message: TLS certificate verification is turned off, so the connection can be intercepted.
+    metadata:
+      owasp: A02
+      cwe: CWE-295
+    pattern-either:
+      - pattern: requests.$VERB(..., verify=False, ...)
+      - pattern: httpx.$VERB(..., verify=False, ...)
+      - pattern: httpx.Client(..., verify=False, ...)
+      - pattern: httpx.AsyncClient(..., verify=False, ...)
+      - pattern: $SESSION.verify = False
+      - pattern: ssl._create_unverified_context(...)
+      - pattern: ssl.create_default_context(...).check_hostname = False
+      - pattern: $CTX.verify_mode = ssl.CERT_NONE

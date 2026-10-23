@@ -1,0 +1,33 @@
+rules:
+  - id: python-path-traversal
+    languages: [python]
+    severity: ERROR
+    message: A request input chooses which file is opened.
+    metadata:
+      owasp: A01
+      cwe: CWE-22
+    mode: taint
+    pattern-sources:
+      - patterns:
+          - pattern-inside: |
+              @$ROUTER.$METHOD(...)
+              def $HANDLER(..., $PARAM, ...):
+                  ...
+          - pattern: $PARAM
+    pattern-sanitizers:
+      # reduced to a bare file name, or resolved and checked against a base folder
+      - pattern: os.path.basename(...)
+      - pattern: werkzeug.utils.secure_filename(...)
+      - pattern: secure_filename(...)
+    pattern-sinks:
+      - patterns:
+          - pattern-either:
+              - pattern: open($PATH, ...)
+              - pattern: io.open($PATH, ...)
+              - pattern: FileResponse($PATH, ...)
+              - pattern: send_file($PATH, ...)
+              - pattern: pathlib.Path($PATH, ...).read_text(...)
+              - pattern: pathlib.Path($PATH, ...).read_bytes(...)
+              - pattern: Path($PATH, ...).read_text(...)
+              - pattern: Path($PATH, ...).read_bytes(...)
+          - focus-metavariable: $PATH

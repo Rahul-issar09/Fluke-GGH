@@ -1,0 +1,40 @@
+rules:
+  - id: js-command-injection
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: A request input reaches an operating-system command.
+    metadata:
+      owasp: A03
+      cwe: CWE-78
+    mode: taint
+    # Express request input: query string, path parameters, body, headers, cookies
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern: $REQ.query
+              - pattern: $REQ.params
+              - pattern: $REQ.body
+              - pattern: $REQ.headers
+              - pattern: $REQ.cookies
+              - pattern: $REQ.query.$X
+              - pattern: $REQ.params.$X
+              - pattern: $REQ.body.$X
+              - pattern: $REQ.get(...)
+              - pattern: $REQ.param(...)
+          - metavariable-regex:
+              metavariable: $REQ
+              regex: ^(req|request)$
+    pattern-sinks:
+      - patterns:
+          - pattern-either:
+              - pattern: $CP.exec($CMD, ...)
+              - pattern: $CP.execSync($CMD, ...)
+              - pattern: exec($CMD, ...)
+              - pattern: execSync($CMD, ...)
+          - focus-metavariable: $CMD
+      # spawn / execFile only through a shell
+      - patterns:
+          - pattern-either:
+              - pattern: '$CP.spawn($CMD, $ARGS, {..., shell: true, ...})'
+              - pattern: 'spawn($CMD, $ARGS, {..., shell: true, ...})'
+          - focus-metavariable: $CMD

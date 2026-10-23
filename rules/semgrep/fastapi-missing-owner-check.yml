@@ -1,0 +1,26 @@
+rules:
+  - id: fastapi-missing-owner-check
+    languages: [python]
+    severity: ERROR
+    message: Object is read by id without an owner check.
+    metadata:
+      owasp: A01
+      cwe: CWE-639
+    patterns:
+      # a GET route that takes an object id from the path...
+      - pattern-inside: |
+          @$ROUTER.get($PATH, ...)
+          def $HANDLER(..., $ID: int, ...):
+              ...
+      - metavariable-regex:
+          metavariable: $PATH
+          regex: .*\{  # anchored at the start: a path parameter anywhere
+      # ...and loads the object by that id alone...
+      - pattern: $DB.execute($QUERY, ($ID,))
+      # ...with no owner comparison anywhere in the handler
+      - pattern-not-inside: |
+          def $F(...):
+              ...
+              if <... "owner_id" ...>:
+                  ...
+              ...

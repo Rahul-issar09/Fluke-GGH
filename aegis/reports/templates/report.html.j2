@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AEGIS report {{ scan.id }}</title>
+<style>
+:root {
+  --bg: #f7f8fa; --panel: #ffffff; --text: #1d2330; --muted: #5f6b7a; --line: #dde2ea; --code: #f1f3f7;
+  --accent: #2f5bd3; --confirmed: #b42318; --corroborated: #b54708; --candidate: #475467; --resolved: #067647;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #11151c; --panel: #181e27; --text: #e6e9ef; --muted: #9aa4b2; --line: #2a3340; --code: #10141a;
+    --accent: #7ea2ff; --confirmed: #f97066; --corroborated: #fdb022; --candidate: #98a2b3; --resolved: #47cd89;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+header h1 { margin: 0 0 4px; font-size: 26px; }
+h2 { margin: 36px 0 12px; font-size: 20px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { margin: 0; font-size: 17px; }
+h4 { margin: 18px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin: 12px 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat b { display: block; font-size: 24px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+pre { background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-x: auto; font: 13px/1.45 ui-monospace, "Cascadia Mono", Consolas, monospace; white-space: pre; }
+code { font: 13px ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.badge { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #fff; text-transform: uppercase; letter-spacing: .03em; }
+.badge.confirmed { background: var(--confirmed); } .badge.corroborated { background: var(--corroborated); }
+.badge.candidate { background: var(--candidate); } .badge.resolved { background: var(--resolved); }
+.formula { font-size: 16px; font-weight: 600; }
+.warning { border-left: 4px solid var(--confirmed); padding: 8px 12px; background: var(--code); border-radius: 6px; }
+.claims li { margin: 4px 0; }
+.ev { scroll-margin-top: 12px; }
+.ev:target, .finding:target { outline: 2px solid var(--accent); outline-offset: 3px; }
+.paths-wrap { overflow-x: auto; }
+svg.paths text { font: 12px system-ui, sans-serif; fill: var(--text); }
+svg.paths .node { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+svg.paths .node.finding { stroke: var(--confirmed); stroke-width: 2; }
+svg.paths .edge { stroke: var(--muted); stroke-width: 1.5; }
+svg.paths .arrowhead { fill: var(--muted); }
+footer { margin-top: 48px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>AEGIS security report</h1>
+  <div class="muted">
+    Scan <code>{{ scan.id }}</code> · mode <b>{{ scan.mode }}</b> · status {{ scan.status }}
+    {% if scan.target_url %} · target <code>{{ scan.target_url }}</code>{% endif %}
+    {% if scan.repo_url %} · repo <code>{{ scan.repo_url }}</code>{% if scan.repo_commit %} @ <code>{{ scan.repo_commit[:12] }}</code>{% endif %}{% elif scan.source %} · source <code>{{ scan.source }}</code>{% endif %}
+    {% if scan.repo_url %} · repo <code>{{ scan.repo_url }}</code>{% endif %}
+    <br>Generated {{ report.generated_at }} · report format {{ report.aegis_report }}
+  </div>
+</header>
+
+<h2 id="summary">Summary</h2>
+<div class="grid">
+  <div class="panel stat"><b>{{ report.summary.findings }}</b>findings</div>
+  <div class="panel stat"><b>{{ report.summary.open }}</b>open</div>
+  <div class="panel stat"><b>{{ report.summary.resolved }}</b>resolved</div>
+  {% for state, count in report.summary.by_state.items() %}
+  <div class="panel stat"><b>{{ count }}</b><span class="badge {{ state }}">{{ state }}</span></div>
+  {% endfor %}
+</div>
+{% if report.summary.top_risk %}
+<p>Highest risk: <a href="#{{ report.summary.top_risk }}">{{ report.summary.top_risk }}</a>.</p>
+{% endif %}
+
+{% if report.runtime_coverage %}
+<h2 id="runtime-coverage">Runtime coverage</h2>
+{% if report.runtime_coverage_note %}<p class="muted">{{ report.runtime_coverage_note }}</p>{% endif %}
+<table>
+  <thead><tr><th>Check</th><th>Result</th><th>Detail</th></tr></thead>
+  <tbody>{% for c in report.runtime_coverage %}<tr><td>{{ c.label }}</td><td>{{ c.status }}</td><td class="muted">{{ c.detail or "" }}</td></tr>{% endfor %}</tbody>
+</table>
+{% endif %}
+
+<h2 id="ranked">Findings by risk</h2>
+{% if findings %}
+<table>
+  <thead><tr><th class="num">#</th><th>Finding</th><th class="num">Risk</th><th>State</th><th>Type</th><th>Where</th></tr></thead>
+  <tbody>
+  {% for f in findings %}
+  <tr>
+    <td class="num">{{ f.rank }}</td>
+    <td><a href="#{{ f.id }}">{{ f.id }}</a> {{ f.title }}</td>
+    <td class="num">{{ f.risk | num }}</td>
+    <td><span class="badge {{ f.state }}">{{ f.state }}</span></td>
+    <td>{{ f.type }}{% if f.owasp %} <span class="muted">({{ f.owasp }})</span>{% endif %}</td>
+    <td>{% if f.route %}<code>{{ f.route }}</code><br>{% endif %}{% if f.file %}<code>{{ f.file }}{% if f.line %}:{{ f.line }}{% endif %}</code>{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No findings.</p>
+{% endif %}
+
+<h2 id="risk">How risk is computed</h2>
+<div class="panel">
+  <p class="formula">{{ report.risk.formula }}</p>
+  <p class="muted">K<sub>max</sub> = {{ report.risk.kmax | num }} keeps risk between 0 and 1. Confidence comes from the finding's state:
+  {% for state, value in report.risk.confidence_by_state.items() %}{{ state }} = {{ value | num }}{% if not loop.last %}, {% endif %}{% endfor %}.
+  Every finding below lists its factor values and the arithmetic, so each score can be recomputed by hand.</p>
+</div>
+
+<h2 id="db-dates">Vulnerability database snapshot dates</h2>
+<div class="panel">
+{% if report.db_snapshot_dates %}
+  <table>
+    <thead><tr><th>Database</th><th>Snapshot date</th></tr></thead>
+    <tbody>{% for db, date in report.db_snapshot_dates.items() %}<tr><td>{{ db }}</td><td>{{ date or "not present" }}</td></tr>{% endfor %}</tbody>
+  </table>
+  <p class="muted">Results that depend on these databases are only as current as these dates.</p>
+{% else %}
+  <p>No offline vulnerability database was used in this scan.</p>
+{% endif %}
+</div>
+
+<h2 id="attack-paths">Attack paths</h2>
+<div class="panel paths-wrap">{{ paths_svg }}</div>
+
+<h2 id="details">Finding details</h2>
+{% for f in findings %}
+<section class="panel finding" id="{{ f.id }}">
+  <h3>{{ f.rank }}. {{ f.id }} — {{ f.title or f.type }} <span class="badge {{ f.state }}">{{ f.state }}</span></h3>
+  <div class="muted">{{ f.type }}{% if f.owasp %} · OWASP {{ f.owasp }}{% endif %} · risk {{ f.risk | num }}{% if f.correlation_score is not none %} · correlation {{ f.correlation_score | num }}{% endif %}{% if f.sources %} · sources: {{ f.sources | join(", ") }}{% endif %}</div>
+  {% if f.merged %}<div class="muted">Merged duplicates: {{ f.merged | join(", ") }}</div>{% endif %}
+
+  {% for part in parts %}
+  <h4>{{ part }}</h4>
+  {% if part == "where" and f.where %}<pre>{{ f.where }}</pre>
+  {% elif f[part] %}<p>{{ f[part] }}</p>
+  {% else %}<p class="muted">Not available.</p>{% endif %}
+  {% endfor %}
+
+  <h4>fix</h4>
+  {% if f.fix %}
+    <p>{% if f.fix.get("fix_id") %}<code>{{ f.fix.get("fix_id") }}</code> · {% endif %}status <b>{{ f.fix.get("status") or "suggested" }}</b>{% if f.fix.get("commit_mode") %} · committed as {{ f.fix.get("commit_mode") }}{% endif %}</p>
+    {% if f.fix.get("description") %}<p>{{ f.fix.get("description") }}</p>{% endif %}
+    {% for w in f.fix.get("warnings") or [] %}<p class="warning">{{ w }}</p>{% endfor %}
+    {% if f.fix.get("secret_masked") %}<p class="muted">The secret value is masked in this diff.</p>{% endif %}
+    {% if f.fix.get("diff") %}<pre>{{ f.fix.get("diff") }}</pre>{% endif %}
+    {% set fv = f.fix.get("verification") %}
+    {% if fv %}
+    <p>Verification: <b>{{ "passed" if fv.passed else "failed" }}</b>
+      — static {{ fv.static }}, tests {{ fv.tests }}, runtime {{ fv.runtime }}{% if fv.reason %} ({{ fv.reason }}){% endif %}
+      {% if fv.retest_evidence_ids %} · retest evidence:
+        {% for e in fv.retest_evidence_ids %}<a href="#{{ e }}">{{ e }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+    </p>
+    {% endif %}
+  {% else %}<p class="muted">No fix drafted.</p>{% endif %}
+
+  {% if f.claims %}
+  <h4>Claims and their evidence</h4>
+  <ul class="claims">
+  {% for c in f.claims %}
+    <li><b>{{ c.field }}</b>: {{ c.text }} —
+      {% for e in c.evidence_ids %}{% if e in evidence_ids %}<a href="#{{ e }}">{{ e }}</a>{% else %}{{ e }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}</li>
+  {% endfor %}
+  </ul>
+  {% endif %}
+
+  <h4>Risk</h4>
+  <table>
+    <thead><tr><th>Severity</th><th>Confidence</th><th>Exploitability</th><th>Exposure</th><th>Criticality</th><th>Path factor</th><th class="num">Risk</th></tr></thead>
+    <tbody><tr>
+      {% set fx = f.risk_breakdown.factors %}
+      <td>{{ fx.severity | num }}</td><td>{{ fx.confidence | num }}</td><td>{{ fx.exploitability | num }}</td>
+      <td>{{ fx.exposure | num }}</td><td>{{ fx.criticality | num }}</td><td>{{ fx.path_factor | num }}</td><td class="num">{{ f.risk_breakdown.risk | num }}</td>
+    </tr></tbody>
+  </table>
+  <p><code>{{ f.risk_breakdown.expression }}</code></p>
+
+  <h4>Evidence</h4>
+  <p>{% for e in f.evidence_ids %}<a href="#{{ e }}">{{ e }}</a>{% if not loop.last %}, {% endif %}{% else %}<span class="muted">none of its own</span>{% endfor %}</p>
+
+  {% if f.history %}
+  <h4>State history</h4>
+  <table>
+    <thead><tr><th>From</th><th>To</th><th>By</th><th>Why</th><th>Evidence</th></tr></thead>
+    <tbody>
+    {% for t in f.history %}
+    <tr><td>{{ t.from or "—" }}</td><td><span class="badge {{ t.to }}">{{ t.to }}</span></td><td>{{ t.actor }}</td><td>{{ t.reason }}</td>
+      <td>{% for e in t.evidence_ids %}<a href="#{{ e }}">{{ e }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+{% endfor %}
+
+<h2 id="evidence">Evidence appendix</h2>
+{% for e in evidence %}
+<section class="panel ev" id="{{ e.id }}">
+  <h3>{{ e.id }} <span class="muted">· {{ e.kind }} · {{ e.tool }}{% if e.tool_version %} {{ e.tool_version }}{% endif %}{% if e.db_date %} · database {{ e.db_date }}{% endif %}</span></h3>
+  <div class="muted">{% if e.finding_id %}Finding <a href="#{{ e.finding_id }}">{{ e.finding_id }}</a> · {% endif %}recorded {{ e.created_at }}</div>
+  <pre>{{ e.payload | pretty }}</pre>
+</section>
+{% else %}
+<p class="muted">No evidence recorded.</p>
+{% endfor %}
+
+<footer>
+  Tool calls: {{ report.audit.tool_calls }} ({{ report.audit.blocked }} blocked by the safety layer){% for tool, n in report.audit.by_tool.items() %} · {{ tool }} {{ n }}{% endfor %}.
+  Findings and states come from evidence and deterministic rules; explanation text is shown only where it passed validation against that evidence.
+  This file is self-contained and works offline.
+</footer>
+</main>
+</body>
+</html>

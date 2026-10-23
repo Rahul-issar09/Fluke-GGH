@@ -1,0 +1,44 @@
+rules:
+  - id: python-ssrf
+    languages: [python]
+    severity: ERROR
+    message: The server fetches a URL taken from the request, with no host allowlist check first.
+    metadata:
+      owasp: A10
+      cwe: CWE-918
+    mode: taint
+    pattern-sources:
+      - patterns:
+          - pattern-inside: |
+              @$ROUTER.$METHOD(...)
+              def $HANDLER(..., $PARAM, ...):
+                  ...
+          - pattern: $PARAM
+    pattern-sinks:
+      - patterns:
+          - pattern-either:
+              - pattern: requests.$VERB($URL, ...)
+              - pattern: httpx.$VERB($URL, ...)
+              - pattern: urllib.request.urlopen($URL, ...)
+              - pattern: urlopen($URL, ...)
+              # a client/session object, e.g. request.app.state.http.get(url) or session.get(url)
+              - patterns:
+                  - pattern: $CLIENT.$VERB($URL, ...)
+                  - metavariable-regex:
+                      metavariable: $CLIENT
+                      regex: (?i).*(client|session|http).*
+                  - metavariable-regex:
+                      metavariable: $VERB
+                      regex: ^(get|post|put|patch|delete|head|request|stream)$
+          - focus-metavariable: $URL
+          # a fetch guarded by an allowlist that rejects other hosts is not SSRF
+          - pattern-not-inside: |
+              if <... $ALLOWED ...>:
+                  raise $ERR
+              ...
+          - pattern-not-inside: |
+              def $F(...):
+                  ...
+                  if <... $ALLOWED ...>:
+                      raise $ERR
+                  ...

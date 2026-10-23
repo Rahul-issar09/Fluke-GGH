@@ -1,0 +1,12 @@
+rules:
+  - id: crypto-tls
+    languages: [python]
+    severity: INFO
+    message: TLS configuration.
+    metadata:
+      asset: tls
+    pattern-either:
+      - pattern: $CTX.minimum_version = ssl.TLSVersion.$VERSION
+      - pattern: ssl.SSLContext(ssl.$PROTOCOL)
+      - pattern: ssl.wrap_socket(..., ssl_version=ssl.$PROTOCOL, ...)
+      - pattern: $CTX.set_ciphers($CIPHERS)

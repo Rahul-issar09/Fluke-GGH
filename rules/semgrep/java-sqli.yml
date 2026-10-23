@@ -1,0 +1,41 @@
+rules:
+  - id: java-sqli
+    languages: [java]
+    severity: ERROR
+    message: A request input reaches the text of a SQL query.
+    metadata:
+      owasp: A03
+      cwe: CWE-89
+    mode: taint
+    # Spring request input: annotated handler parameters, and the servlet request itself
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern-inside: |
+                  $RET $METHOD(..., @$ANNO(...) $TYPE $PARAM, ...) { ... }
+              - pattern-inside: |
+                  $RET $METHOD(..., @$ANNO $TYPE $PARAM, ...) { ... }
+          - metavariable-regex:
+              metavariable: $ANNO
+              regex: ^(RequestParam|PathVariable|RequestBody|RequestHeader|CookieValue|ModelAttribute)$
+          - pattern: $PARAM
+      - pattern: (HttpServletRequest $REQ).getParameter(...)
+      - pattern: (HttpServletRequest $REQ).getHeader(...)
+      - pattern: (HttpServletRequest $REQ).getQueryString()
+    pattern-sinks:
+      - patterns:
+          - pattern-either:
+              - pattern: ($STMT $S).executeQuery($Q)
+              - pattern: ($STMT $S).executeUpdate($Q)
+              - pattern: ($STMT $S).execute($Q)
+              - pattern: ($STMT $S).addBatch($Q)
+              - pattern: ($CONN $C).prepareStatement($Q, ...)
+              - pattern: ($CONN $C).prepareCall($Q, ...)
+              - pattern: $JDBC.query($Q, ...)
+              - pattern: $JDBC.queryForList($Q, ...)
+              - pattern: $JDBC.queryForObject($Q, ...)
+              - pattern: $JDBC.queryForMap($Q, ...)
+              - pattern: $JDBC.update($Q, ...)
+              - pattern: $EM.createQuery($Q, ...)
+              - pattern: $EM.createNativeQuery($Q, ...)
+          - focus-metavariable: $Q

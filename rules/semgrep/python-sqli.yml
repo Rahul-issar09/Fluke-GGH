@@ -1,0 +1,46 @@
+rules:
+  - id: python-sqli
+    languages: [python]
+    severity: ERROR
+    message: A SQL query is built from a variable with string formatting or concatenation, then executed.
+    metadata:
+      owasp: A03
+      cwe: CWE-89
+      # Framework-independent (TNW-5): no route decorator needed, so aiohttp, Django views, helper
+      # functions and scripts are covered. fastapi-sqli still traces a FastAPI handler's input.
+    patterns:
+      - pattern-either:
+          # built right in the call
+          - pattern: $DB.$EXEC($Q % $ARGS, ...)
+          - pattern: $DB.$EXEC($Q.format(...), ...)
+          - pattern: $DB.$EXEC(f"...", ...)
+          - pattern: $DB.$EXEC($A + $B, ...)
+          # built first, executed later in the same function
+          - patterns:
+              - pattern-either:
+                  - pattern-inside: |
+                      $SQL = $Q % $ARGS
+                      ...
+                  - pattern-inside: |
+                      $SQL = $Q.format(...)
+                      ...
+                  - pattern-inside: |
+                      $SQL = f"..."
+                      ...
+                  - pattern-inside: |
+                      $SQL = $A + $B
+                      ...
+                  - pattern-inside: |
+                      $SQL += $B
+                      ...
+              - pattern: $DB.$EXEC($SQL, ...)
+      - metavariable-regex:
+          metavariable: $EXEC
+          regex: ^(execute|executemany|executescript|raw|mogrify)$
+      # an f-string with no {placeholder} is a constant
+      - pattern-not: $DB.$EXEC(f"$CONST", ...)
+      # two literals glued together are a constant too
+      - pattern-not: $DB.$EXEC("..." + "...", ...)
+      - pattern-not-inside: |
+          $SQL = "..." + "..."
+          ...

@@ -1,0 +1,62 @@
+# --- Python environments -------------------------------------------------
+# the app's virtualenv and separate tool venvs (e.g. semgrep, which pins older packages than the app)
+.venv/
+venv/
+.tools/
+
+# --- Python bytecode, build output and tool caches -----------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+.pytest_cache/
+.hypothesis/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+# schemathesis stores failing-case caches here
+.schemathesis/
+
+# --- AEGIS runtime data (generated, can be large or sensitive) ------------
+# SQLite store, checkpoints, reports, fix workspaces, scan copies, chat index (data/chroma)
+data/
+workspaces/
+# offline vulnerability databases (staged once while online; large)
+offline-db/
+
+# --- Frontend ------------------------------------------------------------
+# dependencies and build output
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# --- Secrets and local configuration --------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+# Claude Code: per-machine state, not project files
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+
+# --- Markdown notes -------------------------------------------------------
+# all Markdown stays local, except the fix templates: rules/fix_templates/*.md are read by the
+# remediation code (aegis/fix/draft.py), so a fresh clone needs them
+*.md
+!rules/fix_templates/*.md
+
+# --- Generated per-machine config -----------------------------------------
+# made by `python -m aegis.mcp.cli print-config`: holds this machine's absolute paths
+antigravity_mcp_config.json
+
+# --- Logs, temp files, editor and OS noise --------------------------------
+*.log
+*.tmp
+*.swp
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

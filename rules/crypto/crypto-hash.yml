@@ -1,0 +1,21 @@
+rules:
+  - id: crypto-hash
+    languages: [python]
+    severity: INFO
+    message: Hash algorithm in use.
+    metadata:
+      asset: hash
+    pattern-either:
+      - patterns:
+          - pattern: hashlib.$ALG(...)
+          - metavariable-regex:
+              metavariable: $ALG
+              regex: ^(md5|sha1|sha224|sha256|sha384|sha512|sha3_224|sha3_256|sha3_384|sha3_512|blake2b|blake2s)$
+      - patterns:
+          - pattern: hashlib.new($ALG, ...)
+      - patterns:
+          # cryptography: hashes.SHA1(), hashes.MD5(), hashes.SHA256() …
+          - pattern: hashes.$ALG()
+          - metavariable-regex:
+              metavariable: $ALG
+              regex: ^(MD5|SHA1|SHA224|SHA256|SHA384|SHA512|SHA3_256|SHA3_512|BLAKE2b|BLAKE2s)$

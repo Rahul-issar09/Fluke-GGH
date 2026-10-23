@@ -1,0 +1,40 @@
+rules:
+  - id: js-ssrf
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: A request input decides which URL the server requests (server-side request forgery).
+    metadata:
+      owasp: A10
+      cwe: CWE-918
+    mode: taint
+    # Express request input: query string, path parameters, body, headers, cookies
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern: $REQ.query
+              - pattern: $REQ.params
+              - pattern: $REQ.body
+              - pattern: $REQ.headers
+              - pattern: $REQ.cookies
+              - pattern: $REQ.query.$X
+              - pattern: $REQ.params.$X
+              - pattern: $REQ.body.$X
+              - pattern: $REQ.get(...)
+              - pattern: $REQ.param(...)
+          - metavariable-regex:
+              metavariable: $REQ
+              regex: ^(req|request)$
+    pattern-sinks:
+      - patterns:
+          - pattern-either:
+              - pattern: fetch($URL, ...)
+              - pattern: axios($URL, ...)
+              - pattern: axios.$METHOD($URL, ...)
+              - pattern: got($URL, ...)
+              - pattern: got.$METHOD($URL, ...)
+              - pattern: request($URL, ...)
+              - pattern: http.get($URL, ...)
+              - pattern: https.get($URL, ...)
+              - pattern: http.request($URL, ...)
+              - pattern: https.request($URL, ...)
+          - focus-metavariable: $URL

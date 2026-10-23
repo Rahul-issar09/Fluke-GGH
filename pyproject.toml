@@ -1,0 +1,93 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aegis"
+version = "0.1.0"
+description = "AEGIS — offline, evidence-first AppSec & crypto-risk platform"
+requires-python = ">=3.10"
+# Lower bounds are the versions tested together (Python 3.10, 2026-10-10). Upper bounds only where the
+# next major version is known to change the API this code uses (mcp 2.x renamed FastMCP → MCPServer).
+dependencies = [
+    # API and services
+    "fastapi>=0.142",
+    "starlette>=1.7",
+    "uvicorn>=0.54",
+    "sse-starlette>=3.5",
+    "httpx>=0.28",
+    "pydantic>=2.13",
+    "sqlmodel>=0.0.48",
+    "SQLAlchemy>=2.0.54",
+    "aiosqlite>=0.22",
+    "structlog>=26.1",
+    "PyYAML>=6.0",
+    "Jinja2>=3.1",
+    "MarkupSafe>=3.0",
+    "networkx>=3.4",
+    "pathspec>=1.1",
+    "packaging>=26.3",
+    # agent
+    "langgraph>=1.2.14,<2",
+    "langgraph-checkpoint-sqlite>=3.1",
+    "langchain-core>=1.6.7,<2",
+    "langchain-ollama>=1.1",
+    # code analysis
+    "tree-sitter>=0.26",
+    "tree-sitter-python>=0.25",
+    "tree-sitter-java>=0.23.5",
+    "tree-sitter-javascript>=0.25",
+    "tree-sitter-typescript>=0.23.2",
+    # chat / RAG
+    "chromadb>=1.5.9,<2",
+    # MCP server
+    "mcp>=2.3,<3",
+    "anyio>=4.15",
+    # CLI (CLI_PHASES.md, D-5)
+    "typer>=0.27",
+    "rich>=15.0",
+]
+
+[project.optional-dependencies]
+# browser logins for runtime scans (also needs a staged Chromium: `aegis offline-db stage`)
+browser = ["playwright>=1.63"]
+# live TLS checks (sslyze runs as a scanner binary through the SafetyController)
+tls = ["sslyze>=6.3"]
+dev = [
+    "pytest>=9.1",
+    "pytest-asyncio>=1.4",
+    "hypothesis>=6.140",
+    "schemathesis>=4.29",
+]
+
+[project.scripts]
+aegis = "aegis.cli.main:main"
+aegis-mcp = "aegis.mcp.server:main"
+
+[tool.setuptools.packages.find]
+include = ["aegis*"]
+
+[tool.setuptools.package-data]
+# data files read from inside the package. NOTE: rules/ (Semgrep, crypto and fix-template rules) and
+# .tools/ are read from the project folder, so the install must be editable (`pip install -e .`)
+# until they move into the package (CLI_PHASES.md CLI01 / CLI17).
+aegis = [
+    "agent/prompts/*.txt",
+    "chat/prompts/*.txt",
+    "reports/templates/*.j2",
+    "risk/*.yaml",
+    "safety/*.yaml",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-m 'not ollama and not docker and not tools'"
+markers = [
+    "phase(code): AEGIS build-phase tag (e.g. AG00). ST05 adds the --upto plugin.",
+    "ollama: needs a local Ollama instance (run with -m ollama)",
+    "docker: needs the docker-compose stack",
+    "tools: runs a real external scanner binary (run with -m tools)",
+    "slow: slow test",
+]

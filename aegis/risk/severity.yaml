@@ -1,0 +1,25 @@
+# Base severity per weakness class (PRD §7.10 "Severity", PHASES P10.1).
+#
+# Range 0.1–1.0, aligned with CVSS-style impact for the class. This is the only
+# source of the `Severity` factor: it is a property of the *class*, not of the
+# tool that reported it, so the same weakness weighs the same whichever scanner
+# found it. A type that is not listed falls back to `default`.
+default: 0.5
+
+types:
+  broken_access_control: 0.9   # A01  IDOR / missing owner check
+  sqli: 0.9                    # A03  injection
+  command_injection: 0.9       # A03  input reaches an OS command
+  code_injection: 0.9          # A03  input evaluated as code
+  insecure_deserialization: 0.8  # A08  pickle / unsafe yaml loader
+  path_traversal: 0.8          # A01  input chooses the file that is opened
+  insecure_tls: 0.6            # A02  certificate verification turned off
+  ssrf: 0.8                    # A10
+  secret: 0.8                  # hard-coded credential / key
+  vulnerable_dependency: 0.7   # A06  (OSV / Trivy — Worker 2, stretch)
+  weak_crypto: 0.6             # A02  weak hash / key size / mode
+  weak_tls: 0.6                # A02  live TLS posture (Engine 3)
+  misconfig: 0.4               # A05  nuclei / trivy IaC
+  quantum_risk: 0.4            # A02  harvest-now-decrypt-later exposure (Engine 3)
+  code_issue: 0.5              # a static rule with no dedicated class
+  api_conformance: 0.3         # schemathesis: the API deviates from its own spec

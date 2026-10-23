@@ -1,0 +1,21 @@
+rules:
+  - id: crypto-random
+    languages: [python]
+    severity: INFO
+    message: A secret value is generated with the non-cryptographic random module.
+    metadata:
+      asset: random
+    pattern-either:
+      - patterns:
+          - pattern: $VAR = random.$FN(...)
+          - metavariable-regex:
+              metavariable: $VAR
+              regex: (?i).*(token|secret|password|passwd|key|nonce|otp|salt|session).*
+      - patterns:
+          - pattern-inside: |
+              def $F(...):
+                  ...
+          - pattern: return random.$FN(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: (?i).*(token|secret|password|passwd|key|nonce|otp|salt|session).*

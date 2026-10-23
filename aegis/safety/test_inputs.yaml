@@ -1,0 +1,15 @@
+# Approved test-input library (PHASES P2.3).
+#
+# The agent may reference an input only by ID; it can never supply a raw
+# payload. `{scan_id}` is substituted at resolve time, and `{callback}` with
+# the operator-configured callback listener (safety.callback_url, e.g.
+# http://callback:8080 in Docker, http://127.0.0.1:8080 locally). Values are
+# fixed, benign detection probes for authorized testing of the allowlisted target.
+
+SSRF-CB-001:
+  class: ssrf
+  value: "{callback}/hit/{scan_id}"
+
+SQLI-001:
+  class: sqli
+  value: "' OR '1'='1"

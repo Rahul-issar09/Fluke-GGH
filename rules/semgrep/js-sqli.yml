@@ -1,0 +1,39 @@
+rules:
+  - id: js-sqli
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: A request input reaches the text of a SQL query.
+    metadata:
+      owasp: A03
+      cwe: CWE-89
+    mode: taint
+    # Express request input: query string, path parameters, body, headers, cookies
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern: $REQ.query
+              - pattern: $REQ.params
+              - pattern: $REQ.body
+              - pattern: $REQ.headers
+              - pattern: $REQ.cookies
+              - pattern: $REQ.query.$X
+              - pattern: $REQ.params.$X
+              - pattern: $REQ.body.$X
+              - pattern: $REQ.get(...)
+              - pattern: $REQ.param(...)
+          - metavariable-regex:
+              metavariable: $REQ
+              regex: ^(req|request)$
+    pattern-sinks:
+      # the SQL text (first argument); values bound as parameters (second argument) are safe
+      - patterns:
+          - pattern-either:
+              - pattern: $DB.query($Q, ...)
+              - pattern: $DB.execute($Q, ...)
+              - pattern: $DB.raw($Q, ...)
+              - pattern: $DB.$QUERYRAW($Q, ...)
+              - pattern: $DB.exec($Q, ...)
+          - metavariable-regex:
+              metavariable: $DB
+              regex: (?i).*(db|pool|conn|connection|client|knex|sequelize|sql|database|prisma|mysql|pg).*
+          - focus-metavariable: $Q

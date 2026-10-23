@@ -1,0 +1,44 @@
+rules:
+  - id: java-path-traversal
+    languages: [java]
+    severity: ERROR
+    message: A request input decides which file the server reads or writes (path traversal).
+    metadata:
+      owasp: A01
+      cwe: CWE-22
+    mode: taint
+    # Spring request input: annotated handler parameters, and the servlet request itself
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern-inside: |
+                  $RET $METHOD(..., @$ANNO(...) $TYPE $PARAM, ...) { ... }
+              - pattern-inside: |
+                  $RET $METHOD(..., @$ANNO $TYPE $PARAM, ...) { ... }
+          - metavariable-regex:
+              metavariable: $ANNO
+              regex: ^(RequestParam|PathVariable|RequestBody|RequestHeader|CookieValue|ModelAttribute)$
+          - pattern: $PARAM
+      - pattern: (HttpServletRequest $REQ).getParameter(...)
+      - pattern: (HttpServletRequest $REQ).getHeader(...)
+      - pattern: (HttpServletRequest $REQ).getQueryString()
+    pattern-sinks:
+      # the file access itself: building a path is harmless, opening it is not
+      - patterns:
+          - pattern: Files.$OP($P, ...)
+          - metavariable-regex:
+              metavariable: $OP
+              regex: ^(readAllBytes|readAllLines|readString|lines|newInputStream|newBufferedReader|newOutputStream|newBufferedWriter|write|writeString|copy|move|delete|deleteIfExists)$
+          - focus-metavariable: $P
+      - patterns:
+          - pattern-either:
+              - pattern: new FileInputStream($P)
+              - pattern: new FileReader($P)
+              - pattern: new FileOutputStream($P, ...)
+              - pattern: new FileWriter($P, ...)
+              - pattern: new RandomAccessFile($P, ...)
+          - focus-metavariable: $P
+    # only the file name (no directories) cannot climb out of the folder
+    pattern-sanitizers:
+      - pattern: FilenameUtils.getName(...)
+      - pattern: $X.getFileName()

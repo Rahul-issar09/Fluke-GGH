@@ -1,0 +1,7 @@
+# Byte-exact files: tests and fix verification match their lines exactly, so text files here must keep
+# LF endings on every OS (Windows git with core.autocrlf=true would otherwise check them out as CRLF).
+# text=auto lets git detect binaries (e.g. tracked .pyc files) and leave them untouched.
+demo-app/** text=auto eol=lf
+demo-app-patched/** text=auto eol=lf
+tests/fixtures/** text=auto eol=lf
+rules/** text=auto eol=lf

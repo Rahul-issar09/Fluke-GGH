@@ -1,0 +1,37 @@
+rules:
+  - id: java-ssrf
+    languages: [java]
+    severity: ERROR
+    message: A request input decides which URL the server requests (server-side request forgery).
+    metadata:
+      owasp: A10
+      cwe: CWE-918
+    mode: taint
+    # Spring request input: annotated handler parameters, and the servlet request itself
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern-inside: |
+                  $RET $METHOD(..., @$ANNO(...) $TYPE $PARAM, ...) { ... }
+              - pattern-inside: |
+                  $RET $METHOD(..., @$ANNO $TYPE $PARAM, ...) { ... }
+          - metavariable-regex:
+              metavariable: $ANNO
+              regex: ^(RequestParam|PathVariable|RequestBody|RequestHeader|CookieValue|ModelAttribute)$
+          - pattern: $PARAM
+      - pattern: (HttpServletRequest $REQ).getParameter(...)
+      - pattern: (HttpServletRequest $REQ).getHeader(...)
+      - pattern: (HttpServletRequest $REQ).getQueryString()
+    pattern-sinks:
+      - patterns:
+          - pattern-either:
+              - pattern: new URL($U, ...)
+              - pattern: URI.create($U)
+              - pattern: new URI($U)
+              - pattern: ($REST $T).getForObject($U, ...)
+              - pattern: ($REST $T).getForEntity($U, ...)
+              - pattern: ($REST $T).postForObject($U, ...)
+              - pattern: ($REST $T).exchange($U, ...)
+              - pattern: $WC.get().uri($U, ...)
+              - pattern: HttpRequest.newBuilder($U)
+          - focus-metavariable: $U

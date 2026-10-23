@@ -1,0 +1,28 @@
+rules:
+  - id: python-command-injection
+    languages: [python]
+    severity: ERROR
+    message: A request input reaches an operating-system command.
+    metadata:
+      owasp: A03
+      cwe: CWE-78
+    mode: taint
+    pattern-sources:
+      - patterns:
+          - pattern-inside: |
+              @$ROUTER.$METHOD(...)
+              def $HANDLER(..., $PARAM, ...):
+                  ...
+          - pattern: $PARAM
+    pattern-sinks:
+      - pattern-either:
+          - patterns:
+              - pattern-either:
+                  - pattern: os.system($CMD)
+                  - pattern: os.popen($CMD, ...)
+              - focus-metavariable: $CMD
+          - patterns:
+              # subprocess with a shell: the whole string is interpreted by the shell
+              - pattern-either:
+                  - pattern: subprocess.$FN($CMD, ..., shell=True, ...)
+              - focus-metavariable: $CMD

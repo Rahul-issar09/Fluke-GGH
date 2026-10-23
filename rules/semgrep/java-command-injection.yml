@@ -1,0 +1,32 @@
+rules:
+  - id: java-command-injection
+    languages: [java]
+    severity: ERROR
+    message: A request input reaches an operating-system command.
+    metadata:
+      owasp: A03
+      cwe: CWE-78
+    mode: taint
+    # Spring request input: annotated handler parameters, and the servlet request itself
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern-inside: |
+                  $RET $METHOD(..., @$ANNO(...) $TYPE $PARAM, ...) { ... }
+              - pattern-inside: |
+                  $RET $METHOD(..., @$ANNO $TYPE $PARAM, ...) { ... }
+          - metavariable-regex:
+              metavariable: $ANNO
+              regex: ^(RequestParam|PathVariable|RequestBody|RequestHeader|CookieValue|ModelAttribute)$
+          - pattern: $PARAM
+      - pattern: (HttpServletRequest $REQ).getParameter(...)
+      - pattern: (HttpServletRequest $REQ).getHeader(...)
+      - pattern: (HttpServletRequest $REQ).getQueryString()
+    pattern-sinks:
+      - patterns:
+          - pattern-either:
+              - pattern: Runtime.getRuntime().exec($CMD, ...)
+              - pattern: ($RT $R).exec($CMD, ...)
+              - pattern: new ProcessBuilder(..., $CMD, ...)
+              - pattern: ($PB $B).command($CMD, ...)
+          - focus-metavariable: $CMD

@@ -1,0 +1,35 @@
+rules:
+  - id: js-code-injection
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: A request input is evaluated as code.
+    metadata:
+      owasp: A03
+      cwe: CWE-94
+    mode: taint
+    # Express request input: query string, path parameters, body, headers, cookies
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern: $REQ.query
+              - pattern: $REQ.params
+              - pattern: $REQ.body
+              - pattern: $REQ.headers
+              - pattern: $REQ.cookies
+              - pattern: $REQ.query.$X
+              - pattern: $REQ.params.$X
+              - pattern: $REQ.body.$X
+              - pattern: $REQ.get(...)
+              - pattern: $REQ.param(...)
+          - metavariable-regex:
+              metavariable: $REQ
+              regex: ^(req|request)$
+    pattern-sinks:
+      - patterns:
+          - pattern-either:
+              - pattern: eval($CODE)
+              - pattern: new Function(..., $CODE)
+              - pattern: $VM.runInNewContext($CODE, ...)
+              - pattern: $VM.runInThisContext($CODE, ...)
+              - pattern: setTimeout($CODE, ...)
+          - focus-metavariable: $CODE

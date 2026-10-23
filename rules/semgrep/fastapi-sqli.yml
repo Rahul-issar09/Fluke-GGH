@@ -1,0 +1,22 @@
+rules:
+  - id: fastapi-sqli
+    languages: [python]
+    severity: ERROR
+    message: User input flows into a SQL query built by string concatenation.
+    metadata:
+      owasp: A03
+      cwe: CWE-89
+    mode: taint
+    # source: a parameter of a route handler (FastAPI / Flask style decorators)
+    pattern-sources:
+      - patterns:
+          - pattern-inside: |
+              @$ROUTER.$METHOD(...)
+              def $HANDLER(..., $PARAM, ...):
+                  ...
+          - pattern: $PARAM
+    # sink: the SQL text itself — bound parameters (the second argument) are safe
+    pattern-sinks:
+      - patterns:
+          - pattern: $DB.execute($QUERY, ...)
+          - focus-metavariable: $QUERY

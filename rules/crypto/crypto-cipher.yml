@@ -1,0 +1,19 @@
+rules:
+  - id: crypto-cipher
+    languages: [python]
+    severity: INFO
+    message: Symmetric cipher in use.
+    metadata:
+      asset: cipher
+    pattern-either:
+      # cryptography: Cipher(algorithms.AES(key), modes.CBC(iv))
+      - pattern: Cipher(algorithms.$ALG(...), modes.$MODE(...), ...)
+      - patterns:
+          - pattern: algorithms.$ALG(...)
+          - pattern-not-inside: Cipher(...)
+      # PyCryptodome: AES.new(key, AES.MODE_ECB)
+      - patterns:
+          - pattern: $ALG.new($KEY, $ALG.$MODE, ...)
+          - metavariable-regex:
+              metavariable: $ALG
+              regex: ^(AES|DES|DES3|ARC2|ARC4|Blowfish|CAST|ChaCha20|Salsa20)$
